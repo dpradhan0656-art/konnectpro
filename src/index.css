@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* 🔥 DEFAULT THEME (Default Colors) */
+  --primary-color: #1e3a8a;
+  /* Deep Blue */
+  --secondary-color: #3b82f6;
+  /* Sky Blue */
+  --accent-color: #D4AF37;
+  /* Gold */
+  --bg-color: #f8fafc;
+  /* Light Background */
+  --surface-color: #ffffff;
+  /* White Cards */
+  --text-color: #0f172a;
+  /* Dark Text */
+
+  --font-heading: 'Outfit', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: var(--font-body);
+}
