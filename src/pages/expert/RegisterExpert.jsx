@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { supabase } from '../../supabase';
+// ✅ पुराने "../../supabase" को बदलकर नया रास्ता दें
+import { supabase } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { User, MapPin, Phone, Lock, CreditCard, ShieldCheck, Loader } from 'lucide-react';
 

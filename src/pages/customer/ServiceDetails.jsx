@@ -1,93 +1,174 @@
 ﻿import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Star, Clock, ShieldCheck, Loader } from 'lucide-react';
-import { supabase } from '../../supabase'; // Database connect kiya
+import BookingModal from '../../components/customer/BookingModal';
+import SOSButton from '../../components/common/SOSButton';
+import { Star, Clock, MapPin, Camera, Play, ShieldCheck, ArrowLeft } from 'lucide-react';
 
-// SERVICES DATA (Temporary until we fetch from DB too, keeping local for speed)
-const services = [
-  { id: 1, name: "AC Service", price: 599, rating: 4.8, image: "https://images.unsplash.com/photo-1581094794329-cd56b5095bb4?auto=format&fit=crop&q=80&w=1000", desc: "Complete AC cleaning and gas check." },
-  { id: 2, name: "Bathroom Cleaning", price: 399, rating: 4.7, image: "https://images.unsplash.com/photo-1584622050111-993a426fbf0a?auto=format&fit=crop&q=80&w=1000", desc: "Deep cleaning of tiles and sanitary ware." },
-  { id: 3, name: "Sofa Cleaning", price: 799, rating: 4.6, image: "https://plus.unsplash.com/premium_photo-1663126298656-33616be83c32?auto=format&fit=crop&q=80&w=1000", desc: "Shampoo cleaning for 3-seater sofa." },
-  { id: 4, name: "Carpenter", price: 299, rating: 4.5, image: "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&q=80&w=1000", desc: "Furniture repair and assembly." },
-  { id: 5, name: "Electrician", price: 299, rating: 4.9, image: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&q=80&w=1000", desc: "Switch repair, fan installation." },
-  { id: 6, name: "Plumber", price: 349, rating: 4.7, image: "https://images.unsplash.com/photo-1585704032915-c3400ca199e7?auto=format&fit=crop&q=80&w=1000", desc: "Tap leakage, pipe fitting." }
-];
-
-export default function ServiceDetails() {
+const ServiceDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const service = services.find(s => s.id == id) || services[0];
-  const [loading, setLoading] = useState(false);
+  const [showBooking, setShowBooking] = useState(false);
+  const [estimatedPrice, setEstimatedPrice] = useState(null);
+  const [analyzing, setAnalyzing] = useState(false);
 
-  // REAL BOOKING FUNCTION
-  const handleBook = async () => {
-    try {
-      setLoading(true);
-      
-      // 1. Supabase me data bhejo
-      const { error } = await supabase
-        .from('bookings')
-        .insert([
-          {
-            customer_name: "Deepak (Test User)", // Abhi ke liye hardcoded, baad me login se aayega
-            customer_phone: "9999999999",
-            customer_address: "Ranjhi, Jabalpur",
-            service_name: service.name,
-            price: service.price,
-            status: "Pending"
-          }
-        ]);
+  // Mock Data (Asli app me ye Supabase se aayega)
+  const service = {
+    id: id,
+    name: "Split AC Service",
+    rating: 4.8,
+    reviews_count: 124,
+    basePrice: 599,
+    serviceFee: 100,
+    eta: "15 mins",
+    image: "https://images.unsplash.com/photo-1581094794329-cd56b5095bb4?auto=format&fit=crop&q=80&w=1000",
+    description: "Deep cleaning of filters, cooling coil, and drain tray. Gas charging extra if needed."
+  };
 
-      if (error) throw error;
+  // 6.1 Video Reviews Data
+  const videoReviews = [
+    { id: 1, user: "Rahul S.", thumbnail: "https://images.unsplash.com/photo-1590541673322-959c5d1406c1?auto=format&fit=crop&q=80&w=300", videoUrl: "#" },
+    { id: 2, user: "Priya M.", thumbnail: "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&q=80&w=300", videoUrl: "#" },
+  ];
 
-      // 2. Success!
-      alert(`🎉 Booking Confirmed! \n\nWe have received your request for ${service.name}. An expert will be assigned shortly.`);
-      navigate('/bookings');
-
-    } catch (error) {
-      alert("Booking Failed: " + error.message);
-    } finally {
-      setLoading(false);
+  // 3.2 AI Estimator Tool Logic
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAnalyzing(true);
+      // Mocking AI Analysis Delay
+      setTimeout(() => {
+        setAnalyzing(false);
+        setEstimatedPrice(service.basePrice + 250); // AI says repair needs more work
+        alert("🤖 AI Analysis Complete!\n\nBased on the photo, it looks like the cooling coil needs extra cleaning. Estimate updated.");
+      }, 2000);
     }
   };
 
+  const handleBookingConfirm = (mode) => {
+    alert(`Booking Confirmed! Payment Mode: ${mode === 'online' ? 'Secure Vault' : 'Pay After Service'}.`);
+    setShowBooking(false);
+    navigate('/bookings'); // Send to bookings page
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 font-sans pb-20">
-      <div className="relative h-64">
-        <img src={service.image} className="w-full h-full object-cover" />
-        <button onClick={() => navigate(-1)} className="absolute top-4 left-4 bg-white/30 p-2 rounded-full backdrop-blur-md text-white">
+    <div className="bg-gray-50 min-h-screen pb-24 font-sans text-slate-800">
+      <SOSButton />
+
+      {/* HEADER IMAGE & NAV */}
+      <div className="relative h-64 w-full">
+        <img src={service.image} className="w-full h-full object-cover" alt={service.name} />
+        <div className="absolute inset-0 bg-gradient-to-t from-teal-900 to-transparent opacity-80"></div>
+        
+        <button 
+          onClick={() => navigate(-1)} 
+          className="absolute top-4 left-4 bg-white/20 backdrop-blur-md p-2 rounded-full text-white hover:bg-white/40 transition"
+        >
           <ArrowLeft size={24} />
         </button>
+
+        <div className="absolute bottom-4 left-5 text-white">
+          <h1 className="text-3xl font-extrabold tracking-wide">{service.name}</h1>
+          <div className="flex items-center gap-2 mt-1 text-teal-100 text-sm font-bold">
+            <span className="bg-amber-500 text-white px-2 py-0.5 rounded flex items-center gap-1">
+              <Star size={12} fill="currentColor" /> {service.rating}
+            </span>
+            <span>• {service.reviews_count} Reviews</span>
+            <span>• {service.eta} ETA</span>
+          </div>
+        </div>
       </div>
 
-      <div className="p-6 -mt-10 relative bg-white rounded-t-[30px] shadow-xl min-h-[500px]">
-        <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6"></div>
+      <div className="p-5 space-y-6">
         
-        <div className="flex justify-between items-start mb-2">
-          <h1 className="text-2xl font-bold text-gray-800">{service.name}</h1>
-          <span className="text-green-600 font-bold text-xl">₹{service.price}</span>
-        </div>
-
-        <div className="flex items-center gap-2 mb-6 text-sm text-gray-500">
-          <Star size={16} className="text-yellow-500 fill-current" /> {service.rating} (120 reviews)
-        </div>
-
-        <h3 className="font-bold text-gray-800 mb-2">Description</h3>
-        <p className="text-gray-500 text-sm leading-relaxed mb-20">
-          {service.desc} Expert will arrive at your location. Payment to be done after service.
-        </p>
-
-        {/* Action Button */}
-        <div className="fixed bottom-0 left-0 w-full p-4 bg-white border-t border-gray-100">
+        {/* PRICE CARD */}
+        <div className="bg-white p-4 rounded-2xl shadow-md border border-gray-100 flex justify-between items-center">
+          <div>
+            <p className="text-sm text-gray-500 font-bold">Total Estimate</p>
+            <h2 className="text-2xl font-extrabold text-teal-700">₹{estimatedPrice || service.basePrice + service.serviceFee}</h2>
+            {estimatedPrice && <span className="text-xs text-amber-600 font-bold bg-amber-50 px-2 rounded">AI Adjusted</span>}
+          </div>
           <button 
-            onClick={handleBook}
-            disabled={loading}
-            className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-lg shadow-lg hover:bg-slate-800 transition active:scale-95 flex items-center justify-center gap-2 disabled:opacity-70"
+            onClick={() => setShowBooking(true)}
+            className="bg-amber-500 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-amber-600 transition transform hover:-translate-y-1"
           >
-            {loading ? <Loader className="animate-spin"/> : `Book Now (Pay After Service)`}
+            Book Now
           </button>
         </div>
+
+        {/* 3.2 AI ESTIMATOR TOOL */}
+        <div className="bg-teal-50 p-5 rounded-2xl border border-teal-100 relative overflow-hidden">
+          <div className="flex justify-between items-start mb-3 relative z-10">
+            <div>
+              <h3 className="font-bold text-teal-900 flex items-center gap-2">
+                <Camera size={18} /> AI Price Estimator
+              </h3>
+              <p className="text-xs text-teal-700 mt-1">Upload a photo of the problem to get an exact price.</p>
+            </div>
+          </div>
+          
+          <div className="relative z-10">
+            <input 
+              type="file" 
+              accept="image/*" 
+              onChange={handlePhotoUpload}
+              id="ai-upload"
+              className="hidden"
+            />
+            <label 
+              htmlFor="ai-upload" 
+              className={`block w-full text-center py-3 rounded-xl border-2 border-dashed border-teal-300 font-bold cursor-pointer transition ${
+                analyzing ? 'bg-teal-100 text-teal-500' : 'bg-white text-teal-600 hover:bg-teal-50'
+              }`}
+            >
+              {analyzing ? '🤖 Analyzing Problem...' : '📷 Click / Upload Photo'}
+            </label>
+          </div>
+          {/* Decorative AI Element */}
+          <div className="absolute right-[-10px] top-[-10px] text-6xl opacity-10 rotate-12">🤖</div>
+        </div>
+
+        {/* 6.1 VIDEO REVIEWS */}
+        <div>
+          <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
+            <Play size={18} className="text-red-500 fill-current" /> Video Reviews
+          </h3>
+          <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
+            {videoReviews.map((review) => (
+              <div key={review.id} className="min-w-[140px] relative rounded-xl overflow-hidden shadow-md group cursor-pointer">
+                <img src={review.thumbnail} className="w-full h-24 object-cover" alt="User review" />
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/20 transition">
+                  <div className="bg-white/20 backdrop-blur-sm p-2 rounded-full">
+                    <Play size={16} className="text-white fill-current" />
+                  </div>
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                  <p className="text-white text-xs font-bold">{review.user}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* SAFETY BADGE */}
+        <div className="bg-green-50 p-4 rounded-xl flex items-center gap-3 border border-green-100">
+          <ShieldCheck className="text-green-600" size={24} />
+          <div>
+            <h4 className="font-bold text-green-800 text-sm">Apna Hunar Safety Guarantee</h4>
+            <p className="text-xs text-green-600">Verified Experts & Insurance Cover upto ₹5000.</p>
+          </div>
+        </div>
       </div>
+
+      {/* Booking Modal */}
+      {showBooking && (
+        <BookingModal 
+          service={service} 
+          onClose={() => setShowBooking(false)} 
+          onConfirm={handleBookingConfirm}
+        />
+      )}
     </div>
   );
-}
+};
+
+export default ServiceDetails;

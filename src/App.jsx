@@ -1,51 +1,55 @@
-﻿import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+﻿import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { supabase } from './lib/supabase';
 
-// Customer Pages
+// --- PAGES IMPORT ---
 import Home from './pages/customer/Home';
-import ServiceDetails from './pages/customer/ServiceDetails';
 import Bookings from './pages/customer/Bookings';
-import Profile from './pages/customer/Profile';
-
-// Expert Pages
-import ExpertDashboard from './pages/expert/ExpertDashboard';
-import RegisterExpert from './pages/expert/RegisterExpert'; // ✅ (1) यह लाइन नई जुड़ी है
-
-// Auth Pages
-import Login from './pages/auth/Login';
-
-// Admin Pages
-import DeepakHQ from './pages/admin/DeepakHQ';
-
-// Legal Pages
-import Privacy from './pages/legal/Privacy';
-import Terms from './pages/legal/Terms';
-import Refund from './pages/legal/Refund';
+import DeepakHQ from './pages/admin/DeepakHQ'; // ✅ Admin Panel Added Back
 
 function App() {
+  const [session, setSession] = useState(null);
+
+  useEffect(() => {
+    // 1. Check active session on load
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    // 2. Real-time Listener (Magic Link Click detect karega)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("Auth Event:", _event); // Debugging ke liye
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   return (
     <Router>
       <Routes>
-        {/* Customer Routes */}
-        <Route path="/" element={<Home />} />
-        <Route path="/service/:id" element={<ServiceDetails />} />
-        <Route path="/bookings" element={<Bookings />} />
-        <Route path="/profile" element={<Profile />} />
+        
+        {/* Route 1: Home Page (Login ki zaroorat nahi, par session pass karenge) */}
+        {/* key={session?.user?.id} lagane se login hote hi page refresh ho jayega */}
+        <Route 
+          path="/" 
+          element={<Home key={session?.user?.id} session={session} />} 
+        />
 
-        {/* Expert Routes */}
-        <Route path="/expert" element={<ExpertDashboard />} />
-        <Route path="/register-expert" element={<RegisterExpert />} /> {/* ✅ (2) यह रूट नया जुड़ा है */}
-
-        {/* Auth Route */}
-        <Route path="/login" element={<Login />} />
-
-        {/* Admin Route */}
+        {/* Route 2: My Bookings (Protected - Bina login ke nahi khulega) */}
+        <Route 
+          path="/bookings" 
+          element={session ? <Bookings /> : <Navigate to="/" replace />} 
+        />
+        
+        {/* Route 3: Admin Panel (God Mode) */}
         <Route path="/deepakhq" element={<DeepakHQ />} />
 
-        {/* Legal Routes (Required for Razorpay) */}
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/refund" element={<Refund />} />
+        {/* Fallback: Agar koi galat URL dale to Home par bhej do */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+
       </Routes>
     </Router>
   );
