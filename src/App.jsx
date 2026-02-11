@@ -5,7 +5,7 @@ import { supabase } from './lib/supabase';
 // --- PAGES IMPORT ---
 import Home from './pages/customer/Home';
 import Bookings from './pages/customer/Bookings';
-import DeepakHQ from './pages/admin/DeepakHQ'; // ✅ Admin Panel Added Back
+import DeepakHQ from './pages/admin/DeepakHQ'; // ✅ Only DeepakHQ is needed now
 
 function App() {
   const [session, setSession] = useState(null);
@@ -16,11 +16,10 @@ function App() {
       setSession(session);
     });
 
-    // 2. Real-time Listener (Magic Link Click detect karega)
+    // 2. Real-time Listener
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("Auth Event:", _event); // Debugging ke liye
       setSession(session);
     });
 
@@ -31,23 +30,22 @@ function App() {
     <Router>
       <Routes>
         
-        {/* Route 1: Home Page (Login ki zaroorat nahi, par session pass karenge) */}
-        {/* key={session?.user?.id} lagane se login hote hi page refresh ho jayega */}
+        {/* --- CUSTOMER AREA --- */}
         <Route 
           path="/" 
           element={<Home key={session?.user?.id} session={session} />} 
         />
 
-        {/* Route 2: My Bookings (Protected - Bina login ke nahi khulega) */}
         <Route 
           path="/bookings" 
           element={session ? <Bookings /> : <Navigate to="/" replace />} 
         />
         
-        {/* Route 3: Admin Panel (God Mode) */}
+        {/* --- ADMIN AREA (SINGLE SECRET DOOR) --- */}
+        {/* Ab /admin ki zaroorat nahi hai, DeepakHQ sab sambhal lega */}
         <Route path="/deepakhq" element={<DeepakHQ />} />
 
-        {/* Fallback: Agar koi galat URL dale to Home par bhej do */}
+        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
 
       </Routes>
