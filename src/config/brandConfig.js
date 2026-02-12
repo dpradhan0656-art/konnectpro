@@ -1,27 +1,34 @@
-// KonnectPro Brand Configuration
+// KonnectPro - Centralized Brand Identity Config
 export const BRAND = {
   name: "KonnectPro",
+  legalName: "APNA HUNAR", // For Invoices/Legal (DPDP Act compliance)
   tagline: "Expert Connections, Trusted Results",
   
-  // Astro-Numerology Color Palette
+  // ✅ NEW: Admin Controlled Tagline (Default value)
+  dynamicTagline: "Experts at your doorstep in Jabalpur", 
+  
+  // Astro-Numerology Colors (Mercury, Sun, Venus)
   theme: {
-    primary: "text-teal-700",      // Mercury (Budh)
-    primaryBg: "bg-teal-700",      // Mercury
-    primaryBorder: "border-teal-700", 
+    // Mercury: Deep Teal (Trust & Trade)
+    primary: "teal-700",
+    primaryHex: "#0d9488", 
     
-    action: "bg-amber-500",        // Sun (Surya)
-    actionHover: "hover:bg-amber-600",
-    actionText: "text-amber-500",
+    // Sun: Golden Amber (Action & Energy)
+    action: "amber-500",
+    actionHover: "amber-600",
     
-    background: "bg-white",        // Venus (Shukra)
-    surface: "bg-gray-50",
+    // Venus: White/Light Gray (Clarity & Wealth)
+    background: "white",
+    surface: "gray-50",
     
-    typography: "text-slate-800",
-    mutedText: "text-slate-500"
+    // Shani/Saturn: Stability (Not Pure Black)
+    typography: "slate-800",
+    muted: "slate-500"
   },
 
   contact: {
     email: "support@konnectpro.in",
-    phone: "+91-XXXXXXXXXX"
+    phone: "+91-9425451382", // Aapka registered number
+    address: "H-36, Mastana Road, Ranjhi, Jabalpur, MP - 482005"
   }
 };

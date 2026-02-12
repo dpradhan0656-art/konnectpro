@@ -1,26 +1,29 @@
 import React from 'react';
+import { BRAND } from '../../config/brandConfig';
 
-const BrandLogo = ({ size = "text-2xl", showTagline = false }) => {
+const BrandLogo = ({ size = "w-10 h-10", showTagline = false }) => {
   return (
-    <div className="flex flex-col">
-      <div className={`flex items-center gap-2 font-sans tracking-tight ${size}`}>
-        {/* The 'K' Icon - Deep Teal (Mercury) */}
-        <div className="bg-teal-700 text-white px-3 py-1 rounded-lg font-extrabold shadow-sm flex items-center justify-center">
-          K
+    <div className="flex items-center gap-3">
+      {/* 🛡️ Asli Logo Image (Mercury/Sun Energy) */}
+      <img 
+        src="/logo.png" 
+        alt="KonnectPro Logo" 
+        className={`${size} object-contain`} 
+      />
+
+      <div className="flex flex-col">
+        <div className="text-xl md:text-2xl font-sans tracking-tight">
+          <span className="font-bold text-slate-800">
+            Konnect<span className="text-teal-700">Pro</span>
+          </span>
         </div>
-
-        {/* The Brand Name */}
-        <span className="font-bold text-slate-800">
-          Konnect<span className="text-teal-700">Pro</span>
-        </span>
+        
+        {showTagline && (
+          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none mt-1">
+            {BRAND.tagline}
+          </p>
+        )}
       </div>
-
-      {/* Tagline */}
-      {showTagline && (
-        <p className="text-xs text-slate-500 mt-1 ml-1">
-          Expert Connections, Trusted Results
-        </p>
-      )}
     </div>
   );
 };

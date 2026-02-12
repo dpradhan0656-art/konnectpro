@@ -1,17 +1,26 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, User } from 'lucide-react';
+import { User } from 'lucide-react';
+// 👇 IMPORT ADDED: Nayi location se logo lana
+import logoImg from '../../assets/logo.png';
 
 export default function Navbar() {
   const navigate = useNavigate();
   
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 px-6 py-3 flex justify-between items-center shadow-sm">
-      {/* BRAND LOGO */}
-      <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-        <div className="bg-teal-600 p-1.5 rounded-lg">
-            <Shield size={22} className="text-white" fill="currentColor" />
+      {/* BRAND LOGO SECTION */}
+      <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
+        
+        {/* 👇 IMAGE SOURCE CHANGED: Variable use kiya */}
+        <div className="bg-white p-1 rounded-lg border border-gray-100 shadow-sm">
+            <img 
+              src={logoImg} 
+              alt="KonnectPro" 
+              className="w-10 h-10 object-contain" 
+            />
         </div>
+
         <div>
           <h1 className="text-xl font-black tracking-tighter text-slate-900 leading-none">
             Konnect<span className="text-teal-600">Pro</span>

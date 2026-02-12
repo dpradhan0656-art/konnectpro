@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-// ✅ FIX 1: Correct path to the lib folder
-import { supabase } from '../../lib/supabase'; 
+import { supabase } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
-// ✅ FIX 2: Brand config for astrology-aligned colors
-import { BRAND } from '../../config/brandConfig'; 
-import { ShieldCheck, Mail, Lock, Loader, Smartphone } from 'lucide-react';
+import { BRAND } from '../../config/brandConfig';
+import { Lock, Loader, Smartphone } from 'lucide-react';
+// ✅ FIXED: Direct Logo Import (Fail-proof method)
+import logoImg from '../../assets/logo.png'; 
 
 export default function Login() {
   const navigate = useNavigate();
@@ -16,10 +16,9 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
 
-    // ✅ FIX 3: Rebranding logic - using @konnectpro.in instead of old domain
+    // ✅ REBRANDING LOGIC: Mobile to KonnectPro Email
     let loginEmail = email; 
-    
-    // Check if it's a mobile number (digits only)
+    // Agar sirf number hai (e.g. 9876543210) toh email bana do
     if (/^\d+$/.test(email)) {
        loginEmail = `${email}@konnectpro.in`;
     }
@@ -34,43 +33,40 @@ export default function Login() {
     if (error) {
       alert("🔐 Access Denied: " + error.message);
     } else {
-      // ✅ REDIRECT LOGIC
-      // 1. Admin (Deepak HQ)
+      // ✅ REDIRECT LOGIC (Admin -> DeepakHQ)
       if (loginEmail.includes('admin')) {
         localStorage.setItem('adminAuth', 'true');
-        navigate('/admin/dashboard');
+        navigate('/deepakhq'); // Seedha Founder HQ mein entry
       } 
-      // 2. Expert/Partner
       else if (loginEmail.includes('@konnectpro.in')) {
-        navigate('/expert');
+        navigate('/expert'); // Expert Dashboard
       } 
-      // 3. Customer
       else {
-        navigate('/');
+        navigate('/'); // Customer Home
       }
     }
   };
 
   return (
-    // Mercury/Venus Clean background
     <div className="min-h-screen bg-white flex flex-col justify-center items-center p-6 text-slate-800 font-sans">
       
-      {/* Decorative Brand Background Element */}
+      {/* Decorative Background (Mercury/Teal) */}
       <div className="absolute top-0 left-0 w-full h-1/3 bg-teal-700 -skew-y-3 -mt-20"></div>
 
       <div className="w-full max-w-sm bg-white p-8 rounded-[2rem] shadow-2xl border border-gray-100 relative z-10">
         
-        {/* Brand Icon (Mercury/Teal) */}
+        {/* 🛡️ BRAND LOGO IMAGE */}
         <div className="flex justify-center mb-6">
-          <div className="bg-teal-700 p-4 rounded-2xl shadow-lg shadow-teal-200">
-            <ShieldCheck size={40} className="text-white"/>
+          <div className="bg-white p-2 rounded-2xl shadow-lg border border-gray-100">
+            {/* ✅ FIXED: Using imported logo variable */}
+            <img src={logoImg} alt={BRAND.name} className="w-20 h-20 object-contain" />
           </div>
         </div>
 
         <h1 className="text-3xl font-black text-center text-slate-900 tracking-tight">
           Konnect<span className="text-teal-700">Pro</span>
         </h1>
-        <p className="text-slate-500 text-center text-xs font-bold uppercase tracking-widest mt-2 mb-8">
+        <p className="text-slate-500 text-center text-[10px] font-bold uppercase tracking-widest mt-2 mb-8">
           Partner & Admin Secure Access
         </p>
         
@@ -119,8 +115,8 @@ export default function Login() {
           </button>
         </form>
 
-        <p className="text-[10px] text-center text-slate-400 mt-8 font-bold">
-          © 2026 KONNECTPRO INDIA • ALL RIGHTS RESERVED
+        <p className="text-[10px] text-center text-slate-400 mt-8 font-bold uppercase">
+          © 2026 {BRAND.name.toUpperCase()} INDIA • ALL RIGHTS RESERVED
         </p>
       </div>
     </div>
