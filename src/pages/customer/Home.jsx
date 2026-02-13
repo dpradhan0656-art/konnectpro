@@ -36,22 +36,24 @@ export default function Home() {
   ];
 
   // Replace this part in your Home.jsx inside the component
-const spotlights = [
+// src/pages/customer/Home.jsx ke andar
+
+ const spotlights = [
     { 
       id: 1, 
       title: "AC Service", 
       discount: "Starts @ ₹499", 
       color: "from-blue-600 to-blue-800", 
-      // ✅ Reliable Professional Image
-      img: "https://cdn.pixabay.com/photo/2016/11/29/01/22/air-conditioner-1866504_1280.jpg" 
+      // ✅ LOCAL PATH - Ye kabhi fail nahi hoga
+      img: "/assets/banners/ac-service.jpg" 
     },
     { 
       id: 2, 
       title: "Deep Cleaning", 
       discount: "Flat 20% OFF", 
       color: "from-teal-600 to-teal-800", 
-      // ✅ High Quality Cleaning Image
-      img: "https://cdn.pixabay.com/photo/2014/02/17/14/28/vacuum-cleaner-268179_1280.jpg" 
+      // ✅ LOCAL PATH
+      img: "/assets/banners/deep-cleaning.jpg" 
     },
 ];
   // --- HELPER: Format Location Name ---
