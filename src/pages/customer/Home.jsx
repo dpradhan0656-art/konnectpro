@@ -35,10 +35,25 @@ export default function Home() {
     { name: "Carpenter", icon: "🪑", color: "bg-orange-50 border-orange-100" },
   ];
 
-  const spotlights = [
-    { id: 1, title: "AC Service", discount: "Starts @ ₹499", color: "from-blue-500 to-blue-700", img: "https://images.unsplash.com/photo-1581094794329-cd56b5095bb4?w=400" },
-    { id: 2, title: "Deep Cleaning", discount: "Flat 20% OFF", color: "from-teal-500 to-teal-700", img: "https://images.unsplash.com/photo-1584622050111-993a426fbf0a?w=400" },
-  ];
+  // Replace this part in your Home.jsx inside the component
+const spotlights = [
+    { 
+      id: 1, 
+      title: "AC Service", 
+      discount: "Starts @ ₹499", 
+      color: "from-blue-600 to-blue-800", 
+      // ✅ New Reliable Image Link
+      img: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=1740&auto=format&fit=crop" 
+    },
+    { 
+      id: 2, 
+      title: "Deep Cleaning", 
+      discount: "Flat 20% OFF", 
+      color: "from-teal-600 to-teal-800", 
+      // ✅ New Reliable Image Link
+      img: "https://images.unsplash.com/photo-1581578731117-104f2a41272c?q=80&w=1740&auto=format&fit=crop" 
+    },
+];
 
   // --- HELPER: Format Location Name ---
   const formatLocationDisplay = (loc) => {
@@ -138,7 +153,14 @@ export default function Home() {
       <SOSButton />
 
       {/* --- HERO SECTION --- */}
-      <div className={`relative pt-6 pb-20 px-6 rounded-b-[2.5rem] shadow-2xl overflow-visible transition-colors duration-500 ${cityStatus.active ? 'bg-teal-800' : 'bg-slate-800'}`}>
+      <div className={`relative pt-6 pb-24 px-6 rounded-b-[2.5rem] shadow-2xl overflow-hidden transition-colors duration-500 ${cityStatus.active ? 'bg-gradient-to-br from-teal-900 via-teal-800 to-teal-600' : 'bg-slate-800'}`}>
+    
+    {/* Add this Decorative Pattern inside the div */}
+    <div className="absolute inset-0 opacity-10 pointer-events-none" 
+         style={{ backgroundImage: 'radial-gradient(circle, #ffffff 2px, transparent 2px)', backgroundSize: '20px 20px' }}>
+    </div>
+    
+    {/* ... baaki code waisa hi rahega ... */}
         <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
         
         <div className="relative z-10 max-w-4xl mx-auto">
@@ -216,7 +238,31 @@ export default function Home() {
               ))}
           </div>
       </div>
-
+{/* --- HOW IT WORKS SECTION (New) --- */}
+<div className="mt-8 px-6 max-w-4xl mx-auto">
+    <h2 className="font-bold text-slate-900 text-lg mb-4">How it Works</h2>
+    <div className="flex justify-between gap-2">
+        {/* Step 1 */}
+        <div className="flex-1 bg-white p-3 rounded-xl border border-slate-100 shadow-sm text-center">
+            <div className="w-10 h-10 bg-teal-50 rounded-full flex items-center justify-center mx-auto text-lg">📍</div>
+            <p className="text-xs font-bold text-slate-700 mt-2">Select Location</p>
+        </div>
+        {/* Arrow */}
+        <div className="flex items-center text-slate-300">→</div>
+        {/* Step 2 */}
+        <div className="flex-1 bg-white p-3 rounded-xl border border-slate-100 shadow-sm text-center">
+            <div className="w-10 h-10 bg-teal-50 rounded-full flex items-center justify-center mx-auto text-lg">👨‍🔧</div>
+            <p className="text-xs font-bold text-slate-700 mt-2">Choose Expert</p>
+        </div>
+        {/* Arrow */}
+        <div className="flex items-center text-slate-300">→</div>
+        {/* Step 3 */}
+        <div className="flex-1 bg-white p-3 rounded-xl border border-slate-100 shadow-sm text-center">
+            <div className="w-10 h-10 bg-teal-50 rounded-full flex items-center justify-center mx-auto text-lg">✅</div>
+            <p className="text-xs font-bold text-slate-700 mt-2">Book Service</p>
+        </div>
+    </div>
+</div>
       {/* --- SPOTLIGHT OFFERS --- */}
       <div className="mt-4 px-6 max-w-4xl mx-auto">
           <h2 className="font-bold text-slate-900 text-lg mb-4 flex items-center gap-2"><Gift size={20} className="text-amber-500" /> In Spotlight</h2>
