@@ -1,22 +1,23 @@
 import React, { useState } from 'react';
 import BookingModal from './BookingModal';
-import { MapPin, Star, Clock, CheckCircle } from 'lucide-react'; // Assuming you have lucide-react icons, if not, standard text works too.
+import { MapPin, Star, Clock, CheckCircle } from 'lucide-react';
 
 const ExpertCard = ({ expert }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 🛠️ CONFIGURATION: City Head WhatsApp Numbers
-  // Deepak Sir, please replace these dummy numbers with the actual numbers of your City Heads.
-  // Format: Country Code + Number (e.g., 919876543210) without '+' sign.
+  // 🛠️ CONFIGURATION: City Head WhatsApp Numbers (Updated)
   const getCityHeadNumber = (city) => {
+    // Database se aayi city agar case-sensitive ho, toh safe side ke liye Title Case samjhein
+    // Lekin abhi ke liye direct mapping rakhte hain
     const cityHeads = {
-      'Sagar': '918989092325',    // Rishabh Pradhan (Vinay)
-      'Jhansi': '919319414129',   // Sanju Ale
-      'Nagpur': '919970814191',   // Shri Babloo Pandey
-      'Jabalpur': '917503323131', // Vimla Pradhan
+      'Sagar': '918989092325',      // Rishabh Pradhan (Vinay)
+      'Jhansi': '919319414129',     // Sanju Ale
+      'Nagpur': '919970814191',     // Shri Babloo Pandey
+      'Jabalpur': '917503323131',   // Vimla Pradhan
     };
 
-    // Return the specific city head or a default Admin number (Preeti Ji's number)
+    // Return specific city head or Default Admin (Preeti Ji)
+    // Agar city list mein nahi hai, toh default number use hoga
     return cityHeads[city] || '919589634799'; 
   };
 
@@ -28,9 +29,12 @@ const ExpertCard = ({ expert }) => {
         {/* Top Section: Image & Badge */}
         <div className="relative h-48 bg-gray-200">
           <img 
-            src={expert.image_url || "https://via.placeholder.com/300?text=KonnectPro+Expert"} 
+            // ✅ FIX 1: Corrected 'src' attribute & DB Column Name (profile_photo_url)
+            src={expert.profile_photo_url || `https://ui-avatars.com/api/?name=${expert.name}&background=004d40&color=fff`} 
             alt={expert.name} 
             className="w-full h-full object-cover"
+            // ✅ FIX 2: Fallback logic agar image URL broken ho
+            onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${expert.name}&background=004d40&color=fff`; }}
           />
           <div className="absolute top-3 right-3 bg-white px-2 py-1 rounded-full text-xs font-bold text-teal-700 shadow flex items-center gap-1">
             <CheckCircle size={14} /> Verified
@@ -42,7 +46,10 @@ const ExpertCard = ({ expert }) => {
           <div className="flex justify-between items-start mb-2">
             <div>
               <h3 className="text-xl font-bold text-gray-800">{expert.name}</h3>
-              <p className="text-teal-600 font-medium text-sm">{expert.specialization}</p>
+              {/* ✅ FIX 3: Corrected DB Column Name (service_category) */}
+              <p className="text-teal-600 font-medium text-sm">
+                {expert.service_category || expert.service_type || "Service Expert"}
+              </p>
             </div>
             <div className="flex items-center bg-yellow-100 px-2 py-1 rounded text-yellow-700 text-xs font-bold">
               <Star size={14} className="fill-current mr-1" />
@@ -58,7 +65,7 @@ const ExpertCard = ({ expert }) => {
             </div>
             <div className="flex items-center gap-2">
               <MapPin size={16} />
-              <span>{expert.city}, {expert.area || "Main City"}</span>
+              <span>{expert.city || "India"}, {expert.location || "Main City"}</span>
             </div>
           </div>
         </div>
@@ -75,7 +82,6 @@ const ExpertCard = ({ expert }) => {
       </div>
 
       {/* --- Booking Modal Component --- */}
-      {/* This renders conditionally when isModalOpen is true */}
       <BookingModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
