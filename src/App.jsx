@@ -47,7 +47,8 @@ function App() {
         />
 
         {/* --- ADMIN ROUTE --- */}
-        <Route path="/deepakhq" element={<DeepakHQ />} />
+        {/* Purana hatayein aur ye nayi line likhein earlier it was <Route path="/deepakhq" element={<DeepakHQ />} /> */}
+        <Route path="/admin" element={<DeepakHQ />} />        
 
         {/* --- CATCH ALL (Galat link par Home bhej do) --- */}
         <Route path="*" element={<Navigate to="/" replace />} />
