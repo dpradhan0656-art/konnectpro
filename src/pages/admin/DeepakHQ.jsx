@@ -1,11 +1,15 @@
-﻿import React, { useEffect, useState } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Menu, X, LogOut, LayoutGrid, Users, Briefcase, Settings } from 'lucide-react';
+import { 
+  Shield, Menu, X, LogOut, LayoutGrid, Users, Briefcase, Settings, 
+  Megaphone // ✅ NEW ICON IMPORT
+} from 'lucide-react';
 
-// ✅ Import Modular Tabs (Hum inhe agle steps mein banayenge)
+// Import Modular Tabs
 import DashboardTab from './tabs/DashboardTab'; 
 import ExpertControl from './tabs/ExpertControl';
-import ServiceManager from './tabs/ServiceManager'; // New Feature
+import ServiceManager from './tabs/ServiceManager';
+import OffersManager from './tabs/OffersManager'; // ✅ NEW TAB IMPORT
 
 export default function DeepakHQ() {
   const navigate = useNavigate();
@@ -22,7 +26,6 @@ export default function DeepakHQ() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    // Security: Real app mein ye env variable hona chahiye
     if (passcode === 'Founder2026') { 
         localStorage.setItem('adminAuth', 'true');
         setIsAuthenticated(true);
@@ -67,6 +70,10 @@ export default function DeepakHQ() {
             <NavBtn icon={<LayoutGrid size={20}/>} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
             <NavBtn icon={<Briefcase size={20}/>} label="Services & Prices" active={activeTab === 'services'} onClick={() => setActiveTab('services')} />
             <NavBtn icon={<Users size={20}/>} label="Expert Army" active={activeTab === 'experts'} onClick={() => setActiveTab('experts')} />
+            
+            {/* ✅ NEW BUTTON: SPOTLIGHT OFFERS */}
+            <NavBtn icon={<Megaphone size={20}/>} label="Spotlight Offers" active={activeTab === 'offers'} onClick={() => setActiveTab('offers')} />
+            
             <NavBtn icon={<Settings size={20}/>} label="Settings" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
         </nav>
         <div className="absolute bottom-0 w-full p-4">
@@ -83,10 +90,14 @@ export default function DeepakHQ() {
         </header>
 
         {/* Dynamic Content */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-6 bg-[#0a0f16]"> {/* Darker bg for content */}
             {activeTab === 'dashboard' && <DashboardTab />}
             {activeTab === 'services' && <ServiceManager />}
             {activeTab === 'experts' && <ExpertControl />}
+            
+            {/* ✅ NEW CONTENT: OFFERS MANAGER */}
+            {activeTab === 'offers' && <OffersManager />}
+            
             {activeTab === 'settings' && <div className="text-center text-slate-500 mt-20">Settings Module Coming Soon</div>}
         </main>
       </div>
