@@ -1,36 +1,47 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabase';
 import { 
   Shield, Menu, X, LogOut, LayoutGrid, Users, Briefcase, Settings, 
-  Megaphone // ✅ NEW ICON IMPORT
+  Megaphone, Navigation // ✅ New Icons
 } from 'lucide-react';
 
-// Import Modular Tabs
+// ✅ Import All Modular Tabs
 import DashboardTab from './tabs/DashboardTab'; 
 import ExpertControl from './tabs/ExpertControl';
 import ServiceManager from './tabs/ServiceManager';
-import OffersManager from './tabs/OffersManager'; // ✅ NEW TAB IMPORT
+import ManageOffers from './tabs/ManageOffers'; // Note: File name matches
+import DispatchTab from './tabs/DispatchTab';   // ✅ NEW
+import SettingsTab from './tabs/SettingsTab';   // ✅ NEW
 
 export default function DeepakHQ() {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passcode, setPasscode] = useState('');
+  const [dbPasscode, setDbPasscode] = useState('Founder2026'); // Default Fallback
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // --- LOGIN CHECK ---
+  // --- LOGIN & SETTINGS CHECK ---
   useEffect(() => {
     const adminAuth = localStorage.getItem('adminAuth');
     if (adminAuth === 'true') setIsAuthenticated(true);
+
+    // Fetch Custom Password from DB
+    const fetchConfig = async () => {
+        const { data } = await supabase.from('admin_settings').select('*').eq('setting_key', 'admin_passcode').single();
+        if (data) setDbPasscode(data.setting_value);
+    };
+    fetchConfig();
   }, []);
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (passcode === 'Founder2026') { 
+    if (passcode === dbPasscode) { // Check against DB
         localStorage.setItem('adminAuth', 'true');
         setIsAuthenticated(true);
     } else {
-        alert('⛔ Access Denied!');
+        alert('⛔ Access Denied! Wrong Code.');
     }
   };
 
@@ -60,7 +71,7 @@ export default function DeepakHQ() {
   // --- MAIN LAYOUT ---
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans flex">
-      {/* SIDEBAR (Desktop) */}
+      {/* SIDEBAR */}
       <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 border-r border-slate-800 transition-transform duration-300 md:relative md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-6 border-b border-slate-800 flex justify-between items-center">
             <h1 className="text-xl font-black tracking-widest">HQ<span className="text-teal-500">.</span></h1>
@@ -68,13 +79,13 @@ export default function DeepakHQ() {
         </div>
         <nav className="p-4 space-y-2">
             <NavBtn icon={<LayoutGrid size={20}/>} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
-            <NavBtn icon={<Briefcase size={20}/>} label="Services & Prices" active={activeTab === 'services'} onClick={() => setActiveTab('services')} />
+            <NavBtn icon={<Navigation size={20}/>} label="Dispatch Center" active={activeTab === 'dispatch'} onClick={() => setActiveTab('dispatch')} badge="NEW" />
+            <NavBtn icon={<Briefcase size={20}/>} label="Services" active={activeTab === 'services'} onClick={() => setActiveTab('services')} />
             <NavBtn icon={<Users size={20}/>} label="Expert Army" active={activeTab === 'experts'} onClick={() => setActiveTab('experts')} />
-            
-            {/* ✅ NEW BUTTON: SPOTLIGHT OFFERS */}
             <NavBtn icon={<Megaphone size={20}/>} label="Spotlight Offers" active={activeTab === 'offers'} onClick={() => setActiveTab('offers')} />
             
-            <NavBtn icon={<Settings size={20}/>} label="Settings" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+            <div className="pt-6 pb-2 px-4 text-[10px] font-bold text-slate-600 uppercase">System</div>
+            <NavBtn icon={<Settings size={20}/>} label="HQ Settings" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
         </nav>
         <div className="absolute bottom-0 w-full p-4">
             <button onClick={handleLogout} className="flex items-center gap-3 text-red-400 hover:bg-red-900/20 w-full p-3 rounded-xl transition-all font-bold text-sm"><LogOut size={18} /> Secure Logout</button>
@@ -83,22 +94,18 @@ export default function DeepakHQ() {
 
       {/* CONTENT AREA */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* Top Header (Mobile) */}
         <header className="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center md:hidden">
             <h2 className="font-bold">KonnectPro Admin</h2>
             <button onClick={() => setIsMobileMenuOpen(true)}><Menu /></button>
         </header>
 
-        {/* Dynamic Content */}
-        <main className="flex-1 overflow-y-auto p-6 bg-[#0a0f16]"> {/* Darker bg for content */}
+        <main className="flex-1 overflow-y-auto p-6 bg-[#0a0f16]">
             {activeTab === 'dashboard' && <DashboardTab />}
             {activeTab === 'services' && <ServiceManager />}
             {activeTab === 'experts' && <ExpertControl />}
-            
-            {/* ✅ NEW CONTENT: OFFERS MANAGER */}
-            {activeTab === 'offers' && <OffersManager />}
-            
-            {activeTab === 'settings' && <div className="text-center text-slate-500 mt-20">Settings Module Coming Soon</div>}
+            {activeTab === 'offers' && <ManageOffers />}   {/* ✅ Name Fixed */}
+            {activeTab === 'dispatch' && <DispatchTab />}   {/* ✅ Manual Assignment */}
+            {activeTab === 'settings' && <SettingsTab />}   {/* ✅ Settings */}
         </main>
       </div>
     </div>
@@ -106,8 +113,9 @@ export default function DeepakHQ() {
 }
 
 // Helper Component for Sidebar
-const NavBtn = ({ icon, label, active, onClick }) => (
-    <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${active ? 'bg-teal-600 text-white shadow-lg shadow-teal-900/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
-        {icon} <span>{label}</span>
+const NavBtn = ({ icon, label, active, onClick, badge }) => (
+    <button onClick={onClick} className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all font-medium ${active ? 'bg-teal-600 text-white shadow-lg shadow-teal-900/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+        <div className="flex items-center gap-3">{icon} <span>{label}</span></div>
+        {badge && <span className="text-[9px] bg-red-500 text-white px-1.5 rounded font-bold">{badge}</span>}
     </button>
 );
