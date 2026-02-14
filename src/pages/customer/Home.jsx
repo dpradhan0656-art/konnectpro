@@ -1,15 +1,15 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
-import { BRAND } from '../../config/brandConfig';
-import Navbar from '../../components/common/Navbar';
-import Footer from '../../components/common/Footer';
-import SOSButton from '../../components/common/SOSButton';
-import ExpertCard from '../../components/ExpertCard';
+import { supabase } from '../lib/supabase';
+import { BRAND } from '../config/brandConfig';
+import Navbar from '../components/common/Navbar';
+import Footer from '../components/common/Footer';
+import SOSButton from '../components/common/SOSButton';
+import ExpertCard from '../components/ExpertCard';
 import { 
   Search, Mic, ShieldCheck, Zap, Star, 
   MapPin, Wallet, Home as HomeIcon, Calendar, Bell, User,
-  Gift, TrendingUp
+  Gift, TrendingUp, Megaphone
 } from 'lucide-react';
 
 export default function Home() {
@@ -23,29 +23,26 @@ export default function Home() {
   
   // ✅ States for Real Data
   const [experts, setExperts] = useState([]);
-  const [offers, setOffers] = useState([]); // New: For Live Offers
+  const [offers, setOffers] = useState([]); 
+  const [categories, setCategories] = useState([]); // Now Dynamic
+  const [tickerText, setTickerText] = useState(""); // Running Patti
   const [loading, setLoading] = useState(true);
   
-  // ✅ New: Theme State (Default Teal)
+  // ✅ Theme State
   const [themeGradient, setThemeGradient] = useState('from-teal-900 via-teal-800 to-teal-600');
   const [accentColor, setAccentColor] = useState('text-teal-600');
 
-  // --- CATEGORIES (Static) ---
-  const categories = [
-    { name: "AC Repair", icon: "❄️", color: "bg-blue-50 border-blue-100" },
-    { name: "Cleaning", icon: "🧹", color: "bg-green-50 border-green-100" },
-    { name: "Electrician", icon: "⚡", color: "bg-amber-50 border-amber-100" },
-    { name: "Plumber", icon: "🚰", color: "bg-cyan-50 border-cyan-100" },
-    { name: "Carpenter", icon: "🪑", color: "bg-orange-50 border-orange-100" },
-  ];
-
-  // --- HELPER: Format Location Name ---
-  const formatLocationDisplay = (loc) => {
-    if (!loc.includes(',')) return loc;
-    const parts = loc.split(',');
-    const area = parts[0].trim();
-    const city = parts[1].trim();
-    return area === city ? area : `${area} | ${city}`;
+  // --- HELPER: Random Color for Categories ---
+  const getColorByIndex = (index) => {
+      const colors = [
+          "bg-blue-50 border-blue-100 text-blue-600",
+          "bg-green-50 border-green-100 text-green-600",
+          "bg-amber-50 border-amber-100 text-amber-600",
+          "bg-cyan-50 border-cyan-100 text-cyan-600",
+          "bg-rose-50 border-rose-100 text-rose-600",
+          "bg-purple-50 border-purple-100 text-purple-600"
+      ];
+      return colors[index % colors.length];
   };
 
   // --- 1. FETCH EXPERTS ---
@@ -62,18 +59,17 @@ export default function Home() {
         if (!error && data && data.length > 0) {
             setExperts(data);
         } else {
-            // Fallback Demo
-            setExperts([
-                { id: 99, name: "KonnectPro Expert", specialization: "General Service", rating: "4.9", experience_years: 5, city: city, area: "Main Market", image_url: "" }
-            ]);
+            // Fallback Demo if no experts
+            setExperts([]);
         }
     } catch (err) { console.error(err); }
     setLoading(false);
   };
 
-  // --- 2. FETCH ADMIN SETTINGS & OFFERS (NEW) ---
+  // --- 2. FETCH ADMIN SETTINGS & DATA ---
   useEffect(() => {
       const fetchAdminData = async () => {
+          
           // A. Get Theme Color
           const { data: themeData } = await supabase.from('admin_settings').select('*').eq('setting_key', 'theme_color').single();
           if (themeData) {
@@ -90,7 +86,23 @@ export default function Home() {
               setAccentColor(accents[themeData.setting_value] || accents['teal']);
           }
 
-          // B. Get Live Offers
+          // B. Get Ticker Text (Running Patti) 📢
+          const { data: tickerData } = await supabase.from('admin_settings').select('*').eq('setting_key', 'ticker_text').single();
+          if (tickerData) setTickerText(tickerData.setting_value);
+
+          // C. Get Categories 📂
+          const { data: catData } = await supabase.from('categories').select('*').order('id');
+          if (catData && catData.length > 0) {
+              setCategories(catData);
+          } else {
+              // Fallback if DB empty
+              setCategories([
+                { name: "AC Repair", icon: "❄️" },
+                { name: "Plumber", icon: "🚰" }
+              ]);
+          }
+
+          // D. Get Live Offers
           const { data: offerData } = await supabase.from('spotlight_offers').select('*').order('created_at', { ascending: false });
           if (offerData) setOffers(offerData);
       };
@@ -148,10 +160,22 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans selection:bg-teal-100 relative pb-24">
+      
+      {/* 📢 RUNNING PATTI (TICKER) */}
+      {tickerText && (
+          <div className="bg-amber-400 text-slate-900 text-[10px] font-black py-1 overflow-hidden relative z-50">
+             <div className="animate-marquee whitespace-nowrap flex gap-10 uppercase tracking-widest">
+                 <span>📢 {tickerText}</span>
+                 <span>📢 {tickerText}</span>
+                 <span>📢 {tickerText}</span>
+             </div>
+          </div>
+      )}
+
       <Navbar />
       <SOSButton />
 
-      {/* --- HERO SECTION (Dynamic Gradient) --- */}
+      {/* --- HERO SECTION --- */}
       <div className={`relative pt-6 pb-24 px-6 rounded-b-[2.5rem] shadow-2xl overflow-hidden transition-all duration-1000 bg-gradient-to-br ${themeGradient}`}>
         
         {/* Decorative Pattern */}
@@ -166,7 +190,7 @@ export default function Home() {
             </div>
             <div>
                 <p className="text-[10px] font-black text-teal-200 uppercase tracking-widest leading-none mb-0.5">{cityStatus.message}</p>
-                <h2 className="text-sm font-black text-white leading-none tracking-wide">{formatLocationDisplay(locationName)}</h2>
+                <h2 className="text-sm font-black text-white leading-none tracking-wide">{locationName}</h2>
             </div>
           </div>
 
@@ -214,49 +238,30 @@ export default function Home() {
           </div>
       </div>
 
-      {/* --- CATEGORIES --- */}
+      {/* --- CATEGORIES (Dynamic) --- */}
       <div className="mt-8 px-6 max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-4">
               <h2 className="font-bold text-slate-900 text-lg">Categories</h2>
               <span className={`text-xs font-bold cursor-pointer hover:underline ${accentColor}`}>View All</span>
           </div>
+          
           <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
               {categories.map((cat, i) => (
                   <div key={i} onClick={() => navigate(`/services/${cat.name.toLowerCase().replace(' ', '-')}`)} className="flex flex-col items-center gap-2 min-w-[72px] cursor-pointer group active:scale-90 transition-transform duration-200">
-                      <div className={`w-16 h-16 ${cat.color} border rounded-2xl flex items-center justify-center text-2xl bg-white group-hover:shadow-md transition-all`}>{cat.icon}</div>
+                      <div className={`w-16 h-16 ${getColorByIndex(i)} border rounded-2xl flex items-center justify-center text-2xl group-hover:shadow-md transition-all`}>
+                          {cat.icon}
+                      </div>
                       <span className="text-[11px] font-bold text-slate-600 whitespace-nowrap">{cat.name}</span>
                   </div>
               ))}
           </div>
       </div>
 
-      {/* --- HOW IT WORKS --- */}
-      <div className="mt-8 px-6 max-w-4xl mx-auto">
-        <h2 className="font-bold text-slate-900 text-lg mb-4">How it Works</h2>
-        <div className="flex justify-between gap-2">
-            <div className="flex-1 bg-white p-3 rounded-xl border border-slate-100 shadow-sm text-center">
-                <div className="w-10 h-10 bg-teal-50 rounded-full flex items-center justify-center mx-auto text-lg">📍</div>
-                <p className="text-xs font-bold text-slate-700 mt-2">Select Location</p>
-            </div>
-            <div className="flex items-center text-slate-300">→</div>
-            <div className="flex-1 bg-white p-3 rounded-xl border border-slate-100 shadow-sm text-center">
-                <div className="w-10 h-10 bg-teal-50 rounded-full flex items-center justify-center mx-auto text-lg">👨‍🔧</div>
-                <p className="text-xs font-bold text-slate-700 mt-2">Choose Expert</p>
-            </div>
-            <div className="flex items-center text-slate-300">→</div>
-            <div className="flex-1 bg-white p-3 rounded-xl border border-slate-100 shadow-sm text-center">
-                <div className="w-10 h-10 bg-teal-50 rounded-full flex items-center justify-center mx-auto text-lg">✅</div>
-                <p className="text-xs font-bold text-slate-700 mt-2">Book Service</p>
-            </div>
-        </div>
-      </div>
-
-      {/* --- SPOTLIGHT OFFERS (Dynamic) --- */}
+      {/* --- SPOTLIGHT OFFERS --- */}
       <div className="mt-8 px-6 max-w-4xl mx-auto">
           <h2 className="font-bold text-slate-900 text-lg mb-4 flex items-center gap-2"><Gift size={20} className="text-amber-500" /> In Spotlight</h2>
           
           <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
-              {/* ✅ Mapped from Database (Offers) instead of static array */}
               {offers.length > 0 ? offers.map((item) => (
                   <div key={item.id} className={`min-w-[260px] h-36 rounded-3xl relative overflow-hidden shadow-lg bg-gradient-to-r ${item.gradient_color || 'from-teal-600 to-teal-800'} cursor-pointer`}>
                       <div className="absolute top-4 left-4 z-10 text-white">
@@ -264,7 +269,6 @@ export default function Home() {
                           <h3 className="font-black text-xl mt-2 w-2/3 leading-tight drop-shadow-md">{item.title}</h3>
                           <p className="font-bold text-sm mt-1 text-white/90">{item.discount_text}</p>
                       </div>
-                      {/* Image Handling */}
                       <img 
                         src={item.image_url} 
                         onError={(e) => e.target.style.display = 'none'}
@@ -273,7 +277,6 @@ export default function Home() {
                       />
                   </div>
               )) : (
-                  // Fallback if no offers active
                   <div className="w-full text-center p-6 border-2 border-dashed border-slate-300 rounded-2xl text-slate-400">
                       Stay tuned for exciting offers!
                   </div>
@@ -317,13 +320,9 @@ export default function Home() {
         </button>
         <div className="relative -top-6">
             <button className={`p-4 rounded-full shadow-xl ring-4 ring-white hover:scale-110 transition-transform ${themeGradient.replace('via-teal-800', '').replace('to-teal-600', '')}`}> 
-            {/* Note: Simplified gradient for button for cleaner look, or just use solid color */}
                <Zap size={24} fill="white" className="text-white" />
             </button>
         </div>
-        <button onClick={() => alert("No Alerts")} className="flex flex-col items-center gap-1 text-slate-400 hover:text-teal-700">
-            <Bell size={24} /> <span className="text-[10px] font-bold">Alerts</span>
-        </button>
         <button onClick={() => navigate('/admin')} className="flex flex-col items-center gap-1 text-slate-400 hover:text-teal-700">
             <User size={24} /> <span className="text-[10px] font-bold">Admin</span>
         </button>
