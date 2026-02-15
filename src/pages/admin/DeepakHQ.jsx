@@ -17,8 +17,7 @@ import CustomerCRM from './tabs/CustomerCRM';
 import WalletManager from './tabs/WalletManager'; 
 import CategoryManager from './tabs/CategoryManager';
 import MarketingTab from './tabs/MarketingTab';       
-import FinanceTab from './tabs/FinanceTab'; // ✅ Updated Name
-// import LegalManager from './LegalManager'; // Filhal comment kar raha hu agar file nahi hai to
+import RevenueTab from './tabs/RevenueTab'; // ✅ CORRECT: Ab ham Hybrid wala use karenge
 
 export default function DeepakHQ() {
   const navigate = useNavigate();
@@ -59,7 +58,7 @@ export default function DeepakHQ() {
   // ✅ Helper to Auto-Close Menu on Mobile
   const handleTabChange = (tabName) => {
       setActiveTab(tabName);
-      setIsMobileMenuOpen(false); // Ye line mobile menu ko band karegi
+      setIsMobileMenuOpen(false); // Mobile Menu Close
       window.scrollTo({top: 0, behavior: 'smooth'});
   };
 
@@ -104,7 +103,10 @@ export default function DeepakHQ() {
             <div className="pt-4 pb-2 px-4 text-[10px] font-bold text-slate-600 uppercase tracking-wider">Growth & Finance</div>
             <NavBtn icon={<User size={18}/>} label="Customer CRM" active={activeTab === 'customers'} onClick={() => handleTabChange('customers')} badge="NEW" />
             <NavBtn icon={<CreditCard size={18}/>} label="Wallet Manager" active={activeTab === 'wallet'} onClick={() => handleTabChange('wallet')} />
-            <NavBtn icon={<DollarSign size={18}/>} label="Revenue & City" active={activeTab === 'finance'} onClick={() => handleTabChange('finance')} badge="₹" />
+            
+            {/* ✅ UPDATED: Revenue Tab (Name changed to 'revenue' for code consistency) */}
+            <NavBtn icon={<DollarSign size={18}/>} label="Revenue & City" active={activeTab === 'revenue'} onClick={() => handleTabChange('revenue')} badge="₹" />
+            
             <NavBtn icon={<Megaphone size={18}/>} label="Marketing & Offers" active={activeTab === 'offers'} onClick={() => handleTabChange('offers')} />
             <NavBtn icon={<Zap size={18}/>} label="Ticker Text" active={activeTab === 'marketing'} onClick={() => handleTabChange('marketing')} /> 
             
@@ -119,7 +121,7 @@ export default function DeepakHQ() {
         </div>
       </div>
 
-      {/* OVERLAY for Mobile (Click outside to close) */}
+      {/* OVERLAY for Mobile */}
       {isMobileMenuOpen && (
         <div onClick={() => setIsMobileMenuOpen(false)} className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm"></div>
       )}
@@ -146,7 +148,9 @@ export default function DeepakHQ() {
                 {activeTab === 'customers' && <CustomerCRM />} 
                 {activeTab === 'wallet' && <WalletManager />}
                 {activeTab === 'marketing' && <MarketingTab />}
-                {activeTab === 'finance' && <FinanceTab />} {/* ✅ Updated */}
+                
+                {/* ✅ UPDATED: Ab Hybrid RevenueTab call hoga */}
+                {activeTab === 'revenue' && <RevenueTab />} 
                 
                 {activeTab === 'offers' && <ManageOffers />}
                 {activeTab === 'settings' && <SettingsTab />}
@@ -167,7 +171,6 @@ const NavBtn = ({ icon, label, active, onClick, badge }) => (
         </div>
         {badge && <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider relative z-10 ${active ? 'bg-white text-teal-700' : 'bg-teal-900 text-teal-400'}`}>{badge}</span>}
         
-        {/* Hover Effect */}
         {!active && <div className="absolute inset-0 bg-slate-800 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300 origin-left z-0"></div>}
     </button>
 );
