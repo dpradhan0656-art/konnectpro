@@ -61,11 +61,10 @@ export default function RegisterExpert() {
     if (s.includes('bengal')) return 'bengali';
     if (s.includes('gujarat')) return 'gujarati';
     if (s.includes('karnataka')) return 'kannada';
-    // Default Hindi for MP, UP, Delhi, etc.
     return 'hindi';
   };
 
-// --- 2. GPS LOGIC (Corrected Version) ---
+  // --- 3. GPS LOGIC (Corrected Variable Name) ---
   const detectLocation = () => {
     setLocLoading(true);
     if (!navigator.geolocation) { 
@@ -80,7 +79,7 @@ export default function RegisterExpert() {
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
         const data = await res.json();
         
-        // ✅ Yahan humne variable ka naam 'cleanAddr' rakha hai
+        // ✅ Correct Variable Name: cleanAddr (Not cleanFullAddress)
         const cleanAddr = data.display_name ? data.display_name.replace(/[^\x00-\x7F]/g, "").trim() : ""; 
         const city = data.address.city || data.address.town || "Jabalpur";
         const state = data.address.state || "Madhya Pradesh";
@@ -91,7 +90,7 @@ export default function RegisterExpert() {
 
         setFormData(prev => ({ 
           ...prev, 
-          address: cleanAddr, // ✅ Fix: Ab 'cleanAddr' hi use ho raha hai
+          address: cleanAddr, // ✅ Using Correct Variable
           city: city, 
           state: state 
         }));
@@ -106,7 +105,7 @@ export default function RegisterExpert() {
     });
   };
 
-  // --- 4. SUBMIT FORM (Master Logic) ---
+  // --- 4. SUBMIT FORM ---
   const handleSubmit = async () => {
     setLoading(true);
     const phoneValue = formData.mobile ? String(formData.mobile).trim() : "";
@@ -146,7 +145,7 @@ export default function RegisterExpert() {
     finally { setLoading(false); }
   };
 
-  // Helper to Render Label (English + Local)
+  // Helper to Render Label
   const Label = ({ field }) => (
     <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
       {labels['english'][field]} <span className="text-teal-600">/ {labels[localLang]?.[field] || labels['hindi'][field]}</span>
@@ -195,7 +194,7 @@ export default function RegisterExpert() {
           </div>
         )}
 
-        {/* --- STEP 2: LOCATION (The Magic Step) --- */}
+        {/* --- STEP 2: LOCATION --- */}
         {step === 2 && (
           <div className="space-y-4 animate-in slide-in-from-right-8">
              <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 text-blue-800 text-xs">
@@ -210,7 +209,7 @@ export default function RegisterExpert() {
           </div>
         )}
 
-        {/* --- STEP 3: KYC & BANK (Financials) --- */}
+        {/* --- STEP 3: KYC & BANK --- */}
         {step === 3 && (
           <div className="space-y-4 animate-in slide-in-from-right-8">
              <div className="grid grid-cols-2 gap-4">
