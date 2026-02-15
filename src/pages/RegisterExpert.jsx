@@ -17,12 +17,18 @@ export default function RegisterExpert() {
     mobile: '',
     service_category: 'Electrician',
     city: 'Jabalpur',
-    working_area: '', // Specific Area (e.g. Napier Town)
-    address: '',      // Full Home Address via GPS
+    working_area: '', 
+    address: '',      
     is_verified: false
   });
 
-  // --- 1. GPS LOGIC (Auto Address) ---
+  // ✅ 1. CLEAN ADDRESS FUNCTION
+  const cleanAddress = (rawAddress) => {
+    if (!rawAddress) return "";
+    return rawAddress.replace(/[^\x00-\x7F]/g, "").replace(/, ,/g, ",").trim();
+  };
+
+  // --- 2. GPS LOGIC ---
   const detectLocation = () => {
     setLocLoading(true);
     if (!navigator.geolocation) {
@@ -37,43 +43,77 @@ export default function RegisterExpert() {
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
         const data = await res.json();
         
+        const cleanFullAddress = cleanAddress(data.display_name);
         const detectedCity = data.address.city || data.address.town || "Jabalpur";
+
         setFormData(prev => ({ 
           ...prev, 
-          address: data.display_name, 
-          city: detectedCity 
+          address: cleanFullAddress, 
+          city: cleanAddress(detectedCity) 
         }));
       } catch (err) { alert("Location fetch failed. Type manually."); }
       setLocLoading(false);
     }, () => { alert("Please enable GPS"); setLocLoading(false); });
   };
 
-  // --- 2. SUBMIT FORM ---
+  // --- 3. SUBMIT FORM (Corrected & Single Version) ---
   const handleSubmit = async () => {
     setLoading(true);
     
-    // Check if user already exists
-    const { data: existing } = await supabase.from('experts').select('mobile').eq('mobile', formData.mobile).single();
-    if (existing) {
-        alert("This mobile number is already registered!");
+    // Safety Check
+    const phoneValue = formData.mobile ? String(formData.mobile).trim() : "";
+
+    if (!phoneValue || phoneValue.length < 10) {
+        alert("कृपया एक वैध मोबाइल नंबर दर्ज करें।");
         setLoading(false);
         return;
     }
 
-    const { error } = await supabase.from('experts').insert([{
-        name: formData.name,
-        mobile: formData.mobile,
-        service_category: formData.service_category,
-        city: formData.city,
-        working_area: formData.working_area,
-        address: formData.address,
-        is_verified: false // Admin verification required
-    }]);
+    try {
+        // 1. Check duplicate
+        const { data: existing } = await supabase
+            .from('experts')
+            .select('phone')
+            .eq('phone', phoneValue)
+            .maybeSingle();
 
-    if (error) alert("Error: " + error.message);
-    else setStep(3); // Success Screen
-    
-    setLoading(false);
+        if (existing) {
+            alert("यह मोबाइल नंबर पहले से पंजीकृत है!");
+            setLoading(false);
+            return;
+        }
+
+        // 2. Prepare Data Object (Explicit Mapping)
+        const expertData = {
+            name: formData.name || "Unknown Expert",
+            phone: phoneValue, // ✅ Correctly Mapped
+            service_category: formData.service_category,
+            city: formData.city || "Jabalpur",
+            working_area: formData.working_area || "",
+            address: formData.address || "",
+            is_verified: false,
+            status: 'pending',
+            experience: "0",
+            email: "" 
+        };
+
+        // 3. Insert
+        const { error: insertError } = await supabase
+            .from('experts')
+            .insert([expertData]);
+
+        if (insertError) {
+            console.error("Supabase Detailed Error:", insertError);
+            alert(`Error: ${insertError.message}`);
+        } else {
+            setStep(3); // Success Screen
+        }
+    } catch (err) {
+        console.error("Unexpected Error:", err);
+        alert("कुछ गलत हुआ। कृपया पुनः प्रयास करें।");
+    } finally {
+        setLoading(false);
+    }
   };
 
   return (
@@ -81,7 +121,7 @@ export default function RegisterExpert() {
       
       {/* Back Button */}
       {step === 1 && (
-        <button onClick={() => navigate('/')} className="absolute top-6 left-6 p-3 bg-white rounded-full shadow-sm text-slate-500">
+        <button onClick={() => navigate('/')} className="absolute top-6 left-6 p-3 bg-white rounded-full shadow-sm text-slate-500 hover:bg-slate-100 transition-colors">
           <ArrowLeft size={20}/>
         </button>
       )}
@@ -104,17 +144,17 @@ export default function RegisterExpert() {
             </div>
             
             <div className="space-y-4">
-               <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center gap-3">
+               <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center gap-3 focus-within:ring-2 focus-within:ring-teal-500 transition-all">
                   <User size={20} className="text-slate-400"/>
                   <input type="text" placeholder="Full Name" className="bg-transparent w-full font-bold outline-none text-slate-700"
                     value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                </div>
-               <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center gap-3">
+               <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center gap-3 focus-within:ring-2 focus-within:ring-teal-500 transition-all">
                   <Phone size={20} className="text-slate-400"/>
                   <input type="number" placeholder="Mobile Number" className="bg-transparent w-full font-bold outline-none text-slate-700"
                     value={formData.mobile} onChange={e => setFormData({...formData, mobile: e.target.value})} />
                </div>
-               <button disabled={!formData.name || !formData.mobile} onClick={() => setStep(2)} className="w-full bg-teal-600 text-white py-4 rounded-xl font-bold flex justify-center items-center gap-2 shadow-lg hover:bg-teal-700 transition-all disabled:opacity-50">
+               <button disabled={!formData.name || !formData.mobile} onClick={() => setStep(2)} className="w-full bg-teal-600 text-white py-4 rounded-xl font-bold flex justify-center items-center gap-2 shadow-lg hover:bg-teal-700 transition-all active:scale-95 disabled:opacity-50">
                   Next Step <ChevronRight size={18}/>
                </button>
             </div>
@@ -130,7 +170,6 @@ export default function RegisterExpert() {
             </div>
 
             <div className="space-y-3">
-               {/* Category */}
                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center gap-3">
                   <Briefcase size={20} className="text-slate-400"/>
                   <select className="bg-transparent w-full font-bold outline-none text-slate-700"
@@ -140,25 +179,23 @@ export default function RegisterExpert() {
                   </select>
                </div>
 
-               {/* Working Area */}
                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center gap-3">
                   <Building size={20} className="text-slate-400"/>
                   <input type="text" placeholder="Work Area (e.g. Vijay Nagar)" className="bg-transparent w-full font-bold outline-none text-slate-700"
                     value={formData.working_area} onChange={e => setFormData({...formData, working_area: e.target.value})} />
                </div>
 
-               {/* GPS Address */}
                <div className="pt-2">
                   <button type="button" onClick={detectLocation} className="w-full bg-teal-50 text-teal-700 py-3 rounded-xl text-xs font-black flex justify-center items-center gap-2 border border-teal-100 mb-2 hover:bg-teal-100 transition-colors">
                      {locLoading ? "Locating..." : <><Navigation size={14}/> Auto-Detect Home Address</>}
                   </button>
-                  <textarea placeholder="Address will appear here..." readOnly className="w-full bg-slate-50 p-3 rounded-xl text-xs font-medium text-slate-600 h-20 resize-none outline-none border border-slate-100" value={formData.address}></textarea>
+                  <textarea placeholder="Address will appear here..." readOnly className="w-full bg-slate-50 p-3 rounded-xl text-xs font-medium text-slate-600 h-20 resize-none outline-none border border-slate-100 focus:border-teal-500" value={formData.address}></textarea>
                </div>
 
                <div className="flex gap-3">
-                  <button onClick={() => setStep(1)} className="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-bold text-sm">Back</button>
-                  <button onClick={handleSubmit} disabled={loading} className="flex-[2] bg-slate-900 text-white py-3 rounded-xl font-bold shadow-lg flex justify-center items-center gap-2">
-                     {loading ? "Sending..." : "Submit"}
+                  <button onClick={() => setStep(1)} className="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-bold text-sm hover:bg-slate-200">Back</button>
+                  <button onClick={handleSubmit} disabled={loading} className="flex-[2] bg-slate-900 text-white py-3 rounded-xl font-bold shadow-lg flex justify-center items-center gap-2 hover:bg-slate-800 transition-all active:scale-95">
+                      {loading ? "Sending..." : "Submit"}
                   </button>
                </div>
             </div>
@@ -168,7 +205,7 @@ export default function RegisterExpert() {
         {/* --- STEP 3: SUCCESS --- */}
         {step === 3 && (
           <div className="text-center py-8 animate-in zoom-in-95">
-             <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+             <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
                <CheckCircle size={40} strokeWidth={3}/>
              </div>
              <h2 className="text-2xl font-black text-slate-900">Request Sent!</h2>
@@ -183,7 +220,7 @@ export default function RegisterExpert() {
                    <b>Password:</b> Will be sent via SMS after verification.
                 </p>
              </div>
-             <button onClick={() => navigate('/')} className="w-full bg-slate-900 text-white py-3.5 rounded-xl font-bold mt-6">Back to Home</button>
+             <button onClick={() => navigate('/')} className="w-full bg-slate-900 text-white py-3.5 rounded-xl font-bold mt-6 shadow-lg active:scale-95 transition-all">Back to Home</button>
           </div>
         )}
 
