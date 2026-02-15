@@ -5,7 +5,7 @@ import {
   CreditCard, ShieldAlert, CheckCircle2, AlertTriangle, Star, Lock, Briefcase
 } from 'lucide-react';
 
-// ✅ Category List (Taaki spelling mismatch na ho)
+// ✅ 1. CATEGORY LIST (Spelling Mistakes se bachne ke liye)
 const CATEGORIES = [
   "Electrician",
   "Plumber",
@@ -27,16 +27,15 @@ export default function ExpertControl() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   
-  // ✅ Default State
   const [formData, setFormData] = useState({
       name: '', 
       phone: '', 
-      service_category: 'Electrician', // Default
+      service_category: 'Electrician', 
       city: 'Jabalpur', 
       password: ''
   });
 
-  // --- 1. FETCH DATA ---
+  // --- 2. FETCH DATA ---
   useEffect(() => {
     fetchExperts();
   }, [filterStatus]);
@@ -53,7 +52,7 @@ export default function ExpertControl() {
     setLoading(false);
   };
 
-  // --- 2. ACTIONS (Approve/Block) ---
+  // --- 3. ACTIONS (Approve/Block) ---
   const handleStatusUpdate = async (id, newStatus) => {
     if(!confirm(`Are you sure you want to ${newStatus} this expert?`)) return;
 
@@ -76,7 +75,7 @@ export default function ExpertControl() {
       }
   };
 
-  // --- 3. MODAL ACTIONS (Open/Close) ---
+  // --- 4. MODAL ACTIONS (Open/Close) ---
   const openAddModal = () => {
       setEditingId(null);
       setFormData({ name: '', phone: '', service_category: 'Electrician', city: 'Jabalpur', password: '' });
@@ -85,68 +84,76 @@ export default function ExpertControl() {
 
   const openEditModal = (expert) => {
       setEditingId(expert.id);
-      // ✅ Data Populate karte waqt dhyaan dein
+      // ✅ Populate data, but keep password blank for security
       setFormData({ 
           name: expert.name || '', 
           phone: expert.phone || '', 
-          service_category: expert.service_category || 'Electrician', // Fallback
+          service_category: expert.service_category || 'Electrician', 
           city: expert.city || '', 
           password: '' 
       });
       setIsModalOpen(true);
   };
 
-  // --- 4. SAVE / UPDATE LOGIC (The Fix) ---
+  // --- 5. SAVE / UPDATE LOGIC (Updated & Secure) ---
   const handleSave = async (e) => {
       e.preventDefault();
       setLoading(true);
       
-      // ✅ Payload ko clean banayein
+      // ✅ Payload: Sirf basic data
       const payload = {
           name: formData.name,
           phone: formData.phone,
-          service_category: formData.service_category, // 👈 Ye ab sahi value lega
+          service_category: formData.service_category,
           city: formData.city
       };
 
-      // Password tabhi bheje jab bhara gaya ho
+      // ✅ Logic: Password tabhi add hoga jab user ne naya type kiya ho
       if (formData.password && formData.password.trim() !== "") {
           payload.password = formData.password;
       }
 
-      console.log("Saving Data:", payload); // Debugging ke liye check karein console me
+      console.log("Submitting Payload:", payload);
 
-      if (editingId) {
-          // 👉 UPDATE EXISTING
-          const { error } = await supabase
-              .from('experts')
-              .update(payload)
-              .eq('id', editingId);
-          
-          if(error) alert("Error: " + error.message);
-          else alert("✅ Profile Updated Successfully!");
+      try {
+          if (editingId) {
+              // 👉 UPDATE EXISTING
+              const { error } = await supabase
+                  .from('experts')
+                  .update(payload)
+                  .eq('id', editingId);
+              
+              if(error) throw error;
+              alert("✅ Expert Profile Updated!");
 
-      } else {
-          // 👉 ADD NEW
-          const { error } = await supabase
-              .from('experts')
-              .insert([{ 
-                  ...payload, 
-                  status: 'approved', 
-                  is_verified: true,
-                  rating: 5.0 
-              }]);
+          } else {
+              // 👉 ADD NEW (Default Values ke saath)
+              const { error } = await supabase
+                  .from('experts')
+                  .insert([{ 
+                      ...payload, 
+                      status: 'approved', 
+                      is_verified: true,
+                      rating: 5.0,
+                      created_at: new Date().toISOString()
+                  }]);
+              
+              if(error) throw error;
+              alert("✅ New Expert Added Successfully!");
+          }
+
+          setIsModalOpen(false);
+          fetchExperts();
           
-          if(error) alert("Error: " + error.message);
-          else alert("✅ New Expert Added!");
+      } catch (err) {
+          console.error("DB Error:", err);
+          alert("Operation Failed: " + err.message);
+      } finally {
+          setLoading(false);
       }
-
-      setLoading(false);
-      setIsModalOpen(false);
-      fetchExperts();
   };
 
-  // --- 5. FILTER ---
+  // --- 6. FILTER ---
   const filteredExperts = experts.filter(exp => 
     exp.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
     exp.phone?.includes(searchTerm)
@@ -193,7 +200,7 @@ export default function ExpertControl() {
       {/* EXPERTS GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {loading ? (
-            <div className="col-span-full py-20 text-center text-slate-500 font-bold animate-pulse">Loading Data...</div>
+            <div className="col-span-full py-20 text-center text-slate-500 font-bold animate-pulse">Scanning Data...</div>
         ) : filteredExperts.length === 0 ? (
             <div className="col-span-full py-20 text-center bg-slate-900 rounded-[2rem] border border-dashed border-slate-800 text-slate-500 italic">No experts found in '{filterStatus}' list.</div>
         ) : filteredExperts.map((exp) => (
@@ -296,7 +303,7 @@ export default function ExpertControl() {
                           </div>
                       </div>
                       
-                      {/* ✅ FIXED CATEGORY SELECTOR */}
+                      {/* ✅ Updated Category Dropdown */}
                       <div>
                           <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Service Category</label>
                           <select 
@@ -310,7 +317,7 @@ export default function ExpertControl() {
                           </select>
                       </div>
 
-                      {/* Password Field */}
+                      {/* Password Field (Secure) */}
                       <div>
                           <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 flex items-center gap-1"><Lock size={10}/> Login Password</label>
                           <input type="text" placeholder={editingId ? "Leave blank to keep same" : "Set password"}
