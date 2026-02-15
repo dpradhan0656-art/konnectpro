@@ -76,7 +76,8 @@ export default function RegisterExpert() {
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
         const data = await res.json();
         
-        const cleanAddr = data.display_name.replace(/[^\x00-\x7F]/g, "").trim(); // Clean Urdu/Symbols
+        // ✅ Variable name correctly defined as cleanAddr
+        const cleanAddr = data.display_name.replace(/[^\x00-\x7F]/g, "").trim(); 
         const city = data.address.city || data.address.town || "Jabalpur";
         const state = data.address.state || "Madhya Pradesh";
 
@@ -85,9 +86,15 @@ export default function RegisterExpert() {
         setLocalLang(detectedLang);
 
         setFormData(prev => ({ 
-          ...prev, address: cleanFullAddress, city: city, state: state 
+          ...prev, 
+          address: cleanAddr, // ✅ Fix applied here
+          city: city, 
+          state: state 
         }));
-      } catch (err) { alert("Location failed. Fill manually."); }
+      } catch (err) { 
+        console.error("Location Error:", err);
+        alert("Location failed. Fill manually."); 
+      }
       setLocLoading(false);
     }, () => { alert("Please enable GPS"); setLocLoading(false); });
   };
