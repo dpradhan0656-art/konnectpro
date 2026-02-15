@@ -16,6 +16,8 @@ import Refund from './pages/legal/Refund';
 import AntiDiscrimination from './pages/legal/AntiDiscrimination';
 import Careers from './pages/legal/Careers';
 import RegisterProfessional from './pages/legal/RegisterProfessional';
+// बाकी imports के नीचे यह लाइन जोड़ें
+import RegisterExpert from './pages/RegisterExpert';
 
 function App() {
   const [session, setSession] = useState(null);
@@ -52,6 +54,8 @@ function App() {
           path="/bookings" 
           element={session ? <Bookings /> : <Navigate to="/login" replace />} 
         />
+        // <Routes> टैग के अंदर, बाकी <Route ... /> लाइनों के बीच में कहीं भी यह लाइन डाल दें:
+        <Route path="/register-expert" element={<RegisterExpert />} />
 
         {/* ✅ ADMIN ROUTE (Fixed for Security) */}
         {/* Ab ye sirf '/deepakhq' likhne par hi khulega */}

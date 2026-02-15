@@ -140,3 +140,38 @@ export default function Home() {
     </div>
   );
 }
+{/* 🚀 NEW: PARTNER & ADMIN SECTION (Link Here) */}
+      <div className="mx-5 mt-8 mb-24"> {/* mb-24 taaki bottom nav se na chhipe */}
+        
+        {/* 1. Join Expert Army Card */}
+        <div className="bg-slate-900 rounded-[2rem] p-6 relative overflow-hidden shadow-2xl mb-8">
+           <div className="relative z-10">
+              <h3 className="text-white font-black text-xl mb-2">Are you an Expert?</h3>
+              <p className="text-slate-400 text-xs mb-6 w-3/4 leading-relaxed">
+                Join our "Expert Army". Get verified leads and grow your income with {BRAND.name}.
+              </p>
+              <button 
+                onClick={() => navigate('/register-expert')} 
+                className="bg-teal-500 hover:bg-teal-400 text-white py-3 px-6 rounded-xl font-bold text-sm shadow-lg shadow-teal-500/20 transition-all active:scale-95 flex items-center gap-2"
+              >
+                Register Now <span className="bg-white/20 rounded-full p-1 text-[10px]">➜</span>
+              </button>
+           </div>
+           {/* Decorative Glow */}
+           <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-teal-600 rounded-full blur-3xl opacity-40 pointer-events-none"></div>
+        </div>
+
+        {/* 2. Quick Links (Admin Link) */}
+        <div className="text-center space-y-4">
+            <p 
+              onClick={() => navigate('/admin')} 
+              className="text-xs font-bold text-slate-300 hover:text-teal-600 cursor-pointer uppercase tracking-widest transition-colors"
+            >
+              👑 Founder Login (DeepakHQ)
+            </p>
+            <p className="text-[10px] text-slate-300">
+              Made with ❤️ in Jabalpur<br/>
+              © 2025 {BRAND.name}
+            </p>
+        </div>
+      </div>
