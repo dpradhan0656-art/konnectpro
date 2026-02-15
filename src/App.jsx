@@ -8,16 +8,16 @@ import Home from './pages/customer/Home';
 import Login from './pages/auth/Login';
 import Bookings from './pages/customer/Bookings';
 import CategoryView from './pages/customer/CategoryView';
-import DeepakHQ from './pages/admin/DeepakHQ'; // ✅ Admin Panel Import
+import DeepakHQ from './pages/admin/DeepakHQ'; 
 import About from './pages/legal/About';
 import Privacy from './pages/legal/Privacy';
 import Terms from './pages/legal/Terms';
 import Refund from './pages/legal/Refund';
 import AntiDiscrimination from './pages/legal/AntiDiscrimination';
 import Careers from './pages/legal/Careers';
-import RegisterProfessional from './pages/legal/RegisterProfessional';
-// बाकी imports के नीचे यह लाइन जोड़ें
-import RegisterExpert from './pages/RegisterExpert';
+
+// ✅ CORRECT IMPORT: (New Expert Form)
+import RegisterExpert from './pages/RegisterExpert'; 
 
 function App() {
   const [session, setSession] = useState(null);
@@ -54,23 +54,22 @@ function App() {
           path="/bookings" 
           element={session ? <Bookings /> : <Navigate to="/login" replace />} 
         />
-        // <Routes> टैग के अंदर, बाकी <Route ... /> लाइनों के बीच में कहीं भी यह लाइन डाल दें:
-        <Route path="/register-expert" element={<RegisterExpert />} />
 
-        {/* ✅ ADMIN ROUTE (Fixed for Security) */}
-        {/* Ab ye sirf '/deepakhq' likhne par hi khulega */}
+        {/* ✅ EXPERT REGISTRATION (Single & Correct Route) */}
+        <Route path="/register-expert" element={<RegisterExpert />} />
+        
+        {/* ✅ ADMIN ROUTE */}
         <Route path="/deepakhq" element={<DeepakHQ />} />        
 
-        {/* --- CATCH ALL --- */}
-                {/* --- LEGAL ROUTES --- */}
+        {/* --- LEGAL ROUTES --- */}
         <Route path="/about" element={<About />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/refund-policy" element={<Refund />} />
         <Route path="/anti-discrimination" element={<AntiDiscrimination />} />
-        <Route path="/anti-discrimination" element={<AntiDiscrimination />} />
-<Route path="/careers" element={<Careers />} />
-<Route path="/register-expert" element={<RegisterProfessional />} />
+        <Route path="/careers" element={<Careers />} />
+
+        {/* --- CATCH ALL (404) --- */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
