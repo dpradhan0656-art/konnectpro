@@ -1,82 +1,76 @@
 import React from 'react';
-import { BRAND } from '../../config/brandConfig';
-import { Facebook, Twitter, Instagram, Linkedin, Download } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Facebook, Twitter, Instagram, Youtube, ShieldCheck } from 'lucide-react';
 
 export default function Footer() {
+  const navigate = useNavigate();
+
   return (
-    <footer className="bg-slate-900 text-slate-300 py-12 px-6 pb-32">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer className="bg-slate-900 text-slate-300 pt-12 pb-8 px-6">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10">
         
-        {/* Column 1: Company Logo & About */}
-        <div>
-          <h2 className="text-2xl font-black text-white mb-4">
-            Konnect<span className="text-teal-500">Pro</span>
+        {/* Brand Section */}
+        <div className="space-y-4">
+          <h2 className="text-2xl font-black text-white tracking-tighter">
+            APNA <span className="text-teal-400">HUNAR</span>
           </h2>
-          <p className="text-sm text-slate-400 leading-relaxed mb-4">
-            India's most trusted home services platform. Quality work, verified experts, and peace of mind.
+          <p className="text-xs leading-relaxed text-slate-400">
+            India's most transparent service marketplace. Empowering local experts and ensuring customer delight through honesty.
           </p>
-          <p className="text-xs text-slate-500">© 2026 {BRAND.legalName}</p>
-        </div>
-
-        {/* Column 2: Company Links */}
-        <div>
-          <h3 className="text-white font-bold mb-4 uppercase text-xs tracking-wider">Company</h3>
-          <ul className="space-y-2 text-sm">
-            <li className="hover:text-white cursor-pointer transition">About Us</li>
-            <li className="hover:text-white cursor-pointer transition">Terms & Conditions</li>
-            <li className="hover:text-white cursor-pointer transition">Privacy Policy</li>
-            <li className="hover:text-white cursor-pointer transition">Anti-discrimination Policy</li>
-            <li className="hover:text-white cursor-pointer transition">Careers</li>
-          </ul>
-        </div>
-
-        {/* Column 3: For Customers & Partners */}
-        <div>
-          <h3 className="text-white font-bold mb-4 uppercase text-xs tracking-wider">For Customers</h3>
-          <ul className="space-y-2 text-sm mb-6">
-            <li className="hover:text-white cursor-pointer transition">User Reviews</li>
-            <li className="hover:text-white cursor-pointer transition">Categories Near You</li>
-            <li className="hover:text-white cursor-pointer transition">Contact Support</li>
-          </ul>
-
-          <h3 className="text-white font-bold mb-4 uppercase text-xs tracking-wider">For Partners</h3>
-          <ul className="space-y-2 text-sm">
-            <li className="hover:text-teal-400 cursor-pointer transition font-bold">Register as a Professional</li>
-          </ul>
-        </div>
-
-        {/* Column 4: Social & App Links */}
-        <div>
-          <h3 className="text-white font-bold mb-4 uppercase text-xs tracking-wider">Social Links</h3>
-          <div className="flex gap-4 mb-6">
-            <div className="bg-slate-800 p-2 rounded-full hover:bg-teal-600 transition cursor-pointer"><Twitter size={18} /></div>
-            <div className="bg-slate-800 p-2 rounded-full hover:bg-teal-600 transition cursor-pointer"><Facebook size={18} /></div>
-            <div className="bg-slate-800 p-2 rounded-full hover:bg-teal-600 transition cursor-pointer"><Instagram size={18} /></div>
-            <div className="bg-slate-800 p-2 rounded-full hover:bg-teal-600 transition cursor-pointer"><Linkedin size={18} /></div>
+          <div className="flex gap-4 pt-2">
+            <Facebook size={18} className="cursor-pointer hover:text-teal-400" />
+            <Instagram size={18} className="cursor-pointer hover:text-teal-400" />
+            <Twitter size={18} className="cursor-pointer hover:text-teal-400" />
           </div>
+        </div>
 
-          <h3 className="text-white font-bold mb-4 uppercase text-xs tracking-wider">Download App</h3>
-          <div className="flex flex-col gap-2">
-            <button className="bg-slate-800 flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-slate-700 transition">
-                <Download size={20} className="text-teal-500"/>
-                <div className="text-left">
-                    <p className="text-[10px] uppercase font-bold text-slate-400">Get it on</p>
-                    <p className="text-sm font-bold text-white">Google Play</p>
-                </div>
-            </button>
-            <button className="bg-slate-800 flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-slate-700 transition">
-                <div className="text-teal-500 font-bold text-xl"></div>
-                <div className="text-left">
-                    <p className="text-[10px] uppercase font-bold text-slate-400">Download on the</p>
-                    <p className="text-sm font-bold text-white">App Store</p>
-                </div>
-            </button>
+        {/* For Customers */}
+        <div>
+          <h3 className="text-white font-bold mb-4 text-sm uppercase tracking-widest">For Customers</h3>
+          <ul className="space-y-2 text-xs">
+            <li onClick={() => navigate('/reviews')} className="cursor-pointer hover:text-white">User Reviews</li>
+            <li onClick={() => navigate('/categories')} className="cursor-pointer hover:text-white">Categories Near You</li>
+            <li onClick={() => navigate('/safety')} className="cursor-pointer hover:text-white">Safety & Trust</li>
+            <li onClick={() => navigate('/support')} className="cursor-pointer hover:text-white font-bold text-teal-400">Contact Support</li>
+          </ul>
+        </div>
+
+        {/* For Partners (Expert Army) */}
+        <div>
+          <h3 className="text-white font-bold mb-4 text-sm uppercase tracking-widest">For Partners</h3>
+          <ul className="space-y-2 text-xs">
+            <li onClick={() => navigate('/register-expert')} className="cursor-pointer hover:text-teal-400 font-bold">Register as a Professional</li>
+            <li onClick={() => navigate('/anti-discrimination')} className="cursor-pointer hover:text-white">Anti-discrimination Policy</li>
+            <li onClick={() => navigate('/careers')} className="cursor-pointer hover:text-white">Careers</li>
+          </ul>
+        </div>
+
+        {/* Legal & App */}
+        <div>
+          <h3 className="text-white font-bold mb-4 text-sm uppercase tracking-widest">Company Info</h3>
+          <ul className="space-y-2 text-xs">
+            <li onClick={() => navigate('/about')} className="cursor-pointer hover:text-white">About Us</li>
+            <li onClick={() => navigate('/terms')} className="cursor-pointer hover:text-white">Terms & Conditions</li>
+            <li onClick={() => navigate('/privacy')} className="cursor-pointer hover:text-white">Privacy Policy</li>
+          </ul>
+          <div className="mt-6 flex gap-2">
+             <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Play Store" className="h-8 cursor-pointer" />
           </div>
         </div>
       </div>
-      
-      <div className="mt-12 pt-8 border-t border-slate-800 text-center">
-         <p className="text-xs text-slate-500"> CIN: U74140DL2015PTC281719 • {BRAND.address}</p>
+
+      <hr className="my-8 border-slate-800" />
+
+      {/* 🇮🇳 IMANDARI WALI DETAILS (Transparency Section) */}
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] text-slate-500 font-medium">
+        <div className="flex flex-col gap-1 text-center md:text-left">
+          <p>© 2026 APNA HUNAR INDIA PRIVATE LIMITED. All rights reserved.</p>
+        </div>
+        
+        <div className="flex items-center gap-2 bg-slate-800/50 px-4 py-2 rounded-full border border-slate-700">
+           <ShieldCheck size={14} className="text-teal-500" />
+           <span className="uppercase tracking-tighter">100% Secure & Honest Platform</span>
+        </div>
       </div>
     </footer>
   );

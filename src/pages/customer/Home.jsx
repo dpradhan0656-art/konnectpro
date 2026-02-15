@@ -1,15 +1,16 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
-import { BRAND } from '../config/brandConfig';
-import Navbar from '../components/common/Navbar';
-import Footer from '../components/common/Footer';
-import SOSButton from '../components/common/SOSButton';
-import ExpertCard from '../components/ExpertCard';
+// ✅ User ke purane code ke hisaab se path adjust kiya hai
+import { supabase } from '../../lib/supabase'; 
+import { BRAND } from '../../config/brandConfig';
+import Navbar from '../../components/common/Navbar';
+import Footer from '../../components/common/Footer';
+import SOSButton from '../../components/common/SOSButton';
+import ExpertCard from '../../components/ExpertCard';
 import { 
   Search, Mic, ShieldCheck, Zap, Star, 
   MapPin, Wallet, Home as HomeIcon, Calendar, Bell, User,
-  Gift, TrendingUp, Megaphone
+  Gift, TrendingUp, Tag 
 } from 'lucide-react';
 
 export default function Home() {
@@ -21,132 +22,112 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isListening, setIsListening] = useState(false);
   
-  // ✅ States for Real Data
+  // ✅ States
   const [experts, setExperts] = useState([]);
   const [offers, setOffers] = useState([]); 
-  const [categories, setCategories] = useState([]); // Now Dynamic
-  const [tickerText, setTickerText] = useState(""); // Running Patti
+  const [services, setServices] = useState([]); // Real Services from DB
+  const [tickerText, setTickerText] = useState(""); 
   const [loading, setLoading] = useState(true);
-  
-  // ✅ Theme State
   const [themeGradient, setThemeGradient] = useState('from-teal-900 via-teal-800 to-teal-600');
   const [accentColor, setAccentColor] = useState('text-teal-600');
 
-  // --- HELPER: Random Color for Categories ---
+  // ✅ Fallback Categories
+  const defaultCategories = [
+    { name: "AC Repair", icon: "❄️" },
+    { name: "Cleaning", icon: "🧹" },
+    { name: "Electrician", icon: "⚡" },
+    { name: "Plumber", icon: "🚰" },
+    { name: "Carpenter", icon: "🪑" },
+    { name: "RO Service", icon: "💧" }
+  ];
+
+  // --- HELPER: Category Colors ---
   const getColorByIndex = (index) => {
       const colors = [
           "bg-blue-50 border-blue-100 text-blue-600",
           "bg-green-50 border-green-100 text-green-600",
           "bg-amber-50 border-amber-100 text-amber-600",
           "bg-cyan-50 border-cyan-100 text-cyan-600",
-          "bg-rose-50 border-rose-100 text-rose-600",
-          "bg-purple-50 border-purple-100 text-purple-600"
+          "bg-rose-50 border-rose-100 text-rose-600"
       ];
       return colors[index % colors.length];
   };
 
-  // --- 1. FETCH EXPERTS ---
-  const fetchExpertsByCity = async (city) => {
-    setLoading(true);
-    try {
-        const { data, error } = await supabase
-            .from('experts')
-            .select('*')
-            .ilike('city', `%${city}%`)
-            .eq('is_verified', true)
-            .limit(10);
-
-        if (!error && data && data.length > 0) {
-            setExperts(data);
-        } else {
-            // Fallback Demo if no experts
-            setExperts([]);
-        }
-    } catch (err) { console.error(err); }
-    setLoading(false);
-  };
-
-  // --- 2. FETCH ADMIN SETTINGS & DATA ---
+  // --- 1. FETCH ALL DATA ---
   useEffect(() => {
-      const fetchAdminData = async () => {
-          
-          // A. Get Theme Color
-          const { data: themeData } = await supabase.from('admin_settings').select('*').eq('setting_key', 'theme_color').single();
-          if (themeData) {
-              const gradients = {
-                  'teal': 'from-teal-900 via-teal-800 to-teal-600',
-                  'blue': 'from-blue-900 via-blue-800 to-blue-600',
-                  'rose': 'from-rose-900 via-rose-800 to-rose-600',
-                  'violet': 'from-violet-900 via-violet-800 to-violet-600'
-              };
-              const accents = {
-                  'teal': 'text-teal-600', 'blue': 'text-blue-600', 'rose': 'text-rose-600', 'violet': 'text-violet-600'
-              };
-              setThemeGradient(gradients[themeData.setting_value] || gradients['teal']);
-              setAccentColor(accents[themeData.setting_value] || accents['teal']);
-          }
+    const fetchAllData = async () => {
+      setLoading(true);
+      try {
+        // A. Admin Settings
+        const { data: themeData } = await supabase.from('admin_settings').select('*').eq('setting_key', 'theme_color').single();
+        if (themeData) {
+            const gradients = {
+                'teal': 'from-teal-900 via-teal-800 to-teal-600',
+                'blue': 'from-blue-900 via-blue-800 to-blue-600',
+                'rose': 'from-rose-900 via-rose-800 to-rose-600'
+            };
+            const accents = {
+                'teal': 'text-teal-600', 'blue': 'text-blue-600', 'rose': 'text-rose-600'
+            };
+            setThemeGradient(gradients[themeData.setting_value] || gradients['teal']);
+            setAccentColor(accents[themeData.setting_value] || accents['teal']);
+        }
+        
+        const { data: tickerData } = await supabase.from('admin_settings').select('*').eq('setting_key', 'ticker_text').single();
+        if (tickerData) setTickerText(tickerData.setting_value || "");
 
-          // B. Get Ticker Text (Running Patti) 📢
-          const { data: tickerData } = await supabase.from('admin_settings').select('*').eq('setting_key', 'ticker_text').single();
-          if (tickerData) setTickerText(tickerData.setting_value);
+        // B. Offers
+        const { data: offerData } = await supabase.from('spotlight_offers').select('*').eq('is_active', true);
+        if (offerData) setOffers(offerData);
 
-          // C. Get Categories 📂
-          const { data: catData } = await supabase.from('categories').select('*').order('id');
-          if (catData && catData.length > 0) {
-              setCategories(catData);
-          } else {
-              // Fallback if DB empty
-              setCategories([
-                { name: "AC Repair", icon: "❄️" },
-                { name: "Plumber", icon: "🚰" }
-              ]);
-          }
+        // C. Services & Prices (Live from DB)
+        const { data: serviceData } = await supabase.from('services').select('*').limit(10);
+        if (serviceData) setServices(serviceData);
 
-          // D. Get Live Offers
-          const { data: offerData } = await supabase.from('spotlight_offers').select('*').order('created_at', { ascending: false });
-          if (offerData) setOffers(offerData);
-      };
-      fetchAdminData();
+        // D. Experts
+        fetchExpertsByCity("Jabalpur");
+
+      } catch (err) { console.error("Fetch Error:", err); }
+      setLoading(false);
+    };
+
+    fetchAllData();
   }, []);
 
-  // --- 3. LIFECYCLE & GPS ---
+  const fetchExpertsByCity = async (city) => {
+    const { data } = await supabase
+        .from('experts')
+        .select('*')
+        .ilike('city', `%${city}%`)
+        .eq('is_verified', true)
+        .limit(10);
+    setExperts(data || []);
+  };
+
+  // --- 2. USER & GPS LOGIC ---
   useEffect(() => {
     document.title = `${BRAND.name} | India's Trusted Home Services`;
-    
-    // User Session
     const getUser = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        setUser(session?.user || null);
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user || null);
     };
     getUser();
 
-    // GPS Logic
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(async (position) => {
         const { latitude, longitude } = position.coords;
         try {
           const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
           const data = await res.json();
-          const addr = data.address;
-          const localArea = addr.suburb || addr.neighbourhood || addr.village || "";
-          const city = addr.city || addr.town || addr.district || "Jabalpur";
-          setLocationName(localArea ? `${localArea}, ${city}` : city);
+          const city = data.address.city || data.address.town || "Jabalpur";
+          setLocationName(data.address.suburb || city);
           setCurrentCity(city);
           fetchExpertsByCity(city);
-        } catch (err) {
-          setLocationName("Jabalpur, MP");
-          fetchExpertsByCity("Jabalpur");
-        }
-      }, () => {
-          setLocationName("Jabalpur (Default)");
-          fetchExpertsByCity("Jabalpur");
-      }, { enableHighAccuracy: true });
-    } else {
-        fetchExpertsByCity("Jabalpur");
+        } catch (err) { fetchExpertsByCity("Jabalpur"); }
+      }, () => fetchExpertsByCity("Jabalpur"));
     }
   }, []);
 
-  // Voice Search
   const handleVoiceSearch = () => {
     if ('webkitSpeechRecognition' in window) {
       const recognition = new window.webkitSpeechRecognition();
@@ -161,29 +142,24 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 font-sans selection:bg-teal-100 relative pb-24">
       
-      {/* 📢 RUNNING PATTI (TICKER) */}
+      {/* 📢 TICKER */}
       {tickerText && (
-          <div className="bg-amber-400 text-slate-900 text-[10px] font-black py-1 overflow-hidden relative z-50">
-             <div className="animate-marquee whitespace-nowrap flex gap-10 uppercase tracking-widest">
-                 <span>📢 {tickerText}</span>
-                 <span>📢 {tickerText}</span>
-                 <span>📢 {tickerText}</span>
-             </div>
-          </div>
+        <div className="bg-amber-400 text-slate-900 text-[11px] font-black py-2 overflow-hidden relative z-50 shadow-md">
+          <marquee scrollamount="6" className="w-full">
+              <span className="flex gap-10 uppercase tracking-widest font-bold">
+                  📢 {tickerText} &nbsp;&nbsp;&nbsp;&nbsp; 🔥 {tickerText}
+              </span>
+          </marquee>
+        </div>
       )}
 
-      <Navbar />
+      <Navbar user={user} />
       <SOSButton />
 
       {/* --- HERO SECTION --- */}
       <div className={`relative pt-6 pb-24 px-6 rounded-b-[2.5rem] shadow-2xl overflow-hidden transition-all duration-1000 bg-gradient-to-br ${themeGradient}`}>
-        
-        {/* Decorative Pattern */}
         <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #ffffff 2px, transparent 2px)', backgroundSize: '20px 20px' }}></div>
-        <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
-        
         <div className="relative z-10 max-w-4xl mx-auto">
-          {/* Location Header */}
           <div className="flex items-center gap-3 mb-8 bg-white/10 backdrop-blur-md w-fit px-4 py-2 rounded-full border border-white/20 shadow-lg">
             <div className={`p-1.5 rounded-full ${cityStatus.active ? 'bg-amber-400' : 'bg-red-500'} animate-pulse shadow-md`}>
                <MapPin size={16} className="text-teal-900" />
@@ -193,22 +169,19 @@ export default function Home() {
                 <h2 className="text-sm font-black text-white leading-none tracking-wide">{locationName}</h2>
             </div>
           </div>
-
           <h1 className="text-3xl sm:text-4xl font-black text-white leading-tight mb-8">
               Experts at your doorstep in <br/>
               <span className="text-amber-400 underline decoration-amber-400/30 underline-offset-8">{currentCity}</span>
           </h1>
-
-          {/* Search Bar */}
           <div className="relative z-30"> 
-              <div className="relative shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-2xl bg-white z-50 group-focus-within:scale-[1.02]">
+              <div className="relative shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-2xl bg-white z-50">
                 <Search className="absolute left-5 top-5 text-slate-400" size={22} />
                 <input 
                   type="text" 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={`Search in ${currentCity}...`} 
-                  className="w-full p-5 pl-14 pr-14 rounded-2xl bg-white text-slate-900 font-bold text-lg focus:ring-4 focus:ring-amber-400/50 outline-none transition-all placeholder:text-slate-300"
+                  className="w-full p-5 pl-14 pr-14 rounded-2xl bg-white text-slate-900 font-bold text-lg focus:ring-4 focus:ring-amber-400/50 outline-none"
                 />
                 <button onClick={handleVoiceSearch} className={`absolute right-4 top-3.5 p-2 rounded-xl transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'text-teal-700 bg-teal-50 hover:bg-teal-100'}`}>
                   <Mic size={22} />
@@ -218,37 +191,13 @@ export default function Home() {
         </div>
       </div>
 
-      {/* --- TRUST BADGES --- */}
-      <div className="px-6 -mt-10 relative z-20 max-w-4xl mx-auto">
-          <div className="bg-white p-4 rounded-2xl shadow-lg border border-slate-100 flex justify-between items-center">
-              <div className="flex flex-col items-center gap-1">
-                  <div className="bg-green-100 p-2 rounded-full text-green-700"><ShieldCheck size={18} /></div>
-                  <span className="text-[10px] font-bold text-slate-600">Verified</span>
-              </div>
-              <div className="w-[1px] h-8 bg-slate-100"></div>
-              <div className="flex flex-col items-center gap-1">
-                  <div className="bg-amber-100 p-2 rounded-full text-amber-700"><Star size={18} /></div>
-                  <span className="text-[10px] font-bold text-slate-600">4.8 Rated</span>
-              </div>
-              <div className="w-[1px] h-8 bg-slate-100"></div>
-              <div className="flex flex-col items-center gap-1">
-                  <div className="bg-blue-100 p-2 rounded-full text-blue-700"><Wallet size={18} /></div>
-                  <span className="text-[10px] font-bold text-slate-600">Affordable</span>
-              </div>
-          </div>
-      </div>
-
-      {/* --- CATEGORIES (Dynamic) --- */}
+      {/* --- CATEGORIES --- */}
       <div className="mt-8 px-6 max-w-4xl mx-auto">
-          <div className="flex justify-between items-center mb-4">
-              <h2 className="font-bold text-slate-900 text-lg">Categories</h2>
-              <span className={`text-xs font-bold cursor-pointer hover:underline ${accentColor}`}>View All</span>
-          </div>
-          
+          <h2 className="font-bold text-slate-900 text-lg mb-4">Categories</h2>
           <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
-              {categories.map((cat, i) => (
-                  <div key={i} onClick={() => navigate(`/services/${cat.name.toLowerCase().replace(' ', '-')}`)} className="flex flex-col items-center gap-2 min-w-[72px] cursor-pointer group active:scale-90 transition-transform duration-200">
-                      <div className={`w-16 h-16 ${getColorByIndex(i)} border rounded-2xl flex items-center justify-center text-2xl group-hover:shadow-md transition-all`}>
+              {defaultCategories.map((cat, i) => (
+                  <div key={i} onClick={() => navigate(`/services/${cat.name.toLowerCase().replace(' ', '-')}`)} className="flex flex-col items-center gap-2 min-w-[72px] cursor-pointer group active:scale-90 transition-transform">
+                      <div className={`w-16 h-16 ${getColorByIndex(i)} border rounded-2xl flex items-center justify-center text-2xl bg-white shadow-sm group-hover:shadow-md transition-all`}>
                           {cat.icon}
                       </div>
                       <span className="text-[11px] font-bold text-slate-600 whitespace-nowrap">{cat.name}</span>
@@ -257,10 +206,34 @@ export default function Home() {
           </div>
       </div>
 
+      {/* --- POPULAR SERVICES (DB LINKED) --- */}
+      <div className="mt-6 px-6 max-w-4xl mx-auto">
+          <h2 className="font-bold text-slate-900 text-lg mb-4 flex items-center gap-2">
+            <Tag size={20} className="text-pink-500" /> Popular Services
+          </h2>
+          <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+             {services.length > 0 ? services.map((service, i) => (
+                 <div key={i} className="min-w-[160px] bg-white border border-slate-100 p-4 rounded-2xl shadow-sm hover:shadow-md transition-all cursor-pointer group">
+                    <div className="flex justify-between items-start mb-2">
+                        <span className="text-2xl group-hover:scale-110 transition-transform">⚡</span>
+                        <span className="bg-green-100 text-green-700 text-[10px] font-black px-2 py-0.5 rounded-full border border-green-200">
+                          ₹{service.base_price || service.price}
+                        </span>
+                    </div>
+                    <h3 className="font-bold text-slate-800 text-sm leading-tight mb-1">{service.name}</h3>
+                    <p className="text-[10px] text-slate-400">{service.category}</p>
+                 </div>
+             )) : (
+                 <div className="text-xs text-slate-400 italic p-4 border border-dashed rounded-xl w-full text-center">
+                    Services are being updated...
+                 </div>
+             )}
+          </div>
+      </div>
+
       {/* --- SPOTLIGHT OFFERS --- */}
-      <div className="mt-8 px-6 max-w-4xl mx-auto">
+      <div className="mt-6 px-6 max-w-4xl mx-auto">
           <h2 className="font-bold text-slate-900 text-lg mb-4 flex items-center gap-2"><Gift size={20} className="text-amber-500" /> In Spotlight</h2>
-          
           <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
               {offers.length > 0 ? offers.map((item) => (
                   <div key={item.id} className={`min-w-[260px] h-36 rounded-3xl relative overflow-hidden shadow-lg bg-gradient-to-r ${item.gradient_color || 'from-teal-600 to-teal-800'} cursor-pointer`}>
@@ -269,29 +242,21 @@ export default function Home() {
                           <h3 className="font-black text-xl mt-2 w-2/3 leading-tight drop-shadow-md">{item.title}</h3>
                           <p className="font-bold text-sm mt-1 text-white/90">{item.discount_text}</p>
                       </div>
-                      <img 
-                        src={item.image_url} 
-                        onError={(e) => e.target.style.display = 'none'}
-                        className="absolute right-0 bottom-0 w-32 h-32 object-contain translate-x-4 translate-y-4 drop-shadow-xl" 
-                        alt={item.title} 
-                      />
+                      <img src={item.image_url} onError={(e) => e.target.style.display = 'none'} className="absolute right-0 bottom-0 w-32 h-32 object-contain translate-x-4 translate-y-4" alt="" />
                   </div>
               )) : (
-                  <div className="w-full text-center p-6 border-2 border-dashed border-slate-300 rounded-2xl text-slate-400">
-                      Stay tuned for exciting offers!
-                  </div>
+                 <div className="text-xs text-slate-400 italic w-full text-center">No active offers.</div>
               )}
           </div>
       </div>
 
-      {/* --- REAL EXPERTS LIST --- */}
+      {/* --- EXPERTS LIST --- */}
       <div className="mt-6 px-6 mb-4 max-w-4xl mx-auto">
           <h2 className="font-bold text-slate-900 text-lg mb-4 flex items-center gap-2">
               <TrendingUp size={20} className={accentColor} /> Top Experts in {currentCity}
           </h2>
-          
           {loading ? (
-            <p className="text-center text-gray-400 py-10">Finding best experts nearby...</p>
+            <p className="text-center text-gray-400 py-10 font-bold animate-pulse">Finding best experts nearby...</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {experts.map((expert) => (
@@ -299,31 +264,32 @@ export default function Home() {
                 ))}
             </div>
           )}
-          
           {!loading && experts.length === 0 && (
-             <div className="text-center py-10 bg-white rounded-xl border border-dashed border-gray-300">
-                <p className="text-gray-500">No experts found in {currentCity} yet.</p>
-                <p className="text-sm text-teal-600 mt-2">Be the first to join KonnectPro here!</p>
+             <div className="text-center py-10 bg-white rounded-3xl border border-dashed border-gray-300 mx-auto">
+                <p className="text-gray-500 font-bold">No experts found in {currentCity} yet.</p>
              </div>
           )}
       </div>
 
       <Footer />
-
-      {/* --- BOTTOM NAV --- */}
-      <div className="fixed bottom-0 w-full bg-white border-t border-gray-100 px-6 py-3 flex justify-between items-center z-50 pb-safe max-w-md mx-auto left-0 right-0">
-        <button onClick={() => window.scrollTo(0,0)} className={`flex flex-col items-center gap-1 ${accentColor}`}>
+      
+      {/* BOTTOM NAV */}
+      <div className="fixed bottom-0 w-full bg-white border-t border-gray-100 px-6 py-3 flex justify-between items-center z-50 max-w-md mx-auto left-0 right-0 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+        <button onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className={`flex flex-col items-center gap-1 ${accentColor}`}>
             <HomeIcon size={24} /> <span className="text-[10px] font-bold">Home</span>
         </button>
-        <button onClick={() => navigate('/bookings')} className="flex flex-col items-center gap-1 text-slate-400 hover:text-teal-700">
+        <button onClick={() => navigate('/bookings')} className="flex flex-col items-center gap-1 text-slate-400">
             <Calendar size={24} /> <span className="text-[10px] font-bold">Bookings</span>
         </button>
         <div className="relative -top-6">
-            <button className={`p-4 rounded-full shadow-xl ring-4 ring-white hover:scale-110 transition-transform ${themeGradient.replace('via-teal-800', '').replace('to-teal-600', '')}`}> 
-               <Zap size={24} fill="white" className="text-white" />
+            <button className={`p-4 rounded-full shadow-2xl ring-4 ring-white bg-teal-600 text-white active:scale-90 transition-transform`}> 
+               <Zap size={24} fill="white" />
             </button>
         </div>
-        <button onClick={() => navigate('/admin')} className="flex flex-col items-center gap-1 text-slate-400 hover:text-teal-700">
+        <button onClick={() => alert("No Alerts")} className="flex flex-col items-center gap-1 text-slate-400">
+            <Bell size={24} /> <span className="text-[10px] font-bold">Alerts</span>
+        </button>
+        <button onClick={() => navigate('/admin')} className="flex flex-col items-center gap-1 text-slate-400">
             <User size={24} /> <span className="text-[10px] font-bold">Admin</span>
         </button>
       </div>

@@ -9,6 +9,13 @@ import Login from './pages/auth/Login';
 import Bookings from './pages/customer/Bookings';
 import CategoryView from './pages/customer/CategoryView';
 import DeepakHQ from './pages/admin/DeepakHQ'; // ✅ Admin Panel Import
+import About from './pages/legal/About';
+import Privacy from './pages/legal/Privacy';
+import Terms from './pages/legal/Terms';
+import Refund from './pages/legal/Refund';
+import AntiDiscrimination from './pages/legal/AntiDiscrimination';
+import Careers from './pages/legal/Careers';
+import RegisterProfessional from './pages/legal/RegisterProfessional';
 
 function App() {
   const [session, setSession] = useState(null);
@@ -51,6 +58,15 @@ function App() {
         <Route path="/deepakhq" element={<DeepakHQ />} />        
 
         {/* --- CATCH ALL --- */}
+                {/* --- LEGAL ROUTES --- */}
+        <Route path="/about" element={<About />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/refund-policy" element={<Refund />} />
+        <Route path="/anti-discrimination" element={<AntiDiscrimination />} />
+        <Route path="/anti-discrimination" element={<AntiDiscrimination />} />
+<Route path="/careers" element={<Careers />} />
+<Route path="/register-expert" element={<RegisterProfessional />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

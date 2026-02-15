@@ -18,6 +18,7 @@ import WalletManager from './tabs/WalletManager';
 import CategoryManager from './tabs/CategoryManager';
 import MarketingTab from './tabs/MarketingTab';       
 import RevenueTab from './tabs/RevenueTab'; // ✅ NEW: Added Missing Import
+import LegalManager from './LegalManager'; // Import करें
 
 export default function DeepakHQ() {
   const navigate = useNavigate();
@@ -137,6 +138,7 @@ export default function DeepakHQ() {
                 
                 {activeTab === 'offers' && <ManageOffers />}
                 {activeTab === 'settings' && <SettingsTab />}
+                {activeTab === 'legal' && <LegalManager />}
             </div>
         </main>
       </div>

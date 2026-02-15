@@ -5,7 +5,7 @@ export const BRAND = {
   tagline: "Expert Connections, Trusted Results",
   
   // ✅ NEW: Admin Controlled Tagline (Default value)
-  dynamicTagline: "Experts at your doorstep in Jabalpur", 
+  dynamicTagline: "Expert Services at your doorstep", 
   
   // Astro-Numerology Colors (Mercury, Sun, Venus)
   theme: {
