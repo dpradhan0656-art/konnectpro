@@ -2,8 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { 
   UserCheck, UserX, Search, Phone, MapPin, Plus, Edit, Trash2, X,
-  CreditCard, ShieldAlert, CheckCircle2, AlertTriangle, Star, Lock
+  CreditCard, ShieldAlert, CheckCircle2, AlertTriangle, Star, Lock, Briefcase
 } from 'lucide-react';
+
+// ✅ Category List (Taaki spelling mismatch na ho)
+const CATEGORIES = [
+  "Electrician",
+  "Plumber",
+  "AC Repair",
+  "Cleaning",
+  "Carpenter",
+  "Painter",
+  "Pest Control"
+];
 
 export default function ExpertControl() {
   // --- STATE ---
@@ -12,11 +23,17 @@ export default function ExpertControl() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('pending'); // Tabs: pending, approved, rejected
 
-  // --- MODAL STATE (From Old Code) ---
+  // --- MODAL STATE ---
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  
+  // ✅ Default State
   const [formData, setFormData] = useState({
-      name: '', phone: '', service_category: 'Plumber', city: 'Jabalpur', password: ''
+      name: '', 
+      phone: '', 
+      service_category: 'Electrician', // Default
+      city: 'Jabalpur', 
+      password: ''
   });
 
   // --- 1. FETCH DATA ---
@@ -26,7 +43,6 @@ export default function ExpertControl() {
 
   const fetchExperts = async () => {
     setLoading(true);
-    // Hum wahi experts layenge jo selected tab (status) ke hain
     const { data } = await supabase
       .from('experts')
       .select('*')
@@ -47,13 +63,12 @@ export default function ExpertControl() {
       .eq('id', id);
 
     if (!error) {
-        fetchExperts(); // Refresh list
+        fetchExperts(); 
     } else {
         alert("Error updating status");
     }
   };
 
-  // --- 3. CRUD ACTIONS (Add/Edit/Delete from Old Code) ---
   const deleteExpert = async (id) => {
       if(confirm("🛑 DANGER: Delete this expert permanently?")) {
           await supabase.from('experts').delete().eq('id', id);
@@ -61,44 +76,69 @@ export default function ExpertControl() {
       }
   };
 
+  // --- 3. MODAL ACTIONS (Open/Close) ---
   const openAddModal = () => {
       setEditingId(null);
-      setFormData({ name: '', phone: '', service_category: 'Plumber', city: 'Jabalpur', password: '' });
+      setFormData({ name: '', phone: '', service_category: 'Electrician', city: 'Jabalpur', password: '' });
       setIsModalOpen(true);
   };
 
   const openEditModal = (expert) => {
       setEditingId(expert.id);
+      // ✅ Data Populate karte waqt dhyaan dein
       setFormData({ 
-          name: expert.name, 
-          phone: expert.phone, 
-          service_category: expert.service_category, 
+          name: expert.name || '', 
+          phone: expert.phone || '', 
+          service_category: expert.service_category || 'Electrician', // Fallback
           city: expert.city || '', 
-          password: '' // Security: Password field blank rakhenge
+          password: '' 
       });
       setIsModalOpen(true);
   };
 
+  // --- 4. SAVE / UPDATE LOGIC (The Fix) ---
   const handleSave = async (e) => {
       e.preventDefault();
       setLoading(true);
       
-      const payload = { ...formData };
-      if (!payload.password) delete payload.password; // Empty password mat bhejo
+      // ✅ Payload ko clean banayein
+      const payload = {
+          name: formData.name,
+          phone: formData.phone,
+          service_category: formData.service_category, // 👈 Ye ab sahi value lega
+          city: formData.city
+      };
+
+      // Password tabhi bheje jab bhara gaya ho
+      if (formData.password && formData.password.trim() !== "") {
+          payload.password = formData.password;
+      }
+
+      console.log("Saving Data:", payload); // Debugging ke liye check karein console me
 
       if (editingId) {
-          // UPDATE
-          const { error } = await supabase.from('experts').update(payload).eq('id', editingId);
+          // 👉 UPDATE EXISTING
+          const { error } = await supabase
+              .from('experts')
+              .update(payload)
+              .eq('id', editingId);
+          
           if(error) alert("Error: " + error.message);
+          else alert("✅ Profile Updated Successfully!");
+
       } else {
-          // INSERT NEW
-          const { error } = await supabase.from('experts').insert([{ 
-              ...payload, 
-              status: 'approved', // Admin add kar raha hai to direct approve
-              is_verified: true,
-              rating: 5.0 
-          }]);
+          // 👉 ADD NEW
+          const { error } = await supabase
+              .from('experts')
+              .insert([{ 
+                  ...payload, 
+                  status: 'approved', 
+                  is_verified: true,
+                  rating: 5.0 
+              }]);
+          
           if(error) alert("Error: " + error.message);
+          else alert("✅ New Expert Added!");
       }
 
       setLoading(false);
@@ -106,7 +146,7 @@ export default function ExpertControl() {
       fetchExperts();
   };
 
-  // --- 4. FILTER ---
+  // --- 5. FILTER ---
   const filteredExperts = experts.filter(exp => 
     exp.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
     exp.phone?.includes(searchTerm)
@@ -125,7 +165,6 @@ export default function ExpertControl() {
         </div>
         
         <div className="flex flex-wrap items-center gap-2">
-            {/* Tabs */}
             <div className="flex bg-slate-950 p-1.5 rounded-2xl border border-slate-800">
                 {['pending', 'approved', 'rejected'].map(s => (
                     <button key={s} onClick={() => setFilterStatus(s)} className={`px-4 py-2 rounded-xl text-xs font-bold capitalize transition-all ${filterStatus === s ? 'bg-teal-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}>
@@ -133,7 +172,6 @@ export default function ExpertControl() {
                     </button>
                 ))}
             </div>
-            {/* Add Button */}
             <button onClick={openAddModal} className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-3 rounded-xl font-bold flex items-center gap-2 border border-slate-700">
                 <Plus size={16}/> <span className="hidden sm:inline">Add Manual</span>
             </button>
@@ -145,7 +183,7 @@ export default function ExpertControl() {
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors" size={18}/>
         <input 
           type="text" 
-          placeholder="Search by name or phone..." 
+          placeholder="Search by name, phone..." 
           className="w-full bg-slate-900 border border-slate-800 p-4 pl-12 rounded-2xl outline-none focus:border-teal-500 transition-all font-bold text-slate-200"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -161,7 +199,7 @@ export default function ExpertControl() {
         ) : filteredExperts.map((exp) => (
           <div key={exp.id} className="bg-slate-900 border border-slate-800 rounded-[2rem] p-6 hover:border-teal-500/50 transition-all group relative overflow-hidden">
             
-            {/* Top Right Actions (Edit/Delete) - FROM OLD CODE */}
+            {/* Top Right Actions */}
             <div className="absolute top-4 right-4 flex gap-2">
                 <button onClick={() => openEditModal(exp)} className="p-2 bg-slate-800 text-blue-400 rounded-lg hover:bg-blue-600 hover:text-white transition"><Edit size={14}/></button>
                 <button onClick={() => deleteExpert(exp.id)} className="p-2 bg-slate-800 text-red-400 rounded-lg hover:bg-red-600 hover:text-white transition"><Trash2 size={14}/></button>
@@ -174,7 +212,7 @@ export default function ExpertControl() {
                 <div>
                     <h3 className="text-lg font-black text-white group-hover:text-teal-400 transition-colors">{exp.name}</h3>
                     <div className="flex items-center gap-2">
-                        <p className="text-teal-600 text-xs font-bold uppercase tracking-wider">{exp.service_category}</p>
+                        <p className="text-teal-600 text-xs font-bold uppercase tracking-wider flex items-center gap-1"><Briefcase size={10}/> {exp.service_category}</p>
                         <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 flex items-center gap-1">
                              <Star size={8} fill="currentColor"/> {exp.rating || 5.0}
                         </span>
@@ -189,7 +227,7 @@ export default function ExpertControl() {
 
             <hr className="my-5 border-slate-800" />
 
-            {/* KYC & BANKING (Important for Verification) - FROM NEW CODE */}
+            {/* KYC Details */}
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div className="space-y-1">
                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Aadhaar</p>
@@ -205,11 +243,11 @@ export default function ExpertControl() {
                 </div>
             </div>
 
-            {/* APPROVE / REJECT BUTTONS (Only for Pending) */}
+            {/* Verify Buttons */}
             {filterStatus === 'pending' && (
                 <div className="flex gap-3">
                     <button onClick={() => handleStatusUpdate(exp.id, 'approved')} className="flex-1 bg-green-600 hover:bg-green-500 text-white py-3 rounded-xl font-bold text-xs flex justify-center items-center gap-2 shadow-lg shadow-green-900/20">
-                        <CheckCircle2 size={16}/> Approve Expert
+                        <CheckCircle2 size={16}/> Approve
                     </button>
                     <button onClick={() => handleStatusUpdate(exp.id, 'rejected')} className="px-4 bg-slate-800 hover:bg-red-900/50 text-slate-400 hover:text-red-400 py-3 rounded-xl font-bold text-xs border border-slate-700">
                         <UserX size={16}/> Block
@@ -217,7 +255,7 @@ export default function ExpertControl() {
                 </div>
             )}
             
-            {/* IF BLOCKED - Show Unblock Option */}
+            {/* Unblock Option */}
             {filterStatus === 'rejected' && (
                  <button onClick={() => handleStatusUpdate(exp.id, 'pending')} className="w-full bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-bold text-xs border border-slate-700">
                     Restore to Pending
@@ -228,7 +266,7 @@ export default function ExpertControl() {
         ))}
       </div>
 
-      {/* --- ADD / EDIT MODAL (From Old Code) --- */}
+      {/* --- ADD / EDIT MODAL --- */}
       {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
               <div className="bg-slate-900 w-full max-w-md rounded-3xl border border-slate-700 shadow-2xl overflow-hidden">
@@ -257,14 +295,31 @@ export default function ExpertControl() {
                                   value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} />
                           </div>
                       </div>
+                      
+                      {/* ✅ FIXED CATEGORY SELECTOR */}
                       <div>
-                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Category</label>
-                          <select className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-white focus:border-teal-500 outline-none"
-                              value={formData.service_category} onChange={e => setFormData({...formData, service_category: e.target.value})}>
-                              <option>Electrician</option><option>Plumber</option><option>AC Repair</option><option>Cleaning</option><option>Carpenter</option>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Service Category</label>
+                          <select 
+                              className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-white focus:border-teal-500 outline-none"
+                              value={formData.service_category} 
+                              onChange={e => setFormData({...formData, service_category: e.target.value})}
+                          >
+                              {CATEGORIES.map(cat => (
+                                  <option key={cat} value={cat}>{cat}</option>
+                              ))}
                           </select>
                       </div>
-                      <button disabled={loading} className="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-4 rounded-xl shadow-lg mt-4">
+
+                      {/* Password Field */}
+                      <div>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 flex items-center gap-1"><Lock size={10}/> Login Password</label>
+                          <input type="text" placeholder={editingId ? "Leave blank to keep same" : "Set password"}
+                              className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-white focus:border-teal-500 outline-none"
+                              value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})}
+                          />
+                      </div>
+
+                      <button disabled={loading} className="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-4 rounded-xl shadow-lg mt-4 transition-transform active:scale-95">
                           {loading ? 'Saving...' : (editingId ? 'Update Profile' : 'Create & Approve')}
                       </button>
                   </form>
