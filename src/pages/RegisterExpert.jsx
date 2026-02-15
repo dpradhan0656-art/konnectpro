@@ -65,10 +65,14 @@ export default function RegisterExpert() {
     return 'hindi';
   };
 
-  // --- 3. GPS LOGIC (With Language Switch) ---
+// --- 2. GPS LOGIC (Corrected Version) ---
   const detectLocation = () => {
     setLocLoading(true);
-    if (!navigator.geolocation) { alert("GPS not supported"); setLocLoading(false); return; }
+    if (!navigator.geolocation) { 
+      alert("GPS not supported"); 
+      setLocLoading(false); 
+      return; 
+    }
 
     navigator.geolocation.getCurrentPosition(async (pos) => {
       try {
@@ -76,8 +80,8 @@ export default function RegisterExpert() {
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
         const data = await res.json();
         
-        // ✅ Variable name correctly defined as cleanAddr
-        const cleanAddr = data.display_name.replace(/[^\x00-\x7F]/g, "").trim(); 
+        // ✅ Yahan humne variable ka naam 'cleanAddr' rakha hai
+        const cleanAddr = data.display_name ? data.display_name.replace(/[^\x00-\x7F]/g, "").trim() : ""; 
         const city = data.address.city || data.address.town || "Jabalpur";
         const state = data.address.state || "Madhya Pradesh";
 
@@ -87,7 +91,7 @@ export default function RegisterExpert() {
 
         setFormData(prev => ({ 
           ...prev, 
-          address: cleanAddr, // ✅ Fix applied here
+          address: cleanAddr, // ✅ Fix: Ab 'cleanAddr' hi use ho raha hai
           city: city, 
           state: state 
         }));
@@ -96,7 +100,10 @@ export default function RegisterExpert() {
         alert("Location failed. Fill manually."); 
       }
       setLocLoading(false);
-    }, () => { alert("Please enable GPS"); setLocLoading(false); });
+    }, () => { 
+      alert("Please enable GPS"); 
+      setLocLoading(false); 
+    });
   };
 
   // --- 4. SUBMIT FORM (Master Logic) ---
