@@ -1,0 +1,276 @@
+﻿import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabase'; 
+import { BRAND } from '../../config/brandConfig';
+import { useCart } from '../../context/CartContext'; 
+
+// Components
+import SOSButton from '../../components/common/SOSButton';
+
+// Icons
+import { 
+  Search, Mic, MapPin, Gift, Tag, Check, Plus, X, 
+  Home as HomeIcon, Calendar, Bell, User, ShoppingCart,
+  ShieldCheck, Wind, Sparkles, Zap, Droplet, Hammer, Paintbrush, Clock, CheckCircle
+} from 'lucide-react';
+
+export default function Home({ session }) {
+  const navigate = useNavigate();
+  const { addToCart, cart } = useCart(); 
+
+  // States
+  const [locationName, setLocationName] = useState('Detecting...');
+  const [isEditingLoc, setIsEditingLoc] = useState(false);
+  const [cityStatus, setCityStatus] = useState({ active: true, message: "Serving In" });
+  
+  // ✅ DEFAULT POLITE GREETING
+  const [greeting, setGreeting] = useState("Welcome! How can we help you today?"); 
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Data States
+  const [offers, setOffers] = useState([]); 
+  const [services, setServices] = useState([]); 
+  // ❌ REMOVED: Ticker State yahan se hata diya hai
+  const [loading, setLoading] = useState(true);
+
+  // ✅ FIXED CATEGORIES
+  const defaultCategories = [
+    { name: "AC Repair", icon: <Wind size={24} className="text-blue-600"/>, color: "bg-blue-50 border-blue-200" },
+    { name: "Cleaning", icon: <Sparkles size={24} className="text-green-600"/>, color: "bg-green-50 border-green-200" },
+    { name: "Electrician", icon: <Zap size={24} className="text-amber-600"/>, color: "bg-amber-50 border-amber-200" },
+    { name: "Plumber", icon: <Droplet size={24} className="text-cyan-600"/>, color: "bg-cyan-50 border-cyan-200" },
+    { name: "Carpenter", icon: <Hammer size={24} className="text-orange-600"/>, color: "bg-orange-50 border-orange-200" },
+    { name: "Painter", icon: <Paintbrush size={24} className="text-purple-600"/>, color: "bg-purple-50 border-purple-200" }
+  ];
+
+  const filteredCategories = defaultCategories.filter(cat => 
+    cat.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // --- FETCH DATA ---
+  useEffect(() => {
+    const fetchAllData = async () => {
+      setLoading(true);
+      try {
+        // ❌ REMOVED: Ticker fetch logic yahan se hata diya
+
+        const { data: offerData } = await supabase.from('spotlight_offers').select('*').eq('is_active', true);
+        if (offerData) setOffers(offerData);
+
+        const { data: serviceData } = await supabase.from('services').select('*').limit(10);
+        if (serviceData) setServices(serviceData);
+
+      } catch (err) { console.error("Fetch Error:", err); }
+      setLoading(false);
+    };
+
+    fetchAllData();
+  }, []);
+
+  // --- 🌍 POLITE & RESPECTFUL GPS LOGIC ---
+  useEffect(() => {
+    document.title = `${BRAND.name} | Shield of Trust`;
+    
+    const cityGreetings = {
+      "jabalpur": "Namaste! Aapka swagat hai. Kahiye, aaj hum aapki kya seva kar sakte hain?",
+      "indore": "Namaste! Swagat hai aapka. Bataiye, kaise madad karein?",
+      "bhopal": "Namaste! Swagat hai aapka. Bataiye, kya seva karein?",
+      "delhi": "Namaste ji! Swagat hai. Bataiye, hum aapke liye kya kar sakte hain?",
+      "mumbai": "Namaskar! Swagat aahe. Bola, aamhi tumchi kay madat karu shakto?",
+      "pune": "Namaskar! Swagat aahe. Bola, kay sewa karu?",
+      "bengaluru": "Namaskara! Swagatha. Bataiye, hum aapki kaise madad kar sakte hain?",
+      "hyderabad": "Namaskaram! Swagatam. Memu meeku ela sahayapadagalamu?",
+      "kolkata": "Nomoshkar! Apnar swagoto. Bolun, amra apnar ki bhabe sahajyo korte pari?",
+    };
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=en`);
+          const data = await res.json();
+          
+          const city = data.address.city || data.address.town || data.address.village || "Jabalpur";
+          const area = data.address.suburb || data.address.neighbourhood || city;
+          
+          setLocationName(area);
+          
+          const lowerCity = city.toLowerCase();
+          
+          if (cityGreetings[lowerCity]) {
+            setGreeting(cityGreetings[lowerCity]); 
+          } else {
+            setGreeting(`Welcome to ${city}! How can we help you today?`); 
+          }
+
+        } catch (err) { console.error("GPS Error", err); }
+      }, () => { console.log("GPS Permission Denied"); });
+    }
+  }, []);
+
+  const handleVoiceSearch = () => { alert("🎤 Voice Search coming soon!"); };
+
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans selection:bg-teal-100 relative pb-32">
+      
+      {/* ❌ REMOVED: Yahan se Ticker Code hata diya hai */}
+
+      <SOSButton />
+
+      {/* --- HERO SECTION --- */}
+      <div className={`relative pt-6 pb-24 px-6 rounded-b-[2.5rem] shadow-2xl overflow-hidden transition-all duration-1000 bg-[#0f172a]`}>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
+        
+        <div className="relative z-10 max-w-4xl mx-auto">
+          
+          {/* Location Badge */}
+          <div className="flex items-center gap-3 mb-8 bg-white/5 backdrop-blur-md w-fit px-4 py-2 rounded-full border border-white/10 mt-4">
+            <div className={`p-1.5 rounded-full ${cityStatus.active ? 'bg-green-500' : 'bg-red-500'} animate-pulse shadow-md`}>
+               <MapPin size={14} className="text-white" />
+            </div>
+            <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{cityStatus.message}</p>
+                {isEditingLoc ? (
+                    <input 
+                        autoFocus
+                        className="bg-transparent border-b border-white text-white font-black text-sm w-32 outline-none"
+                        value={locationName}
+                        onChange={(e) => setLocationName(e.target.value)}
+                        onBlur={() => setIsEditingLoc(false)}
+                    />
+                ) : (
+                    <h2 onClick={() => setIsEditingLoc(true)} className="text-sm font-black text-white leading-none tracking-wide cursor-pointer border-b border-transparent hover:border-white/50 transition-all">
+                        {locationName}
+                    </h2>
+                )}
+            </div>
+          </div>
+
+          {/* ✨ POLITE GREETING */}
+          <h1 className="text-2xl sm:text-3xl font-bold text-white leading-tight mb-8 drop-shadow-lg">
+              {greeting}
+          </h1>
+
+          <div className="relative z-30"> 
+              <div className="relative shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-2xl bg-white z-50 transform translate-y-4">
+                <Search className="absolute left-5 top-5 text-slate-400" size={22} />
+                <input 
+                  type="text" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={`Search 'AC', 'Plumber'...`} 
+                  className="w-full p-5 pl-14 pr-14 rounded-2xl bg-white text-slate-900 font-bold text-lg focus:ring-4 focus:ring-teal-500/20 outline-none"
+                />
+                {searchQuery && (
+                    <button onClick={() => setSearchQuery('')} className="absolute right-14 top-3.5 p-2 text-slate-400 hover:text-red-500">
+                        <X size={22} />
+                    </button>
+                )}
+                <button onClick={handleVoiceSearch} className="absolute right-4 top-3.5 p-2 rounded-xl text-teal-700 bg-teal-50 hover:bg-teal-100 transition-all">
+                  <Mic size={22} />
+                </button>
+              </div>
+          </div>
+        </div>
+      </div>
+
+      {/* --- CATEGORIES --- */}
+      <div className="mt-16 px-6 max-w-4xl mx-auto relative z-20"> 
+          <h2 className="font-bold text-slate-900 text-lg mb-4">Categories</h2>
+          {filteredCategories.length > 0 ? (
+            <div className="flex gap-4 overflow-x-auto pb-4 pt-2 no-scrollbar">
+                {filteredCategories.map((cat, i) => (
+                    <div key={i} onClick={() => navigate(`/category/${cat.name.toLowerCase().replace(' ', '-')}`)} className="flex flex-col items-center gap-3 min-w-[80px] cursor-pointer group active:scale-95 transition-all">
+                        <div className={`w-18 h-18 p-4 ${cat.color} border rounded-2xl flex items-center justify-center bg-white shadow-sm group-hover:shadow-lg transition-all`}>
+                            {cat.icon}
+                        </div>
+                        <span className="text-xs font-bold text-slate-700 whitespace-nowrap group-hover:text-teal-600 transition-colors">{cat.name}</span>
+                    </div>
+                ))}
+            </div>
+          ) : ( <p className="text-center text-slate-400 text-sm py-4">No categories found.</p> )}
+      </div>
+
+      {/* --- POPULAR SERVICES --- */}
+      <div className="mt-6 px-6 max-w-4xl mx-auto">
+          <h2 className="font-bold text-slate-900 text-lg mb-4 flex items-center gap-2"><Tag size={20} className="text-pink-500" /> Popular Services</h2>
+          <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+              {services.length > 0 ? services.map((service, i) => {
+                  const isInCart = cart.find(item => item.id === service.id);
+                  const displayPrice = service.base_price || service.price || 199;
+                  return (
+                   <div key={i} className="min-w-[180px] bg-white border border-slate-100 p-4 rounded-2xl shadow-sm hover:shadow-md transition-all group relative">
+                       <div className="flex justify-between items-start mb-2">
+                           <span className="bg-slate-100 p-2 rounded-lg text-slate-500"><Zap size={18}/></span>
+                           <span className="bg-green-100 text-green-700 text-[10px] font-black px-2 py-1 rounded-full border border-green-200">₹{displayPrice}</span>
+                       </div>
+                       <h3 className="font-bold text-slate-800 text-sm leading-tight mb-1">{service.name}</h3>
+                       <p className="text-[10px] text-slate-400 mb-3">{service.category}</p>
+                       <button onClick={() => addToCart(service)} disabled={isInCart} className={`w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-95 ${isInCart ? 'bg-green-500 text-white cursor-default' : 'bg-[#0f172a] text-white hover:bg-slate-800'}`}>
+                         {isInCart ? <><Check size={14}/> Added</> : <><Plus size={14}/> Add</>}
+                       </button>
+                   </div>
+                  );
+              }) : ( <div className="text-xs text-slate-400 italic p-4 border border-dashed rounded-xl w-full text-center">Loading popular services...</div> )}
+          </div>
+      </div>
+
+      {/* --- OFFERS --- */}
+      <div className="mt-6 px-6 max-w-4xl mx-auto">
+          <h2 className="font-bold text-slate-900 text-lg mb-4 flex items-center gap-2"><Gift size={20} className="text-amber-500" /> In Spotlight</h2>
+          <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+              {offers.length > 0 ? offers.map((item) => (
+                  <div key={item.id} className={`min-w-[260px] h-36 rounded-3xl relative overflow-hidden shadow-lg bg-gradient-to-r ${item.gradient_color || 'from-teal-600 to-teal-800'} cursor-pointer`}>
+                      <div className="absolute top-4 left-4 z-10 text-white">
+                          <span className="bg-white/20 px-2 py-1 rounded-lg text-[10px] font-black uppercase border border-white/20 backdrop-blur-sm">Offer</span>
+                          <h3 className="font-black text-xl mt-2 w-2/3 leading-tight drop-shadow-md">{item.title}</h3>
+                          <p className="font-bold text-sm mt-1 text-white/90">{item.discount_text}</p>
+                      </div>
+                  </div>
+              )) : ( <div className="text-xs text-slate-400 italic w-full text-center">No active offers.</div> )}
+          </div>
+      </div>
+
+      {/* 🛡️ TRUST BANNER */}
+      <div className="px-6 mt-8 max-w-4xl mx-auto">
+          <div className="bg-gradient-to-br from-teal-600 to-teal-800 rounded-[2rem] p-6 md:p-8 text-white shadow-lg shadow-teal-900/20 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl"></div>
+              <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div className="text-center md:text-left">
+                      <div className="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-3 border border-white/10"><ShieldCheck size={12} /> Kshatr Guarantee</div>
+                      <h2 className="text-2xl font-black mb-2">Why Choose Us?</h2>
+                      <p className="text-teal-100 text-sm max-w-xs mx-auto md:mx-0">Verified Experts • Transparent Pricing • Re-work Warranty</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
+                      <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-sm border border-white/5 text-center">
+                          <CheckCircle size={24} className="mx-auto mb-2 text-teal-300"/>
+                          <div className="text-xl font-black">100%</div>
+                          <div className="text-[9px] font-bold uppercase tracking-wider text-teal-200">Verified</div>
+                      </div>
+                      <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-sm border border-white/5 text-center">
+                          <Clock size={24} className="mx-auto mb-2 text-teal-300"/>
+                          <div className="text-xl font-black">45m</div>
+                          <div className="text-[9px] font-bold uppercase tracking-wider text-teal-200">Quick Arrival</div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      {/* FIXED BOTTOM NAV (Mobile Only) */}
+      <div className="fixed bottom-0 w-full bg-white border-t border-gray-100 px-6 py-3 flex justify-between items-center z-50 max-w-md mx-auto left-0 right-0 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] md:hidden">
+        <button onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className={`flex flex-col items-center gap-1 text-slate-900`}><HomeIcon size={24} /> <span className="text-[10px] font-bold">Home</span></button>
+        <button onClick={() => navigate('/bookings')} className="flex flex-col items-center gap-1 text-slate-400 hover:text-teal-600 transition-colors"><Calendar size={24} /> <span className="text-[10px] font-bold">Bookings</span></button>
+        <div className="relative -top-5" onClick={() => navigate('/cart')}>
+            <button className={`p-4 rounded-full shadow-2xl ring-4 ring-gray-50 bg-teal-600 text-white active:scale-90 transition-transform relative`}> 
+               <ShoppingCart size={24} fill="white" />
+               {cart.length > 0 && ( <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">{cart.length}</span> )}
+            </button>
+        </div>
+        <button onClick={() => alert("No new alerts")} className="flex flex-col items-center gap-1 text-slate-400 hover:text-teal-600 transition-colors"><Bell size={24} /> <span className="text-[10px] font-bold">Alerts</span></button>
+        <button onClick={() => navigate('/profile')} className="flex flex-col items-center gap-1 text-slate-400 hover:text-teal-600 transition-colors"><User size={24} /> <span className="text-[10px] font-bold">Profile</span></button>
+      </div>
+
+    </div>
+  );
+}

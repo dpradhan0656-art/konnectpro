@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 🎨 GLOBAL STYLES */
+body {
+  font-family: 'Inter', sans-serif;
+  /* Google Font */
+  background-color: #f8fafc;
+  /* Slate-50 fallback */
+  color: #0f172a;
+  /* Slate-900 Text */
+  overflow-x: hidden;
+  /* Prevent horizontal scroll */
+}
+
+/* 🏃‍♂️ KSHATR TICKER ANIMATION (Running Patti Logic) */
+@keyframes marquee {
+  0% {
+    transform: translateX(100%);
+    /* Screen ke right bahar se shuru */
+  }
+
+  100% {
+    transform: translateX(-100%);
+    /* Screen ke left bahar khatam */
+  }
+}
+
+.animate-marquee {
+  display: inline-block;
+  white-space: nowrap;
+
+  /* 🐢 SPEED CONTROL: 
+     Yahan '40s' ka matlab hai 40 second lagenge pura text nikalne me.
+     Agar aur DHEEMA karna hai to '50s' ya '60s' kar dein.
+     Agar TEZ karna hai to '20s' kar dein. 
+  */
+  animation: marquee 40s linear infinite;
+
+  padding-left: 100%;
+  /* Ensure starts from outside */
+}
+
+/* 🖱️ CUSTOM SCROLLBAR (For Admin Panel & Lists) */
+/* Chrome, Edge, and Safari */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #0f172a;
+  /* Slate-900 (Dark Track) */
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #334155;
+  /* Slate-700 (Grey Handle) */
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+  /* Slate-600 (Lighter on Hover) */
+}
+
+/* 🚫 HIDE SCROLLBAR UTILITY (For Horizontal Categories) */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+  }
+}
+
+/* 🎭 DYNAMIC THEME OVERRIDES (Backup Variables) */
+:root {
+  --theme-primary: #0d9488;
+  /* Default Teal */
+  --theme-bg: #0f172a;
+  /* Default Dark Blue */
+}
