@@ -203,7 +203,8 @@ export default function DispatchTab() {
                                 <label className="text-[9px] font-bold text-orange-500 uppercase ml-1 flex items-center gap-1">
                                     <MapPinned size={10}/> Assign Expert (Radar)
                                 </label>
-                                {/* 🌟 CLEANED SMART FILTER DROPDOWN 🌟 */}
+                                
+                                {/* 🌟 NEW SMART FILTER DROPDOWN 🌟 */}
                                 <select 
                                     onChange={(e) => handleAssign(job.id, e.target.value)} 
                                     className="w-full bg-slate-950 border border-slate-700 text-white text-xs font-bold rounded-xl p-4 outline-none focus:border-orange-500 transition-all cursor-pointer appearance-none shadow-inner"
@@ -212,28 +213,42 @@ export default function DispatchTab() {
                                     <option value="" disabled>Select Expert Near Customer...</option>
                                     
                                     {(() => {
-                                        // Category ka naam match karne ke liye (chahe backend me category ho ya service_category)
-                                        const jobCategory = job.category || job.service_category;
-                                        
-                                        // 1. Filter experts by City AND Category
+                                        // 1. Data Cleaning (Spelling ya Case ki galti theek karne ke liye)
+                                        const jobService = (job.service_name || "").toLowerCase();
+                                        const jobCat = (job.category || job.service_category || "").toLowerCase();
+                                        const jobCity = (job.city || "jabalpur").toLowerCase();
+
+                                        // 2. Smart Match Logic
                                         const availableExperts = experts.filter(exp => {
-                                            const isCityMatch = !exp.city || exp.city === job.city || !job.city;
-                                            const isCategoryMatch = exp.service_category?.toLowerCase() === jobCategory?.toLowerCase();
+                                            const expCat = (exp.service_category || "").toLowerCase();
+                                            const expCity = (exp.city || "jabalpur").toLowerCase();
+
+                                            // City match ho (ya fir empty ho toh bhi chalega)
+                                            const isCityMatch = expCity === jobCity || !exp.city || !job.city;
+                                            
+                                            // Category thodi bhi milti-julti ho toh match kar lo
+                                            const isCategoryMatch = expCat && (
+                                                jobCat.includes(expCat) || 
+                                                jobService.includes(expCat) || 
+                                                expCat.includes(jobCat) ||
+                                                expCat.includes(jobService)
+                                            );
+
                                             return isCityMatch && isCategoryMatch;
                                         });
 
-                                        // 2. Agar koi expert us category ka nahi hai
+                                        // 3. Koi expert nahi mila
                                         if (availableExperts.length === 0) {
-                                            return <option value="" disabled className="text-red-400">⚠️ No {jobCategory || 'matching'} expert available</option>;
+                                            return <option value="" disabled className="text-red-400">⚠️ No {job.service_name || 'matching'} expert online in {job.city || 'Jabalpur'}</option>;
                                         }
 
-                                        // 3. Agar expert hain, to distance se sort karo
+                                        // 4. Expert mila, toh distance calculate karke dikhao
                                         return availableExperts
                                             .map(exp => ({ ...exp, dist: calculateDistance(job.latitude, job.longitude, exp.latitude, exp.longitude) }))
                                             .sort((a, b) => (a.dist || 999) - (b.dist || 999))
                                             .map(exp => (
                                                 <option key={exp.id} value={exp.id} className="bg-slate-900">
-                                                    {exp.dist ? `[${exp.dist} KM] ` : '[No GPS] '} {exp.name} ({exp.service_category})
+                                                    {exp.dist ? `[${exp.dist} KM] ` : '[No GPS] '} {exp.name} - ({exp.service_category})
                                                 </option>
                                             ));
                                     })()}
