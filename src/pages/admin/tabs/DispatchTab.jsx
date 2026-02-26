@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { 
-  Navigation, Clock, MapPin, User, CheckCircle, XCircle, 
+  Navigation, Clock, MapPin, CheckCircle, XCircle, 
   RefreshCw, IndianRupee, Zap, Phone, AlertCircle, Loader2, MapPinned, Building
 } from 'lucide-react';
 
@@ -204,51 +204,49 @@ export default function DispatchTab() {
                                     <MapPinned size={10}/> Assign Expert (Radar)
                                 </label>
                                 
-                                {/* 🌟 NEW SMART FILTER DROPDOWN 🌟 */}
                                 <select 
                                     onChange={(e) => handleAssign(job.id, e.target.value)} 
                                     className="w-full bg-slate-950 border border-slate-700 text-white text-xs font-bold rounded-xl p-4 outline-none focus:border-orange-500 transition-all cursor-pointer appearance-none shadow-inner"
                                     defaultValue=""
                                 >
-                                    <option value="" disabled>Select Expert Near Customer...</option>
+                                    <option value="" disabled>Select Matching Expert...</option>
                                     
                                     {(() => {
-                                        // 1. Data Cleaning (Spelling ya Case ki galti theek karne ke liye)
-                                        const jobService = (job.service_name || "").toLowerCase();
-                                        const jobCat = (job.category || job.service_category || "").toLowerCase();
-                                        const jobCity = (job.city || "jabalpur").toLowerCase();
+                                        // 1. नाम को एकदम साफ़ करो (spaces और बड़े अक्षर हटाकर)
+                                        const jobService = (job.service_name || "").toLowerCase().trim();
+                                        const jobCat = (job.category || job.service_category || "").toLowerCase().trim();
 
-                                        // 2. Smart Match Logic
+                                        // 2. सिर्फ काम के एक्सपर्ट्स को चुनो (Super Strict Filter)
                                         const availableExperts = experts.filter(exp => {
-                                            const expCat = (exp.service_category || "").toLowerCase();
-                                            const expCity = (exp.city || "jabalpur").toLowerCase();
-
-                                            // City match ho (ya fir empty ho toh bhi chalega)
-                                            const isCityMatch = expCity === jobCity || !exp.city || !job.city;
+                                            const expCat = (exp.service_category || "").toLowerCase().trim();
                                             
-                                            // Category thodi bhi milti-julti ho toh match kar lo
-                                            const isCategoryMatch = expCat && (
-                                                jobCat.includes(expCat) || 
-                                                jobService.includes(expCat) || 
-                                                expCat.includes(jobCat) ||
-                                                expCat.includes(jobService)
-                                            );
+                                            // अगर एक्सपर्ट की कैटेगरी खाली है, तो उसे मत दिखाओ
+                                            if (!expCat) return false;
 
-                                            return isCityMatch && isCategoryMatch;
+                                            // MATCH LOGIC: 
+                                            // या तो कैटेगरी बिल्कुल सेम हो, या बुकिंग के नाम में कैटेगरी का नाम हो
+                                            const isCategoryMatch = (expCat === jobCat) || jobService.includes(expCat) || jobCat.includes(expCat);
+                                            
+                                            return isCategoryMatch;
                                         });
 
-                                        // 3. Koi expert nahi mila
+                                        // 3. अगर कोई सही एक्सपर्ट नहीं मिला
                                         if (availableExperts.length === 0) {
-                                            return <option value="" disabled className="text-red-400">⚠️ No {job.service_name || 'matching'} expert online in {job.city || 'Jabalpur'}</option>;
+                                            return <option value="" disabled className="text-red-400">⚠️ No {job.service_name || 'Matching'} Expert Online</option>;
                                         }
 
-                                        // 4. Expert mila, toh distance calculate karke dikhao
+                                        // 4. दूरी नापो और सबसे करीब वाले को सबसे ऊपर रखो
                                         return availableExperts
-                                            .map(exp => ({ ...exp, dist: calculateDistance(job.latitude, job.longitude, exp.latitude, exp.longitude) }))
-                                            .sort((a, b) => (a.dist || 999) - (b.dist || 999))
+                                            .map(exp => {
+                                                const dist = calculateDistance(job.latitude, job.longitude, exp.latitude, exp.longitude);
+                                                // अगर GPS नहीं है तो उसे 999 मानकर सबसे नीचे डाल दो
+                                                return { ...exp, dist: dist ? parseFloat(dist) : 999 }; 
+                                            })
+                                            .sort((a, b) => a.dist - b.dist)
                                             .map(exp => (
                                                 <option key={exp.id} value={exp.id} className="bg-slate-900">
-                                                    {exp.dist ? `[${exp.dist} KM] ` : '[No GPS] '} {exp.name} - ({exp.service_category})
+                                                    {exp.dist !== 999 ? `🚗 ${exp.dist} KM - ` : '📍 No GPS - '} 
+                                                    {exp.name} ({exp.service_category})
                                                 </option>
                                             ));
                                     })()}
