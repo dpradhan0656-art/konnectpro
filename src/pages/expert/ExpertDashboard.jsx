@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { Power, MapPin, Navigation, Clock, Loader2, User, CheckCircle, Wrench, Wallet, IndianRupee } from 'lucide-react';
@@ -11,8 +11,18 @@ export default function ExpertDashboard() {
   const [locationLoading, setLocationLoading] = useState(false);
   const [processingId, setProcessingId] = useState(null); 
 
+  // 🛰️ GPS Tracking Remote Control
+  const watchIdRef = useRef(null);
+
   useEffect(() => {
     checkExpertLogin();
+    
+    // 🛑 Component unmount hone par tracking rok dein (Battery save)
+    return () => {
+      if (watchIdRef.current) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+    };
   }, []);
 
   // 1. Verify Expert Login
@@ -27,6 +37,11 @@ export default function ExpertDashboard() {
     if (expData) {
         setExpert(expData);
         fetchMyJobs(expData.id);
+        
+        // Agar expert pehle se online tha, toh app khulte hi tracking resume karo
+        if (expData.is_active) {
+            startLiveTracking(expData.id);
+        }
     } else {
         alert("Access Denied: You are not registered as an Expert.");
         navigate('/'); 
@@ -46,7 +61,7 @@ export default function ExpertDashboard() {
     if (data) setJobs(data);
   };
 
-  // 3. Update Normal Status (Accepted, In Progress)
+  // 3. Update Normal Status
   const updateJobStatus = async (jobId, newStatus) => {
     setProcessingId(jobId);
     try {
@@ -61,7 +76,7 @@ export default function ExpertDashboard() {
     }
   };
 
-  // 💰 4. THE MAGIC PAYOUT FUNCTION (Mark as Completed)
+  // 💰 4. THE MAGIC PAYOUT FUNCTION
   const markJobCompleted = async (job) => {
       const confirmDone = window.confirm("Are you sure the job is fully completed and payment is collected?");
       if (!confirmDone) return;
@@ -73,12 +88,8 @@ export default function ExpertDashboard() {
           await supabase.from('bookings').update({ status: 'completed' }).eq('id', job.id);
 
           await supabase.from('transactions').insert({
-              booking_id: job.id,
-              user_type: 'expert',
-              user_id: expert.id,
-              amount: parseFloat(expertCut),
-              transaction_type: 'credit',
-              description: `Earnings for Booking #${job.id}`
+              booking_id: job.id, user_type: 'expert', user_id: expert.id,
+              amount: parseFloat(expertCut), transaction_type: 'credit', description: `Earnings for Booking #${job.id}`
           });
 
           const newBalance = parseFloat(expert.wallet_balance || 0) + parseFloat(expertCut);
@@ -90,7 +101,6 @@ export default function ExpertDashboard() {
               const { data: ah } = await supabase.from('area_heads').select('*').eq('id', job.area_head_id).single();
               if (ah && ah.employment_type === 'commission') {
                   const ahCut = (job.total_amount * (ah.compensation_value / 100)).toFixed(2);
-                  
                   await supabase.from('transactions').insert({
                       booking_id: job.id, user_type: 'area_head', user_id: ah.user_id,
                       amount: parseFloat(ahCut), transaction_type: 'credit', description: `Commission from Booking #${job.id}`
@@ -110,25 +120,58 @@ export default function ExpertDashboard() {
       }
   };
 
-  // 5. GO ONLINE & CAPTURE GPS
+  // 🛰️ LIVE TRACKING FUNCTION
+  const startLiveTracking = (expId) => {
+      if (!navigator.geolocation) return;
+      
+      // Clear old tracker if exists
+      if (watchIdRef.current) navigator.geolocation.clearWatch(watchIdRef.current);
+
+      watchIdRef.current = navigator.geolocation.watchPosition(
+          async (position) => {
+              const { latitude, longitude } = position.coords;
+              // Background update to database (no loading state to avoid disturbing user)
+              await supabase.from('experts').update({ latitude, longitude }).eq('id', expId);
+              setExpert(prev => prev ? { ...prev, latitude, longitude } : prev);
+          },
+          (err) => console.error("GPS Tracking Error:", err),
+          { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
+      );
+  };
+
+  // 5. GO ONLINE / OFFLINE TOGGLE
   const toggleDutyStatus = async () => {
     if (!expert) return;
 
+    // GOING OFFLINE
     if (expert.is_active) {
         setLocationLoading(true);
         await supabase.from('experts').update({ is_active: false }).eq('id', expert.id);
         setExpert({ ...expert, is_active: false });
+        
+        // 🛑 Stop GPS Tracking
+        if (watchIdRef.current) {
+            navigator.geolocation.clearWatch(watchIdRef.current);
+            watchIdRef.current = null;
+        }
+        
         setLocationLoading(false);
         return;
     }
 
+    // GOING ONLINE
     if (!navigator.geolocation) { alert("GPS is not supported."); return; }
 
     setLocationLoading(true);
     navigator.geolocation.getCurrentPosition(async (position) => {
         const { latitude, longitude } = position.coords;
         const { error } = await supabase.from('experts').update({ is_active: true, latitude, longitude }).eq('id', expert.id);
-        if (!error) setExpert({ ...expert, is_active: true, latitude, longitude });
+        
+        if (!error) {
+            setExpert({ ...expert, is_active: true, latitude, longitude });
+            // 🚀 Start live background tracking
+            startLiveTracking(expert.id);
+        }
         setLocationLoading(false);
     }, (err) => {
         alert("⚠️ Please ALLOW Location Access to go online.");
