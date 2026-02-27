@@ -111,12 +111,12 @@ export default function ExpertLogin() {
                 <div className="relative group">
                     <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-teal-500 transition-colors" size={18} />
                     <input 
-                        type="email" 
+                        type="tel" 
                         required 
                         value={email} 
                         onChange={(e) => setEmail(e.target.value)} 
                         className="w-full bg-slate-950 border border-slate-800 text-white rounded-2xl py-4 pl-14 pr-4 outline-none focus:border-teal-500/50 transition-all font-medium" 
-                        placeholder="name@company.com" 
+                        placeholder="Enter Mobile Number"
                     />
                 </div>
                 <div className="relative group">
