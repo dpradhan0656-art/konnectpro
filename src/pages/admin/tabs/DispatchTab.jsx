@@ -216,19 +216,27 @@ export default function DispatchTab() {
                                         const jobService = (job.service_name || "").toLowerCase().trim();
                                         const jobCat = (job.category || job.service_category || "").toLowerCase().trim();
 
-                                        // 2. सिर्फ काम के एक्सपर्ट्स को चुनो (Super Strict Filter)
-                                        const availableExperts = experts.filter(exp => {
-                                            const expCat = (exp.service_category || "").toLowerCase().trim();
-                                            
-                                            // अगर एक्सपर्ट की कैटेगरी खाली है, तो उसे मत दिखाओ
-                                            if (!expCat) return false;
+                                        // 2. सिर्फ काम के एक्सपर्ट्स को चुनो (Smart AI Filter)
+const availableExperts = experts.filter(exp => {
+    const expCat = (exp.service_category || "").toLowerCase().trim();
+    
+    // अगर एक्सपर्ट की कैटेगरी खाली है, तो उसे मत दिखाओ
+    if (!expCat) return false;
 
-                                            // MATCH LOGIC: 
-                                            // या तो कैटेगरी बिल्कुल सेम हो, या बुकिंग के नाम में कैटेगरी का नाम हो
-                                            const isCategoryMatch = (expCat === jobCat) || jobService.includes(expCat) || jobCat.includes(expCat);
-                                            
-                                            return isCategoryMatch;
-                                        });
+    // 🧠 SMART KEYWORDS: ऐप को सिखाएं कि कौन सा काम किसका है
+    const isElectricalJob = jobService.includes('fan') || jobService.includes('light') || jobService.includes('wire') || jobService.includes('switch') || jobService.includes('ac') || jobService.includes('board') || jobService.includes('inverter');
+    
+    const isPlumbingJob = jobService.includes('pipe') || jobService.includes('tap') || jobService.includes('water') || jobService.includes('tank') || jobService.includes('sink') || jobService.includes('motor') || jobService.includes('plumbing');
+
+    // MATCH LOGIC
+    const isCategoryMatch = (expCat === jobCat) || 
+                            jobService.includes(expCat) || 
+                            jobCat.includes(expCat) ||
+                            (expCat.includes('electric') && isElectricalJob) ||
+                            (expCat.includes('plumb') && isPlumbingJob);
+    
+    return isCategoryMatch;
+});
 
                                         // 3. अगर कोई सही एक्सपर्ट नहीं मिला
                                         if (availableExperts.length === 0) {
