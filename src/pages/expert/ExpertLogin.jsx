@@ -1,28 +1,35 @@
 ﻿import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useNavigate, Link } from 'react-router-dom';
-import { Wrench, Lock, Mail, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { Wrench, Lock, Phone as PhoneIcon, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 
 export default function ExpertLogin() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  // State ka naam email se badal kar phone kar diya gaya hai
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleEmailLogin = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     
+    // 💡 THE MAGIC: Phone number ko background me email banayein
+    let loginEmail = phone.trim();
+    if (!loginEmail.includes('@')) {
+        loginEmail = `${loginEmail}@kshatr.com`;
+    }
+    
     // 1. Supabase Auth se login karna
     const { data, error: authError } = await supabase.auth.signInWithPassword({ 
-        email: email.trim(), 
+        email: loginEmail, 
         password: password 
     });
     
     if (authError) {
-        setError("Email ya Password galat hai!");
+        setError("Mobile Number ya Password galat hai!");
         setLoading(false);
         return;
     }
@@ -37,7 +44,7 @@ export default function ExpertLogin() {
       const { data: expertData, error: dbError } = await supabase
         .from('experts')
         .select('status, id')
-        .eq('id', userId) // Primary Key yahan 'id' hi honi chahiye
+        .eq('id', userId) 
         .single();
 
       if (dbError) {
@@ -104,19 +111,20 @@ export default function ExpertLogin() {
 
             <div className="relative flex items-center justify-center mb-8">
                 <div className="absolute border-t border-slate-800 w-full"></div>
-                <span className="bg-slate-900 px-4 text-[10px] text-slate-500 font-black uppercase tracking-widest relative z-10">Or workspace email</span>
+                <span className="bg-slate-900 px-4 text-[10px] text-slate-500 font-black uppercase tracking-widest relative z-10">Or use mobile number</span>
             </div>
 
-            <form onSubmit={handleEmailLogin} className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-4">
                 <div className="relative group">
-                    <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-teal-500 transition-colors" size={18} />
+                    <PhoneIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-teal-500 transition-colors" size={18} />
                     <input 
                         type="tel" 
                         required 
-                        value={email} 
-                        onChange={(e) => setEmail(e.target.value)} 
-                        className="w-full bg-slate-950 border border-slate-800 text-white rounded-2xl py-4 pl-14 pr-4 outline-none focus:border-teal-500/50 transition-all font-medium" 
-                        placeholder="Enter Mobile Number"
+                        maxLength={10}
+                        value={phone} 
+                        onChange={(e) => setPhone(e.target.value)} 
+                        className="w-full bg-slate-950 border border-slate-800 text-white rounded-2xl py-4 pl-14 pr-4 outline-none focus:border-teal-500/50 transition-all font-medium tracking-widest" 
+                        placeholder="10 Digit Mobile No."
                     />
                 </div>
                 <div className="relative group">
