@@ -27,6 +27,7 @@ import DeepakHQ from './pages/admin/DeepakHQ';
 import ExpertDashboard from './pages/expert/ExpertDashboard';
 import PartnerApp from './pages/expert/PartnerApp'; 
 import ExpertLogin from './pages/expert/ExpertLogin'; 
+import ExpertKYC from './pages/expert/ExpertKYC';
 import RegisterExpert from './pages/RegisterExpert'; 
 
 // 4. AREA HEAD PAGES
@@ -105,6 +106,7 @@ const AppRoutes = () => {
           {/* ========================================== */}
           <Route path="/expert-dashboard" element={<ExpertDashboard />} />
           <Route path="/expert/login" element={<ExpertLogin />} />
+          <Route path="/expert/kyc" element={<ExpertKYC />} />
           <Route path="/expert/dashboard" element={session ? <PartnerApp /> : <Navigate to="/expert/login" replace />} />
           <Route path="/register-expert" element={<RegisterExpert />} />
           
