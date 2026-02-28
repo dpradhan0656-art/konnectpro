@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
-import { Power, MapPin, Navigation, Clock, Loader2, User, CheckCircle, Wrench, Wallet, IndianRupee } from 'lucide-react';
+import { Power, MapPin, Navigation, Clock, Loader2, User, CheckCircle, Wrench, Wallet, IndianRupee, LogOut } from 'lucide-react';
 
 export default function ExpertDashboard() {
   const navigate = useNavigate();
@@ -30,9 +30,9 @@ export default function ExpertDashboard() {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     
-    if (!user) { navigate('/login'); return; }
+    if (!user) { navigate('/expert/login'); return; } // FIX: Updated redirect path
 
-    const { data: expData } = await supabase.from('experts').select('*').eq('id', user.id).single();
+    const { data: expData } = await supabase.from('experts').select('*').eq('user_id', user.id).single();
     
     if (expData) {
         setExpert(expData);
@@ -44,7 +44,7 @@ export default function ExpertDashboard() {
         }
     } else {
         alert("Access Denied: You are not registered as an Expert.");
-        navigate('/'); 
+        navigate('/expert/login'); 
     }
     setLoading(false);
   };
@@ -124,13 +124,11 @@ export default function ExpertDashboard() {
   const startLiveTracking = (expId) => {
       if (!navigator.geolocation) return;
       
-      // Clear old tracker if exists
       if (watchIdRef.current) navigator.geolocation.clearWatch(watchIdRef.current);
 
       watchIdRef.current = navigator.geolocation.watchPosition(
           async (position) => {
               const { latitude, longitude } = position.coords;
-              // Background update to database (no loading state to avoid disturbing user)
               await supabase.from('experts').update({ latitude, longitude }).eq('id', expId);
               setExpert(prev => prev ? { ...prev, latitude, longitude } : prev);
           },
@@ -143,13 +141,11 @@ export default function ExpertDashboard() {
   const toggleDutyStatus = async () => {
     if (!expert) return;
 
-    // GOING OFFLINE
     if (expert.is_active) {
         setLocationLoading(true);
         await supabase.from('experts').update({ is_active: false }).eq('id', expert.id);
         setExpert({ ...expert, is_active: false });
         
-        // 🛑 Stop GPS Tracking
         if (watchIdRef.current) {
             navigator.geolocation.clearWatch(watchIdRef.current);
             watchIdRef.current = null;
@@ -159,7 +155,6 @@ export default function ExpertDashboard() {
         return;
     }
 
-    // GOING ONLINE
     if (!navigator.geolocation) { alert("GPS is not supported."); return; }
 
     setLocationLoading(true);
@@ -169,7 +164,6 @@ export default function ExpertDashboard() {
         
         if (!error) {
             setExpert({ ...expert, is_active: true, latitude, longitude });
-            // 🚀 Start live background tracking
             startLiveTracking(expert.id);
         }
         setLocationLoading(false);
@@ -177,6 +171,22 @@ export default function ExpertDashboard() {
         alert("⚠️ Please ALLOW Location Access to go online.");
         setLocationLoading(false);
     });
+  };
+
+  // 🚪 6. LOGOUT FUNCTION (Ab ye sahi jagah par hai)
+  const handleLogout = async () => {
+      const confirmOut = window.confirm("Are you sure you want to log out?");
+      if (!confirmOut) return;
+      
+      if (expert?.is_active) {
+          await supabase.from('experts').update({ is_active: false }).eq('id', expert.id);
+      }
+      if (watchIdRef.current) {
+          navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+
+      await supabase.auth.signOut();
+      navigate('/expert/login'); 
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-900"><Loader2 className="animate-spin text-teal-500" size={40}/></div>;
@@ -193,14 +203,20 @@ export default function ExpertDashboard() {
                   </div>
                   <div>
                       <h2 className="text-xl font-black">{expert?.name}</h2>
-                      <p className="text-teal-500 text-[10px] font-black uppercase tracking-widest">{expert?.service_category} Expert</p>
+                      <p className="text-teal-500 text-[10px] font-black uppercase tracking-widest mb-1">{expert?.service_category} Expert</p>
+                      
+                      {/* 🚀 LOGOUT BUTTON (Ab single baar dikhega) */}
+                      <button onClick={handleLogout} className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-red-400 font-bold uppercase tracking-wider transition-colors">
+                          <LogOut size={12}/> Log Out
+                      </button>
                   </div>
               </div>
+
               <div className="text-right bg-slate-950 p-3 rounded-2xl border border-slate-800">
                   <p className="text-[9px] text-slate-500 uppercase font-black flex items-center justify-end gap-1"><Wallet size={10}/> Wallet Balance</p>
                   <p className="text-2xl font-black text-green-400 mb-2">₹{expert?.wallet_balance?.toFixed(2) || 0}</p>
                   
-                  {/* 🚀 NEW WITHDRAW BUTTON */}
+                  {/* WITHDRAW BUTTON */}
                   <button 
                       onClick={async () => {
                           const upiId = prompt("Enter your UPI ID or Bank Details to receive funds:");
@@ -302,13 +318,14 @@ export default function ExpertDashboard() {
 
                           {job.status === 'accepted' && (
                               <div className="flex gap-3">
-                                  {/* 🚀 FIXED UNIVERSAL GOOGLE MAPS LINK */}
+                                  {/* 🚀 FINAL FIXED UNIVERSAL GOOGLE MAPS LINK */}
                                   <button onClick={() => {
-                                        if(job.latitude && job.longitude) {
-                                            window.open(`https://www.google.com/maps/dir/?api=1&destination=${job.latitude},${job.longitude}`, '_blank');
-                                        } else {
-                                            alert("Customer GPS Location not found!");
-                                        }
+                                          if(job.latitude && job.longitude) {
+                                              // 👇 TRUE GOOGLE MAPS DIRECTIONS LINK
+                                              window.open(`https://www.google.com/maps/dir/?api=1&destination=${job.latitude},${job.longitude}`, '_blank');
+                                          } else {
+                                              alert("Customer GPS Location not found!");
+                                          }
                                       }}
                                       className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-black uppercase text-xs flex justify-center items-center gap-2 transition-all active:scale-95"
                                   >

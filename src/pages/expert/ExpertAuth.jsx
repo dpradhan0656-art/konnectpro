@@ -10,7 +10,7 @@ export default function ExpertAuth({ onLoginSuccess }) {
 
   // 🛠️ Mobile Number ko Email banana (Internal Logic)
   const getEmail = (val) => {
-     if (/^\d+$/.test(val)) return `${val}@kshatr.in`; // Kshatr branding
+     if (/^\d+$/.test(val)) return `${val}@kshatr.com`; // UPDATE: Changed to .com as per your previous login logic
      return val;
   };
 
@@ -31,19 +31,20 @@ export default function ExpertAuth({ onLoginSuccess }) {
       if (authError) throw authError;
 
       if (user) {
-        // 2. SAFETY CHECK: Kya ye wakai Expert hai?
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role, is_verified')
-          .eq('id', user.id)
+        // 🚀 2. SAFETY CHECK: Ab hum 'experts' table me check karenge (profiles me nahi)
+        const { data: expertData, error: dbError } = await supabase
+          .from('experts')
+          .select('status')
+          // Hum user ki ID se dhundh rahe hain (Google aur normal dono ke liye kaam karega)
+          .eq('user_id', user.id) 
           .single();
 
-        if (profile?.role !== 'expert') {
+        if (dbError || !expertData) {
            await supabase.auth.signOut(); 
-           throw new Error("⛔ Access Denied: Only Experts allowed.");
+           throw new Error("⛔ Access Denied. You are not registered as an expert.");
         }
 
-        if (!profile?.is_verified) {
+        if (expertData.status !== 'approved') {
            await supabase.auth.signOut();
            throw new Error("⏳ Account Pending: Wait for Admin verification.");
         }
