@@ -1,9 +1,10 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+// 🚀 NEW: Added 'FileCheck' icon for KYC
 import { 
   Shield, Menu, X, LogOut, LayoutGrid, Users, Briefcase, Settings, 
-  Megaphone, Navigation, CreditCard, UserCheck, Grid, Zap, DollarSign 
+  Megaphone, Navigation, CreditCard, UserCheck, Grid, Zap, DollarSign, FileCheck 
 } from 'lucide-react';
 
 // Import All Tabs
@@ -18,8 +19,9 @@ import WalletManager from './tabs/WalletManager';
 import CategoryManager from './tabs/CategoryManager';
 import MarketingTab from './tabs/MarketingTab';       
 import RevenueTab from './tabs/RevenueTab';
-// ✅ NAYA TAB IMPORT KIYA (Area Head Control Room)
 import AreaHeadManager from './tabs/AreaHeadManager'; 
+// ✅ NAYA TAB IMPORT KIYA (Expert KYC Verification)
+import ExpertVerification from './tabs/ExpertVerification'; 
 
 export default function DeepakHQ() {
   const navigate = useNavigate();
@@ -99,8 +101,11 @@ export default function DeepakHQ() {
             <NavBtn icon={<Grid size={18}/>} label="Category Master" active={activeTab === 'categories'} onClick={() => handleTabChange('categories')} badge="1st" /> 
             <NavBtn icon={<Briefcase size={18}/>} label="Rate List & Services" active={activeTab === 'services'} onClick={() => handleTabChange('services')} badge="2nd" />
             <NavBtn icon={<Navigation size={18}/>} label="Dispatch Ops" active={activeTab === 'dispatch'} onClick={() => handleTabChange('dispatch')} />
+            
+            {/* ✅ NAYA BUTTON JODA (KYC Verification) */}
+            <NavBtn icon={<FileCheck size={18}/>} label="KYC Verifications" active={activeTab === 'kyc_verification'} onClick={() => handleTabChange('kyc_verification')} />
+            
             <NavBtn icon={<UserCheck size={18}/>} label="Expert Army" active={activeTab === 'experts'} onClick={() => handleTabChange('experts')} />
-            {/* ✅ NAYA BUTTON JODA (Area Commanders) */}
             <NavBtn icon={<Shield size={18}/>} label="Area Commanders" active={activeTab === 'area_heads'} onClick={() => handleTabChange('area_heads')} />
             
             <div className="pt-4 pb-2 px-4 text-[10px] font-bold text-slate-600 uppercase tracking-wider">Growth</div>
@@ -137,8 +142,11 @@ export default function DeepakHQ() {
                 {activeTab === 'categories' && <CategoryManager />} 
                 {activeTab === 'services' && <ServiceManager />}
                 {activeTab === 'dispatch' && <DispatchTab />}
+                
+                {/* ✅ NAYA TAB JODA (KYC Verification Show Karega) */}
+                {activeTab === 'kyc_verification' && <ExpertVerification />}
+                
                 {activeTab === 'experts' && <ExpertControl />}
-                {/* ✅ NAYA TAB JODA (Area Head Panel Show Karega) */}
                 {activeTab === 'area_heads' && <AreaHeadManager />}
                 {activeTab === 'customers' && <CustomerCRM />} 
                 {activeTab === 'wallet' && <WalletManager />}
