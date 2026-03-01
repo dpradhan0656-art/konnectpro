@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, ShieldCheck } from 'lucide-react';
+// 🚀 NEW: Briefcase icon import kiya Partner button ke liye
+import { ShoppingCart, ShieldCheck, Briefcase } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { supabase } from '../../lib/supabase';
 
@@ -26,18 +27,19 @@ export default function Navbar() {
 
   return (
     <div className="fixed top-0 left-0 right-0 z-[100]">
-      {/* ????? YELLOW RUNNING PATTI */}
+      {/* 🌟 YELLOW RUNNING PATTI */}
       <div className="bg-amber-400 text-slate-900 py-1 overflow-hidden whitespace-nowrap border-b border-amber-500 shadow-sm">
         <div className="animate-marquee inline-block font-black text-[10px] uppercase tracking-[0.2em]">
-           {ticker} &nbsp;&nbsp;&nbsp;&nbsp; ?? {ticker} &nbsp;&nbsp;&nbsp;&nbsp; ?? {ticker}
+           {ticker} &nbsp;&nbsp;&nbsp;&nbsp; 🚀 {ticker} &nbsp;&nbsp;&nbsp;&nbsp; 🚀 {ticker}
         </div>
       </div>
 
-      {/* ?? MAIN NAVBAR */}
+      {/* 🚀 MAIN NAVBAR */}
       <nav className="bg-slate-900 text-white h-16 flex items-center shadow-xl border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 w-full flex justify-between items-center">
+          
+          {/* LOGO SECTION */}
           <Link to="/" className="flex items-center gap-3">
-             {/* ? LOGO.PNG IS BACK HERE */}
              <div className="h-10 w-10 flex items-center justify-center bg-white/10 rounded-xl border border-white/10 overflow-hidden p-1">
                 <img 
                   src="/logo.png" 
@@ -53,17 +55,34 @@ export default function Navbar() {
              </div>
           </Link>
 
-          <div className="flex items-center gap-4">
+          {/* RIGHT SIDE BUTTONS */}
+          <div className="flex items-center gap-3 md:gap-4">
+             
+             {/* 🚀 NEW: PARTNER LOGIN BUTTON */}
+             <Link 
+                to="/expert/login" 
+                className="flex items-center gap-1.5 text-[10px] md:text-xs font-bold text-teal-400 bg-teal-500/10 border border-teal-500/30 px-2.5 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-teal-500/20 transition-all uppercase tracking-wider"
+             >
+                <Briefcase size={14} className="md:w-4 md:h-4" />
+                <span className="hidden md:inline">Partner Login</span>
+                <span className="md:hidden">Partner</span>
+             </Link>
+
+             {/* CART BUTTON */}
              <Link to="/cart" className="relative p-2 hover:bg-white/5 rounded-full transition-all">
                 <ShoppingCart size={20} className="text-slate-300" />
                 {cart.length > 0 && <span className="absolute -top-1 -right-1 bg-teal-500 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full">{cart.length}</span>}
              </Link>
+
+             {/* CUSTOMER LOGIN / PROFILE */}
              {user ? (
-               <button onClick={() => navigate('/profile')} className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center font-bold text-xs uppercase text-slate-900 shadow-lg shadow-teal-500/20">
+               <button onClick={() => navigate('/profile')} className="w-8 h-8 md:w-9 md:h-9 bg-teal-500 rounded-full flex items-center justify-center font-bold text-xs uppercase text-slate-900 shadow-lg shadow-teal-500/20 hover:scale-105 transition-transform">
                   {user.email?.charAt(0)}
                </button>
              ) : (
-               <button onClick={() => navigate('/login')} className="bg-white text-slate-900 px-4 py-1.5 rounded-lg font-bold text-xs uppercase tracking-wider">Login</button>
+               <button onClick={() => navigate('/login')} className="bg-white hover:bg-slate-200 text-slate-900 px-3 md:px-5 py-1.5 md:py-2 rounded-lg font-bold text-[10px] md:text-xs uppercase tracking-wider transition-colors shadow-lg">
+                   Login
+               </button>
              )}
           </div>
         </div>
