@@ -1,16 +1,17 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Shield, MapPin, Briefcase, Plus, User, Mail, Lock, Loader2, CheckCircle, XCircle } from 'lucide-react';
+// 🚀 NEW: Added 'Phone' icon
+import { Shield, MapPin, Briefcase, Plus, User, Mail, Lock, Loader2, CheckCircle, XCircle, Phone } from 'lucide-react';
 
 export default function AreaHeadManager() {
   const [managers, setManagers] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // 🌟 New State for the 'Add Manager' Form
+  // 🌟 New State for the 'Add Manager' Form (Added phone)
   const [showAddForm, setShowAddForm] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
   const [formData, setFormData] = useState({
-      name: '', email: '', password: '', city: 'Jabalpur', type: 'salary', compensation: 0
+      name: '', email: '', phone: '', password: '', city: 'Jabalpur', type: 'salary', compensation: 0
   });
 
   useEffect(() => { fetchManagers(); }, []);
@@ -37,10 +38,11 @@ export default function AreaHeadManager() {
           if (authError) throw authError;
 
           if (authData.user) {
-              // 2. Add to area_heads table
+              // 2. Add to area_heads table (🚀 Added phone here)
               const { error: dbError } = await supabase.from('area_heads').insert([{
                   user_id: authData.user.id,
                   name: formData.name,
+                  phone: formData.phone, // <--- Ye line missing thi
                   assigned_area: formData.city,
                   employment_type: formData.type,
                   compensation_value: parseFloat(formData.compensation),
@@ -51,7 +53,8 @@ export default function AreaHeadManager() {
 
               alert(`Success! ${formData.name} is now the Commander for ${formData.city}.`);
               setShowAddForm(false);
-              setFormData({ name: '', email: '', password: '', city: 'Jabalpur', type: 'salary', compensation: 0 });
+              // Reset form
+              setFormData({ name: '', email: '', phone: '', password: '', city: 'Jabalpur', type: 'salary', compensation: 0 });
               fetchManagers(); 
           }
       } catch (error) {
@@ -112,15 +115,24 @@ export default function AreaHeadManager() {
                       <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                       <input type="text" required placeholder="Full Name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl py-3 pl-12 pr-4 outline-none focus:border-teal-500/50" />
                   </div>
+                  
+                  {/* 🚀 NEW: Phone Number Field */}
                   <div className="relative">
-                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                      <input type="text" required placeholder="Assigned City (e.g. Indore)" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl py-3 pl-12 pr-4 outline-none focus:border-teal-500/50" />
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                      <input type="tel" required maxLength="10" placeholder="10-Digit Mobile Number" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value.replace(/\D/g, '')})} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl py-3 pl-12 pr-4 outline-none focus:border-teal-500/50" />
                   </div>
+
                   <div className="relative">
                       <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                       <input type="email" required placeholder="Official Email (Login ID)" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl py-3 pl-12 pr-4 outline-none focus:border-teal-500/50" />
                   </div>
+
                   <div className="relative">
+                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                      <input type="text" required placeholder="Assigned City (e.g. Indore)" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl py-3 pl-12 pr-4 outline-none focus:border-teal-500/50" />
+                  </div>
+
+                  <div className="relative md:col-span-2">
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                       <input type="password" required placeholder="Create Secure Password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl py-3 pl-12 pr-4 outline-none focus:border-teal-500/50" />
                   </div>
@@ -151,7 +163,7 @@ export default function AreaHeadManager() {
           </div>
       )}
 
-      {/* 📋 MANAGERS LIST */}
+      {/* 📋 MANAGERS LIST (NO CHANGES HERE) */}
       <div className="grid gap-4">
           {managers.length === 0 ? (
               <div className="text-center py-10 text-slate-500 bg-slate-900 rounded-[2rem] border border-slate-800 font-bold uppercase tracking-widest text-xs">
