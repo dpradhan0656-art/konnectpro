@@ -1,21 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Settings, Save, Lock, Smartphone, Palette, Check, Star } from 'lucide-react';
+import { Settings, Save, Lock, Smartphone, Palette, Check, Star, Phone, Mail, MapPin } from 'lucide-react';
 
-// 🔮 UPDATED THEME LIST
 const THEMES = [
-    { id: 'default', name: 'Kundali Bhagya (Libra)', color: '#2563eb' }, // Astro Color
-    { id: 'diwali', name: 'Diwali Gold', color: '#f59e0b' },
-    { id: 'holi', name: 'Holi Vibrant', color: '#d946ef' },
-    { id: 'republic', name: 'Desh Bhakti', color: '#ea580c' },
-    { id: 'nature', name: 'Eco Green', color: '#16a34a' },
-    { id: 'royal', name: 'Luxury Gold', color: '#ca8a04' },
-    { id: 'ocean', name: 'Ocean Blue', color: '#0ea5e9' },
+  { id: 'default', name: 'Kundali Bhagya (Libra)', color: '#2563eb' }, 
+  { id: 'diwali', name: 'Diwali Gold', color: '#f59e0b' },
+  { id: 'holi', name: 'Holi Vibrant', color: '#d946ef' },
+  { id: 'republic', name: 'Desh Bhakti', color: '#ea580c' },
+  { id: 'nature', name: 'Eco Green', color: '#16a34a' },
+  { id: 'royal', name: 'Luxury Gold', color: '#ca8a04' },
+  { id: 'ocean', name: 'Ocean Blue', color: '#0ea5e9' },
 ];
 
 export default function SettingsTab() {
   const [config, setConfig] = useState({
-    app_name: '', admin_passcode: '', site_theme: 'default'
+    app_name: '', 
+    admin_passcode: '', 
+    site_theme: 'default',
+    company_phone: '+91 9589634799', 
+    company_email: 'apnahunars@gmail.com',
+    company_address: 'Jabalpur, Madhya Pradesh,\nIndia - 482001'
   });
 
   useEffect(() => { fetchSettings(); }, []);
@@ -36,9 +40,10 @@ export default function SettingsTab() {
     
     if(!error) {
         setConfig({...config, [key]: value});
-        // Feedback message
         if(key === 'site_theme') alert(`🎨 Theme Updated: ${THEMES.find(t=>t.id===value)?.name}`);
-        else alert(`✅ ${key} Updated!`);
+        else alert(`✅ ${key.replace('_', ' ').toUpperCase()} Updated Successfully!`);
+    } else {
+        alert("⚠️ Error saving setting!");
     }
   };
 
@@ -53,7 +58,7 @@ export default function SettingsTab() {
           {/* THEME ENGINE */}
           <div className="md:col-span-2 bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl">
               <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-4">
-                  <Palette size={14} className="text-purple-500"/> Website Theme (Astro & Festivals)
+                  <Palette size={14} className="text-purple-500"/> Website Theme
               </label>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
                   {THEMES.map(theme => (
@@ -77,7 +82,7 @@ export default function SettingsTab() {
               <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2"><Smartphone size={14}/> App Name</label>
               <div className="flex gap-2">
                   <input className="flex-1 bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-bold" value={config.app_name} onChange={e => setConfig({...config, app_name: e.target.value})}/>
-                  <button onClick={() => saveSetting('app_name', config.app_name)} className="bg-teal-600 p-3 rounded-xl text-white"><Save size={18}/></button>
+                  <button onClick={() => saveSetting('app_name', config.app_name)} className="bg-teal-600 hover:bg-teal-500 transition p-3 rounded-xl text-white"><Save size={18}/></button>
               </div>
           </div>
 
@@ -86,7 +91,34 @@ export default function SettingsTab() {
               <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2"><Lock size={14}/> Admin Passcode</label>
               <div className="flex gap-2">
                   <input className="flex-1 bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-bold tracking-widest" value={config.admin_passcode} onChange={e => setConfig({...config, admin_passcode: e.target.value})}/>
-                  <button onClick={() => saveSetting('admin_passcode', config.admin_passcode)} className="bg-teal-600 p-3 rounded-xl text-white"><Save size={18}/></button>
+                  <button onClick={() => saveSetting('admin_passcode', config.admin_passcode)} className="bg-teal-600 hover:bg-teal-500 transition p-3 rounded-xl text-white"><Save size={18}/></button>
+              </div>
+          </div>
+
+          {/* COMPANY PHONE */}
+          <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800">
+              <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2"><Phone size={14} className="text-teal-500"/> Company Phone</label>
+              <div className="flex gap-2">
+                  <input className="flex-1 bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-bold" value={config.company_phone} onChange={e => setConfig({...config, company_phone: e.target.value})}/>
+                  <button onClick={() => saveSetting('company_phone', config.company_phone)} className="bg-teal-600 hover:bg-teal-500 transition p-3 rounded-xl text-white"><Save size={18}/></button>
+              </div>
+          </div>
+
+          {/* COMPANY EMAIL */}
+          <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800">
+              <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2"><Mail size={14} className="text-teal-500"/> Company Email</label>
+              <div className="flex gap-2">
+                  <input type="email" className="flex-1 bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-medium" value={config.company_email} onChange={e => setConfig({...config, company_email: e.target.value})}/>
+                  <button onClick={() => saveSetting('company_email', config.company_email)} className="bg-teal-600 hover:bg-teal-500 transition p-3 rounded-xl text-white"><Save size={18}/></button>
+              </div>
+          </div>
+
+          {/* OFFICE ADDRESS */}
+          <div className="md:col-span-2 bg-slate-900 p-6 rounded-3xl border border-slate-800">
+              <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2"><MapPin size={14} className="text-teal-500"/> Office Address (Footer)</label>
+              <div className="flex gap-2">
+                  <textarea rows="2" className="flex-1 bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-medium" value={config.company_address} onChange={e => setConfig({...config, company_address: e.target.value})}/>
+                  <button onClick={() => saveSetting('company_address', config.company_address)} className="bg-teal-600 hover:bg-teal-500 transition px-4 rounded-xl text-white flex items-center justify-center"><Save size={18}/></button>
               </div>
           </div>
           

@@ -1,8 +1,40 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck, Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
+// 🚀 NEW: Supabase import for dynamic fetching
+import { supabase } from '../../lib/supabase';
 
 export default function Footer() {
+  // 🚀 NEW: State to hold dynamic contact info (with your real defaults)
+  const [contactInfo, setContactInfo] = useState({
+    phone: '+91 9589634799', // Aapka naya asli number
+    email: 'apnahunars@gmail.com',
+    address: 'Jabalpur, Madhya Pradesh,\nIndia - 482001'
+  });
+
+  // 🚀 NEW: Fetch settings from Supabase on load
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const { data, error } = await supabase
+        .from('admin_settings')
+        .select('setting_key, setting_value')
+        .in('setting_key', ['company_phone', 'company_email', 'company_address']);
+
+      if (data && !error) {
+        const info = { ...contactInfo };
+        data.forEach(item => {
+          // Agar database me value hai, toh default ko overwrite kar do
+          if (item.setting_key === 'company_phone') info.phone = item.setting_value;
+          if (item.setting_key === 'company_email') info.email = item.setting_value;
+          if (item.setting_key === 'company_address') info.address = item.setting_value;
+        });
+        setContactInfo(info);
+      }
+    };
+
+    fetchSettings();
+  }, []);
+
   return (
     <footer className="bg-slate-900 text-slate-300 pt-16 pb-24 md:pb-8 border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-6">
@@ -18,7 +50,6 @@ export default function Footer() {
                </span>
             </Link>
             
-            {/* ✅ LEGAL ENTITY NAME */}
             <p className="text-[10px] text-teal-400 font-bold uppercase tracking-widest mb-4">
                Powered by Apna Hunar
             </p>
@@ -41,7 +72,6 @@ export default function Footer() {
               <li><Link to="/about" className="hover:text-teal-400 transition-colors">About Us</Link></li>
               <li><Link to="/careers" className="hover:text-teal-400 transition-colors">Careers @ Apna Hunar</Link></li>
               <li><Link to="/register-expert" className="hover:text-teal-400 transition-colors font-bold text-teal-200">Join as Partner</Link></li>
-              {/* ✅ FIX: Changed /deepakhq to /expert/login */}
               <li><Link to="/expert/login" className="hover:text-teal-400 transition-colors opacity-80 hover:opacity-100 font-bold">Partner Login</Link></li>
             </ul>
           </div>
@@ -57,21 +87,22 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Contact */}
+          {/* Contact (🚀 NOW DYNAMIC) */}
           <div>
             <h3 className="text-white font-bold uppercase tracking-widest text-xs mb-6">Contact Us</h3>
             <ul className="space-y-4 text-sm">
               <li className="flex items-start gap-3">
                 <MapPin size={18} className="text-teal-500 shrink-0 mt-0.5"/>
-                <span>Jabalpur, Madhya Pradesh,<br/>India - 482001</span>
+                {/* whitespace-pre-wrap ensures that line breaks (\n) in address show up correctly */}
+                <span className="whitespace-pre-wrap">{contactInfo.address}</span>
               </li>
               <li className="flex items-center gap-3">
                 <Mail size={18} className="text-teal-500 shrink-0"/>
-                <a href="mailto:apnahunars@gmail.com" className="hover:text-white">apnahunars@gmail.com</a>
+                <a href={`mailto:${contactInfo.email}`} className="hover:text-white">{contactInfo.email}</a>
               </li>
               <li className="flex items-center gap-3">
                 <Phone size={18} className="text-teal-500 shrink-0"/>
-                <span>+91 9179159981</span>
+                <span>{contactInfo.phone}</span>
               </li>
             </ul>
           </div>
