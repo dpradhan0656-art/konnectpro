@@ -1,16 +1,17 @@
 ﻿import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useNavigate, Link } from 'react-router-dom';
-import { Wrench, Lock, Phone as PhoneIcon, ArrowRight, Loader2, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
+// 🚀 NEW: PhoneIcon ki jagah User icon laga diya taaki Email/Phone dono ke liye sahi lage
+import { Wrench, Lock, User, ArrowRight, Loader2, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 
 export default function ExpertLogin() {
   const navigate = useNavigate();
-  const [phone, setPhone] = useState('');
+  const [loginId, setLoginId] = useState(''); // 🚀 Changed from 'phone' to 'loginId'
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // 🚀 NEW: Forgot Password States
+  // 🚀 Forgot Password States
   const [isResetMode, setIsResetMode] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
 
@@ -19,8 +20,8 @@ export default function ExpertLogin() {
     setLoading(true);
     setError('');
     
-    // 💡 THE MAGIC: Phone number ko background me email banayein
-    let loginEmail = phone.trim();
+    // 💡 THE MAGIC: Mobile number ko email banayein, ya direct email use karein
+    let loginEmail = loginId.trim();
     if (!loginEmail.includes('@')) {
         loginEmail = `${loginEmail}@kshatr.com`;
     }
@@ -32,7 +33,7 @@ export default function ExpertLogin() {
     });
     
     if (authError) {
-        setError("Mobile Number ya Password galat hai!");
+        setError("Login ID ya Password galat hai!");
         setLoading(false);
         return;
     }
@@ -47,7 +48,7 @@ export default function ExpertLogin() {
       const { data: expertData, error: dbError } = await supabase
         .from('experts')
         .select('status, id')
-        .eq('user_id', userId) // FIX: Ensuring it matches user_id from auth
+        .eq('user_id', userId)
         .single();
 
       if (dbError || !expertData) {
@@ -77,14 +78,14 @@ export default function ExpertLogin() {
     if (error) setError("Google Login Failed!");
   };
 
-  // 🚀 NEW: Password Reset Function
+  // 🚀 Password Reset Function
   const handlePasswordReset = async (e) => {
       e.preventDefault();
       setLoading(true);
       setError('');
       setSuccessMsg('');
 
-      let resetEmail = phone.trim();
+      let resetEmail = loginId.trim();
       if (!resetEmail.includes('@')) {
           resetEmail = `${resetEmail}@kshatr.com`;
       }
@@ -129,7 +130,6 @@ export default function ExpertLogin() {
                 </div>
             )}
 
-            {/* 🚀 NEW: Success Message UI */}
             {successMsg && (
                 <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 text-green-400 text-xs font-bold rounded-2xl flex items-center gap-2">
                     <CheckCircle size={16} className="shrink-0" /> {successMsg}
@@ -150,26 +150,28 @@ export default function ExpertLogin() {
 
                     <div className="relative flex items-center justify-center mb-8">
                         <div className="absolute border-t border-slate-800 w-full"></div>
-                        <span className="bg-slate-900 px-4 text-[10px] text-slate-500 font-black uppercase tracking-widest relative z-10">Or use mobile number</span>
+                        {/* 🚀 Updated Label Text */}
+                        <span className="bg-slate-900 px-4 text-[10px] text-slate-500 font-black uppercase tracking-widest relative z-10">Or use Email / Mobile</span>
                     </div>
                 </>
             )}
 
             <form onSubmit={isResetMode ? handlePasswordReset : handleLogin} className="space-y-4">
+                
+                {/* 🚀 FIX: Removed maxLength, changed to text, updated placeholder */}
                 <div className="relative group">
-                    <PhoneIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-teal-500 transition-colors" size={18} />
+                    <User className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-teal-500 transition-colors" size={18} />
                     <input 
-                        type="tel" 
+                        type="text" 
                         required 
-                        maxLength={10}
-                        value={phone} 
-                        onChange={(e) => setPhone(e.target.value)} 
-                        className="w-full bg-slate-950 border border-slate-800 text-white rounded-2xl py-4 pl-14 pr-4 outline-none focus:border-teal-500/50 transition-all font-medium tracking-widest" 
-                        placeholder="10 Digit Mobile No."
+                        value={loginId} 
+                        onChange={(e) => setLoginId(e.target.value)} 
+                        className="w-full bg-slate-950 border border-slate-800 text-white rounded-2xl py-4 pl-14 pr-4 outline-none focus:border-teal-500/50 transition-all font-medium tracking-wide" 
+                        placeholder="Email Address / Mobile No."
                     />
                 </div>
                 
-                {/* 🚀 Password Field (Hide in Reset Mode) */}
+                {/* Password Field (Hide in Reset Mode) */}
                 {!isResetMode && (
                     <div>
                         <div className="relative group mt-4">
@@ -207,7 +209,7 @@ export default function ExpertLogin() {
                     )}
                 </button>
 
-                {/* 🚀 Back to Login Button */}
+                {/* Back to Login Button */}
                 {isResetMode && (
                     <button 
                         type="button" 
