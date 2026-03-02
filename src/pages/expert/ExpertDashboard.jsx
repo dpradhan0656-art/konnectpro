@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
-import { Power, MapPin, Navigation, Clock, Loader2, User, CheckCircle, Wrench, Wallet, IndianRupee, LogOut } from 'lucide-react';
+import { Power, MapPin, Navigation, Clock, Loader2, User, CheckCircle, Wrench, Wallet, IndianRupee, LogOut, Volume2 } from 'lucide-react';
 
 export default function ExpertDashboard() {
   const navigate = useNavigate();
@@ -12,6 +12,19 @@ export default function ExpertDashboard() {
   const [processingId, setProcessingId] = useState(null); 
 
   const watchIdRef = useRef(null);
+  const prevJobsLength = useRef(0); // नए काम को ट्रैक करने के लिए
+
+  // 🗣️ हिंदी वॉइस असिस्टेंट फंक्शन (The Magic)
+  const speakHindi = (text) => {
+      if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel(); // पुरानी आवाज़ बंद करें
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'hi-IN'; // हिंदी भाषा
+          utterance.rate = 1; // बोलने की स्पीड
+          utterance.pitch = 1;
+          window.speechSynthesis.speak(utterance);
+      }
+  };
 
   useEffect(() => {
     checkExpertLogin();
@@ -21,6 +34,17 @@ export default function ExpertDashboard() {
       }
     };
   }, []);
+
+  // 🔔 जब नया काम आए, तो मोबाइल बोलकर बताएगा
+  useEffect(() => {
+      if (jobs.length > prevJobsLength.current) {
+          const newJob = jobs[0];
+          if (newJob && newJob.status === 'assigned') {
+              speakHindi(`नया काम आया है। सर्विस है: ${newJob.service_name}। कृपया ऐप चेक करें।`);
+          }
+      }
+      prevJobsLength.current = jobs.length;
+  }, [jobs]);
 
   // 1. Verify Login & Profile
   const checkExpertLogin = async () => {
@@ -63,6 +87,9 @@ export default function ExpertDashboard() {
       const { error } = await supabase.from('bookings').update({ status: newStatus }).eq('id', jobId);
       if (error) throw error;
       setJobs(jobs.map(job => job.id === jobId ? { ...job, status: newStatus } : job));
+      
+      // स्टेटस बदलने पर भी आवाज़
+      if(newStatus === 'accepted') speakHindi('काम एक्सेप्ट कर लिया गया है। कस्टमर की लोकेशन पर जाएँ।');
     } catch (err) {
       alert("Status update fail ho gaya!");
     } finally {
@@ -77,7 +104,6 @@ export default function ExpertDashboard() {
 
       setProcessingId(job.id);
       try {
-          // 🚀 DATABASE RPC CALL: ये 80/20 का गणित अब डेटाबेस के अंदर सुरक्षित होगा
           const { error } = await supabase.rpc('process_job_payout', {
               p_booking_id: job.id
           });
@@ -85,11 +111,10 @@ export default function ExpertDashboard() {
           if (error) throw error;
 
           setJobs(jobs.filter(j => j.id !== job.id));
-          alert(`🎉 शानदार! पैसा आपके वॉलेट में जोड़ दिया गया है।`);
+          speakHindi("शानदार! काम पूरा हो गया है और पैसा आपके वॉलेट में जोड़ दिया गया है।"); // 🗣️
+          alert(`🎉 शानदार! पैसा आपके वॉलेट में जोड़ दिया गया है।`);
           
-          // बैलेंस अपडेट करने के लिए प्रोफाइल दोबारा लोड करें
           checkExpertLogin(); 
-
       } catch (error) {
           console.error("Payout Error:", error);
           alert("Payment Error: " + error.message);
@@ -120,6 +145,7 @@ export default function ExpertDashboard() {
     if (expert.is_active) {
         await supabase.from('experts').update({ is_active: false }).eq('id', expert.id);
         setExpert({ ...expert, is_active: false });
+        speakHindi("आप अब ऑफलाइन हैं।"); // 🗣️
         if (watchIdRef.current) { navigator.geolocation.clearWatch(watchIdRef.current); watchIdRef.current = null; }
     } else {
         navigator.geolocation.getCurrentPosition(async (pos) => {
@@ -127,6 +153,7 @@ export default function ExpertDashboard() {
             await supabase.from('experts').update({ is_active: true, latitude, longitude }).eq('id', expert.id);
             setExpert({ ...expert, is_active: true, latitude, longitude });
             startLiveTracking(expert.id);
+            speakHindi("आप अब ऑनलाइन हैं, नया काम आने पर आपको तुरंत बताया जाएगा।"); // 🗣️
         }, () => alert("Location access allow कीजिये!"));
     }
     setLocationLoading(false);
@@ -150,8 +177,11 @@ export default function ExpertDashboard() {
       <div className="bg-slate-900 p-6 rounded-b-[2.5rem] shadow-2xl border-b border-slate-800">
           <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-teal-500 rounded-full flex items-center justify-center font-black text-xl">
+                  <div className="w-12 h-12 bg-teal-500 rounded-full flex items-center justify-center font-black text-xl relative">
                       {expertName[0]}
+                      <div className="absolute -bottom-1 -right-1 bg-slate-900 rounded-full p-1">
+                          <Volume2 size={12} className="text-teal-400"/>
+                      </div>
                   </div>
                   <div>
                       <h2 className="text-xl font-black">{expertName}</h2>
@@ -189,6 +219,7 @@ export default function ExpertDashboard() {
                             });
                             
                             if (error) throw error;
+                            speakHindi("निकासी की रिक्वेस्ट भेज दी गई है।");
                             alert("✅ Request Sent! हेडक्वार्टर जल्द ही पेमेंट कर देगा।");
                             checkExpertLogin(); 
                         } catch(err) { 
@@ -239,7 +270,8 @@ export default function ExpertDashboard() {
                           )}
                           {job.status === 'accepted' && (
                               <div className="flex gap-2">
-                                  <button onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${job.latitude},${job.longitude}`, '_blank')} className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-black uppercase text-xs flex justify-center items-center gap-1"><Navigation size={14}/> Navigate</button>
+                                  {/* 🚀 FIX: Google Maps Link Update */}
+                                  <button onClick={() => window.open(`https://www.google.com/maps?q=${job.latitude},${job.longitude}`, '_blank')} className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-black uppercase text-xs flex justify-center items-center gap-1"><Navigation size={14}/> Navigate</button>
                                   <button onClick={() => updateJobStatus(job.id, 'in_progress')} className="flex-1 bg-yellow-500 text-slate-900 py-3 rounded-xl font-black uppercase text-xs">Start Work</button>
                               </div>
                           )}
