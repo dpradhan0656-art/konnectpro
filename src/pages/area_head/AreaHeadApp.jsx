@@ -1,7 +1,7 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
-import { Shield, MapPin, Briefcase, LogOut, Users, Activity, Clock, CheckCircle, Navigation } from 'lucide-react';
+import { Shield, MapPin, Briefcase, LogOut, Users, Activity, Clock, CheckCircle, Navigation, Phone } from 'lucide-react';
 
 export default function AreaHeadApp() {
   const navigate = useNavigate();
