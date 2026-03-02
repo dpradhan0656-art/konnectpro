@@ -3,7 +3,6 @@ import { supabase } from "../../../lib/supabase";
 import { CreditCard, CheckCircle, Clock, Loader2, IndianRupee, History } from 'lucide-react';
 
 export default function WalletManager() {
-  // States
   const [requests, setRequests] = useState([]);
   const [experts, setExperts] = useState([]);
   const [areaHeads, setAreaHeads] = useState([]);
@@ -11,8 +10,7 @@ export default function WalletManager() {
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
 
-  // Manual Form States
-  const [selectedUser, setSelectedUser] = useState(''); // Format: "type|id"
+  const [selectedUser, setSelectedUser] = useState('');
   const [amount, setAmount] = useState('');
   const [actionType, setActionType] = useState('credit');
   const [desc, setDesc] = useState('');
@@ -21,95 +19,81 @@ export default function WalletManager() {
 
   const fetchAllWalletData = async () => {
     setLoading(true);
-    
-    // 1. Fetch Withdraw Requests
     const { data: reqData } = await supabase.from('withdrawal_requests').select('*').order('created_at', { ascending: false });
     if (reqData) setRequests(reqData);
 
-    // 2. Fetch Experts Balances
     const { data: eData } = await supabase.from('experts').select('id, name, phone, wallet_balance');
     if (eData) setExperts(eData);
 
-    // 3. Fetch Area Heads Balances
     const { data: aData } = await supabase.from('area_heads').select('id, name, wallet_balance');
     if (aData) setAreaHeads(aData);
 
-    // 4. Fetch Ledger (Passbook) - 🚀 FIX: 'wallet_transactions'
     const { data: tData } = await supabase.from('wallet_transactions').select('*').order('created_at', { ascending: false }).limit(30);
     if (tData) setTransactions(tData);
 
     setLoading(false);
   };
 
-  // ✅ APPROVE WITHDRAWAL REQUEST
+  // 🚀 SECURE RPC: APPROVE WITHDRAWAL
   const handleApprove = async (req) => {
     const confirmApprove = window.confirm(`Approve ₹${req.amount} for ${req.user_name}?`);
     if (!confirmApprove) return;
 
     setProcessingId(req.id);
     try {
+        // असली ID निकालने के लिए टेबल चेक करें
+        const table = req.user_type === 'expert' ? 'experts' : 'area_heads';
+        const { data: userData } = await supabase.from(table).select('id').eq('user_id', req.user_id).single();
+        
+        if (!userData) throw new Error("यूजर डेटाबेस में नहीं मिला!");
+
+        // 1. रिक्वेस्ट को 'approved' मार्क करें
         await supabase.from('withdrawal_requests').update({ status: 'approved' }).eq('id', req.id);
         
-        const table = req.user_type === 'expert' ? 'experts' : 'area_heads';
-        const { data: userData } = await supabase.from(table).select('wallet_balance, id').eq('user_id', req.user_id).single();
+        // 2. 🚀 RPC Call - डेटाबेस खुद बैलेंस काटेगा और पासबुक में एंट्री करेगा
+        const { error } = await supabase.rpc('admin_adjust_wallet', {
+            p_user_type: req.user_type,
+            p_entity_id: userData.id,
+            p_amount: req.amount,
+            p_action_type: 'debit',
+            p_desc: `Approved Bank Withdrawal to ${req.payment_method} (${req.payment_details})`
+        });
 
-        if (userData) {
-            const newBalance = parseFloat(userData.wallet_balance || 0) - parseFloat(req.amount);
-            await supabase.from(table).update({ wallet_balance: newBalance }).eq('id', userData.id);
-            
-            // 🚀 FIX: 'wallet_transactions'
-            await supabase.from('wallet_transactions').insert({
-                user_type: req.user_type, user_id: userData.id,
-                amount: req.amount, transaction_type: 'debit',
-                description: `Bank Withdrawal to ${req.payment_method} (${req.payment_details})`
-            });
-        }
-        alert("✅ Payment Approved!");
+        if (error) throw error;
+        alert("✅ Payment Approved & Wallet Updated Successfully!");
         fetchAllWalletData();
     } catch (error) {
-        alert("Error approving request!");
+        alert("Error: " + error.message);
     } finally {
         setProcessingId(null);
     }
   };
 
-  // 💰 MANUAL RECHARGE / PENALTY
+  // 🚀 SECURE RPC: MANUAL RECHARGE / PENALTY
   const handleManualTransaction = async (e) => {
       e.preventDefault();
       if (!selectedUser || !amount) return alert("Select user and enter amount!");
 
       setProcessingId('manual');
-      const [type, id] = selectedUser.split('|'); // Split 'expert|id'
+      const [type, id] = selectedUser.split('|'); 
       const amt = parseFloat(amount);
-      const table = type === 'expert' ? 'experts' : 'area_heads';
-      
-      const userList = type === 'expert' ? experts : areaHeads;
-      const user = userList.find(u => u.id === id);
-      
-      if(!user) return;
-
-      let newBalance = parseFloat(user.wallet_balance || 0);
-      if (actionType === 'credit') newBalance += amt;
-      else newBalance -= amt;
 
       try {
-          // 1. Update Balance
-          await supabase.from(table).update({ wallet_balance: newBalance }).eq('id', id);
-
-          // 2. Add to Transactions Ledger - 🚀 FIX: 'wallet_transactions'
-          await supabase.from('wallet_transactions').insert({
-              user_type: type,
-              user_id: id,
-              amount: amt,
-              transaction_type: actionType,
-              description: desc || `Manual ${actionType} by Admin`
+          // 🚀 RPC Call - सुरक्षित तरीके से पैसा जोड़ना या काटना
+          const { error } = await supabase.rpc('admin_adjust_wallet', {
+              p_user_type: type,
+              p_entity_id: id,
+              p_amount: amt,
+              p_action_type: actionType,
+              p_desc: desc || `Manual ${actionType} by Admin`
           });
 
-          alert(`✅ Wallet Updated! New Balance: ₹${newBalance}`);
+          if (error) throw error;
+          alert(`✅ Wallet Updated Successfully!`);
           setAmount(''); setDesc(''); setSelectedUser('');
           fetchAllWalletData();
       } catch (err) {
-          alert("Transaction Failed!");
+          alert("Transaction Failed: " + err.message);
       } finally {
           setProcessingId(null);
       }
@@ -131,7 +115,7 @@ export default function WalletManager() {
         <button onClick={fetchAllWalletData} className="text-xs bg-slate-800 hover:bg-slate-700 px-4 py-2.5 rounded-xl text-slate-300 font-bold transition-colors">Refresh All</button>
       </div>
 
-      {/* ⚠️ PENDING WITHDRAWALS (ACTION REQUIRED) */}
+      {/* ⚠️ PENDING WITHDRAWALS */}
       <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2 mt-8"><Clock size={16} className="text-amber-500"/> Payout Requests ({pendingReqs.length})</h3>
       <div className="grid gap-4">
           {pendingReqs.length === 0 ? (
@@ -199,25 +183,20 @@ export default function WalletManager() {
           <div className="bg-slate-900 p-6 rounded-[2.5rem] border border-slate-800 shadow-xl flex flex-col h-[420px]">
              <h3 className="text-sm font-black text-white uppercase tracking-widest mb-4">Live Balances</h3>
              <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-2">
-                 {/* Area Heads Section */}
                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 mt-2 border-b border-slate-800 pb-1">Area Commanders</div>
                  {areaHeads.map(ah => (
                      <div key={ah.id} className="flex justify-between items-center p-3 bg-slate-950 rounded-2xl border border-slate-800/50">
                          <div>
                              <p className="font-bold text-white text-sm">{ah.name}</p>
-                             <span className="text-[9px] bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded uppercase font-bold">Manager</span>
                          </div>
                          <div className={`text-lg font-black ${ah.wallet_balance < 0 ? 'text-red-500' : 'text-green-500'}`}>₹{ah.wallet_balance || 0}</div>
                      </div>
                  ))}
-
-                 {/* Experts Section */}
                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 mt-4 border-b border-slate-800 pb-1">Ground Experts</div>
                  {experts.map(ex => (
                      <div key={ex.id} className="flex justify-between items-center p-3 bg-slate-950 rounded-2xl border border-slate-800/50">
                          <div>
                              <p className="font-bold text-white text-sm">{ex.name}</p>
-                             <p className="text-[10px] text-slate-500">{ex.phone}</p>
                          </div>
                          <div className={`text-lg font-black ${ex.wallet_balance < 0 ? 'text-red-500' : 'text-green-500'}`}>₹{ex.wallet_balance || 0}</div>
                      </div>
@@ -248,7 +227,6 @@ export default function WalletManager() {
                               </td>
                               <td className="p-4">
                                   <span className="text-xs font-bold text-white">{txn.description}</span>
-                                  {txn.booking_id && <span className="block text-[10px] text-teal-500 mt-1">Booking Ref: #{txn.booking_id}</span>}
                               </td>
                               <td className={`p-4 text-right font-black text-lg ${txn.transaction_type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
                                   {txn.transaction_type === 'credit' ? '+' : '-'}₹{txn.amount}

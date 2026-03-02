@@ -19,7 +19,7 @@ export default function DispatchTab() {
   const fetchData = async () => {
     setLoading(true);
     
-    // 1. Fetch Bookings (🛠️ FIX 1: Fetch all expert columns using *)
+    // 1. Fetch Bookings 
     const { data: bData, error: bError } = await supabase
         .from('bookings')
         .select(`*, experts(*)`) 
@@ -31,7 +31,7 @@ export default function DispatchTab() {
         setBookings(bData);
     }
 
-    // 2. Fetch Active Experts (🛠️ FIX 2: Removed is_active=true so ALL approved experts show)
+    // 2. Fetch Active Experts
     const { data: eData, error: eError } = await supabase
         .from('experts')
         .select('*')
@@ -70,53 +70,22 @@ export default function DispatchTab() {
       }
   };
 
-  // 💰 Mark Completed & Wallet Math
+  // 🚀 SECURE RPC: Mark Completed & Wallet Math
   const handleComplete = async (job) => {
-      if (!window.confirm(`Mark Job #${String(job.id).slice(0,5)} as COMPLETED?`)) return;
-
-      const amount = parseFloat(job.total_amount || 0);
-      const commissionRate = 0.20; 
-      const platformFee = amount * commissionRate;
-      const expertPayout = amount - platformFee;
-
-      const { error } = await supabase.from('bookings').update({ 
-          status: 'completed',
-          platform_fee: platformFee,
-          expert_payout: expertPayout
-      }).eq('id', job.id);
-
-      if(error) return alert("Error updating job: " + error.message);
-
-      const expert = experts.find(e => e.id === job.expert_id);
-      if (expert) {
-          let newBalance = parseFloat(expert.wallet_balance || 0);
-          let transType = '';
-          let transAmount = 0;
-
-          if (job.payment_mode?.includes('cash')) {
-              newBalance -= platformFee;
-              transType = 'debit';
-              transAmount = platformFee;
-          } else {
-              newBalance += expertPayout;
-              transType = 'credit';
-              transAmount = expertPayout;
-          }
-
-          await supabase.from('experts').update({ wallet_balance: newBalance }).eq('id', expert.id);
-
-          await supabase.from('wallet_transactions').insert({
-              user_id: expert.id,
-              user_type: 'expert',
-              amount: transAmount,
-              transaction_type: transType,
-              reason: transType === 'debit' ? 'commission_cut' : 'online_payout',
-              description: `Job #${String(job.id).slice(0,5)} settlement`,
-              booking_id: job.id
+      if(!window.confirm(`Mark Job #${String(job.id).slice(0,5)} as COMPLETED?`)) return;
+      
+      try {
+          // 💡 अब सारा गणित डेटाबेस के अंदर सुरक्षित तरीके से होगा
+          const { error } = await supabase.rpc('process_job_payout', {
+              p_booking_id: job.id
           });
+          
+          if (error) throw error;
+          alert("✅ Job Finished! Payment Split Done in Database.");
+          fetchData();
+      } catch (err) {
+          alert("Error: " + err.message);
       }
-      fetchData();
-      alert("✅ Job Completed & Wallet Updated!");
   };
 
   return (
@@ -146,7 +115,6 @@ export default function DispatchTab() {
                   <p className="text-slate-500 font-bold uppercase tracking-widest text-sm">No Active Bookings Found</p>
               </div>
           ) : bookings.map(job => {
-              // 🛠️ FIX 3: Safe expert info extraction
               const assignedExpName = job.experts?.name || job.experts?.full_name || 'Unknown Expert';
               const assignedExpPhone = job.experts?.phone || 'No Phone';
 
@@ -226,7 +194,6 @@ export default function DispatchTab() {
                                             })
                                             .sort((a, b) => a.dist - b.dist)
                                             .map(exp => {
-                                                // 🛠️ FIX 4: Bulletproof name extraction
                                                 const expName = exp.name || exp.full_name || "Unknown";
                                                 return (
                                                     <option key={exp.id} value={exp.id} className="bg-slate-900">
