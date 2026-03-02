@@ -19,25 +19,23 @@ export default function DispatchTab() {
   const fetchData = async () => {
     setLoading(true);
     
-    // 1. Fetch Bookings (With proper Error Handling)
+    // 1. Fetch Bookings (🛠️ FIX 1: Fetch all expert columns using *)
     const { data: bData, error: bError } = await supabase
         .from('bookings')
-        .select(`*, experts(name, phone)`)
+        .select(`*, experts(*)`) 
         .order('created_at', { ascending: false });
         
-    if (bError) {
+    if (bError && bError.code !== 'PGRST116') {
         console.error("Booking Fetch Error:", bError);
-        if(bError.code !== 'PGRST116') alert("DB Error: " + bError.message); 
     } else if (bData) {
         setBookings(bData);
     }
 
-    // 2. Fetch Active Experts
+    // 2. Fetch Active Experts (🛠️ FIX 2: Removed is_active=true so ALL approved experts show)
     const { data: eData, error: eError } = await supabase
         .from('experts')
         .select('*')
-        .eq('status', 'approved')
-        .eq('is_active', true); 
+        .eq('status', 'approved'); 
         
     if (eData) setExperts(eData);
     
@@ -147,7 +145,12 @@ export default function DispatchTab() {
                   <AlertCircle className="mx-auto mb-4 text-slate-700" size={48}/>
                   <p className="text-slate-500 font-bold uppercase tracking-widest text-sm">No Active Bookings Found</p>
               </div>
-          ) : bookings.map(job => (
+          ) : bookings.map(job => {
+              // 🛠️ FIX 3: Safe expert info extraction
+              const assignedExpName = job.experts?.name || job.experts?.full_name || 'Unknown Expert';
+              const assignedExpPhone = job.experts?.phone || 'No Phone';
+
+              return (
               <div key={job.id} className={`bg-slate-900 border ${job.status === 'pending' ? 'border-orange-500/30' : 'border-slate-800'} rounded-[2.5rem] p-6 shadow-2xl flex flex-col lg:flex-row gap-6 hover:border-teal-500/30 transition-all group relative overflow-hidden`}>
                   
                   {/* City Indicator Badge */}
@@ -201,7 +204,7 @@ export default function DispatchTab() {
                           {job.status === 'pending' && (
                               <div className="space-y-2">
                                 <label className="text-[9px] font-bold text-orange-500 uppercase ml-1 flex items-center gap-1">
-                                    <MapPinned size={10}/> Assign Expert (Radar)
+                                    <MapPinned size={10}/> Assign Expert
                                 </label>
                                 
                                 <select 
@@ -209,55 +212,29 @@ export default function DispatchTab() {
                                     className="w-full bg-slate-950 border border-slate-700 text-white text-xs font-bold rounded-xl p-4 outline-none focus:border-orange-500 transition-all cursor-pointer appearance-none shadow-inner"
                                     defaultValue=""
                                 >
-                                    <option value="" disabled>Select Matching Expert...</option>
+                                    <option value="" disabled>Select Expert...</option>
                                     
                                     {(() => {
-                                        // 1. नाम को एकदम साफ़ करो (spaces और बड़े अक्षर हटाकर)
-                                        const jobService = (job.service_name || "").toLowerCase().trim();
-                                        const jobCat = (job.category || job.service_category || "").toLowerCase().trim();
-
-                                        // 2. सिर्फ काम के एक्सपर्ट्स को चुनो (Smart AI Filter)
-                                        const availableExperts = experts.filter(exp => {
-                                            const expCat = (exp.service_category || "").toLowerCase().trim();
-                                            if (!expCat) return false;
-
-                                            // 🧠 SMART KEYWORDS
-                                            const isElectricalJob = jobService.includes('fan') || jobService.includes('light') || jobService.includes('wire') || jobService.includes('switch') || jobService.includes('ac') || jobService.includes('board') || jobService.includes('inverter');
-                                            const isPlumbingJob = jobService.includes('pipe') || jobService.includes('tap') || jobService.includes('water') || jobService.includes('tank') || jobService.includes('sink') || jobService.includes('motor') || jobService.includes('plumbing');
-                                            
-                                            // 🚀 NEW: Custom Job Check (अगर कस्टम जॉब है, तो सबको दिखाओ)
-                                            const isCustomJob = jobService.includes('custom') || jobService.includes('other');
-
-                                            // MATCH LOGIC (isCustomJob को इसमें जोड़ दिया गया है)
-                                            const isCategoryMatch = isCustomJob || 
-                                                                    (expCat === jobCat) || 
-                                                                    jobService.includes(expCat) || 
-                                                                    jobCat.includes(expCat) ||
-                                                                    (expCat.includes('electric') && isElectricalJob) ||
-                                                                    (expCat.includes('plumb') && isPlumbingJob);
-                                            
-                                            return isCategoryMatch;
-                                        });
-
-                                        // 3. अगर कोई सही एक्सपर्ट नहीं मिला
-                                        if (availableExperts.length === 0) {
-                                            return <option value="" disabled className="text-red-400">⚠️ No {job.service_name || 'Matching'} Expert Online</option>;
+                                        if (experts.length === 0) {
+                                            return <option value="" disabled className="text-red-400">⚠️ No Approved Experts in DB</option>;
                                         }
 
-                                        // 4. दूरी नापो और सबसे करीब वाले को सबसे ऊपर रखो
-                                        return availableExperts
+                                        return experts
                                             .map(exp => {
                                                 const dist = calculateDistance(job.latitude, job.longitude, exp.latitude, exp.longitude);
-                                                // अगर GPS नहीं है तो उसे 999 मानकर सबसे नीचे डाल दो
                                                 return { ...exp, dist: dist ? parseFloat(dist) : 999 }; 
                                             })
                                             .sort((a, b) => a.dist - b.dist)
-                                            .map(exp => (
-                                                <option key={exp.id} value={exp.id} className="bg-slate-900">
-                                                    {exp.dist !== 999 ? `🚗 ${exp.dist} KM - ` : '📍 No GPS - '} 
-                                                    {exp.name} ({exp.service_category})
-                                                </option>
-                                            ));
+                                            .map(exp => {
+                                                // 🛠️ FIX 4: Bulletproof name extraction
+                                                const expName = exp.name || exp.full_name || "Unknown";
+                                                return (
+                                                    <option key={exp.id} value={exp.id} className="bg-slate-900">
+                                                        {exp.dist !== 999 ? `🚗 ${exp.dist} KM - ` : '📍 No GPS - '} 
+                                                        {expName} ({exp.service_category || 'No Category'})
+                                                    </option>
+                                                );
+                                            });
                                     })()}
                                 </select>
                               </div>
@@ -266,12 +243,12 @@ export default function DispatchTab() {
                           {job.expert_id && (
                               <div className="bg-teal-500/10 border border-teal-500/20 rounded-2xl p-4 flex items-center gap-3">
                                   <div className="w-10 h-10 bg-teal-500 text-white rounded-full flex items-center justify-center font-black shadow-lg">
-                                      {job.experts?.name?.[0] || 'E'}
+                                      {assignedExpName[0]}
                                   </div>
                                   <div>
                                       <p className="text-[9px] text-teal-500 font-black uppercase tracking-wider">Assigned Force</p>
-                                      <p className="text-sm font-bold text-white">{job.experts?.name}</p>
-                                      <p className="text-[10px] text-slate-500 flex items-center gap-1"><Phone size={10}/> {job.experts?.phone}</p>
+                                      <p className="text-sm font-bold text-white">{assignedExpName}</p>
+                                      <p className="text-[10px] text-slate-500 flex items-center gap-1"><Phone size={10}/> {assignedExpPhone}</p>
                                   </div>
                               </div>
                           )}
@@ -290,7 +267,7 @@ export default function DispatchTab() {
                       </div>
                   </div>
               </div>
-          ))}
+          )})}
       </div>
     </div>
   );
