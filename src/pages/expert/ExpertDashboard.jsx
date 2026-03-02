@@ -309,7 +309,12 @@ export default function ExpertDashboard() {
                                   {/* 🚀 FINAL FIX: Correct Google Maps Link for Android/iOS Routing */}
                                   
                                   {/* 🚀 100% CORRECT GOOGLE MAPS NAVIGATION LINK */}
-                                  <button onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${job.latitude},${job.longitude}`, '_blank')} className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-black uppercase text-xs flex justify-center items-center gap-1"><Navigation size={14}/> {t.navigate}</button>
+                                 {/* 🚀 100% CORRECT GOOGLE MAPS NAVIGATION LINK & START WORK BUTTON */}
+                                 <button onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${job.latitude},${job.longitude}`, '_blank')} className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-black uppercase text-xs flex justify-center items-center gap-1"><Navigation size={14}/> {t.navigate}</button>
+<button onClick={() => updateJobStatus(job.id, 'in_progress')} className="flex-1 bg-yellow-500 text-slate-900 py-3 rounded-xl font-black uppercase text-xs">{t.start}</button>
+
+
+
                               </div>
                           )}
                           {job.status === 'in_progress' && (
