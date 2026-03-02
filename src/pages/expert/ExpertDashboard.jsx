@@ -30,7 +30,7 @@ export default function ExpertDashboard() {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     
-    if (!user) { navigate('/expert/login'); return; } // FIX: Updated redirect path
+    if (!user) { navigate('/expert/login'); return; }
 
     const { data: expData } = await supabase.from('experts').select('*').eq('user_id', user.id).single();
     
@@ -87,7 +87,8 @@ export default function ExpertDashboard() {
           
           await supabase.from('bookings').update({ status: 'completed' }).eq('id', job.id);
 
-          await supabase.from('transactions').insert({
+          // 🚀 FIX: Used 'wallet_transactions' instead of 'transactions'
+          await supabase.from('wallet_transactions').insert({
               booking_id: job.id, user_type: 'expert', user_id: expert.id,
               amount: parseFloat(expertCut), transaction_type: 'credit', description: `Earnings for Booking #${job.id}`
           });
@@ -97,11 +98,12 @@ export default function ExpertDashboard() {
           
           setExpert({ ...expert, wallet_balance: newBalance });
 
+          // Area Head Commission Logic
           if (job.area_head_id) {
               const { data: ah } = await supabase.from('area_heads').select('*').eq('id', job.area_head_id).single();
               if (ah && ah.employment_type === 'commission') {
                   const ahCut = (job.total_amount * (ah.compensation_value / 100)).toFixed(2);
-                  await supabase.from('transactions').insert({
+                  await supabase.from('wallet_transactions').insert({
                       booking_id: job.id, user_type: 'area_head', user_id: ah.user_id,
                       amount: parseFloat(ahCut), transaction_type: 'credit', description: `Commission from Booking #${job.id}`
                   });
@@ -173,7 +175,7 @@ export default function ExpertDashboard() {
     });
   };
 
-  // 🚪 6. LOGOUT FUNCTION (Ab ye sahi jagah par hai)
+  // 🚪 6. LOGOUT FUNCTION
   const handleLogout = async () => {
       const confirmOut = window.confirm("Are you sure you want to log out?");
       if (!confirmOut) return;
@@ -191,6 +193,8 @@ export default function ExpertDashboard() {
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-900"><Loader2 className="animate-spin text-teal-500" size={40}/></div>;
 
+  const expertName = expert?.name || expert?.full_name || 'Expert';
+
   return (
     <div className="min-h-screen bg-slate-950 pb-20 font-sans text-white selection:bg-teal-500/30">
       
@@ -199,13 +203,12 @@ export default function ExpertDashboard() {
           <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-teal-500 rounded-full flex items-center justify-center font-black text-xl shadow-lg shadow-teal-500/20">
-                      {expert?.name?.[0] || <User/>}
+                      {expertName[0]}
                   </div>
                   <div>
-                      <h2 className="text-xl font-black">{expert?.name}</h2>
-                      <p className="text-teal-500 text-[10px] font-black uppercase tracking-widest mb-1">{expert?.service_category} Expert</p>
+                      <h2 className="text-xl font-black">{expertName}</h2>
+                      <p className="text-teal-500 text-[10px] font-black uppercase tracking-widest mb-1">{expert?.service_category || 'Service'} Expert</p>
                       
-                      {/* 🚀 LOGOUT BUTTON (Ab single baar dikhega) */}
                       <button onClick={handleLogout} className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-red-400 font-bold uppercase tracking-wider transition-colors">
                           <LogOut size={12}/> Log Out
                       </button>
@@ -232,9 +235,9 @@ export default function ExpertDashboard() {
                           
                           try {
                               const { error } = await supabase.from('withdrawal_requests').insert({
-                                  user_id: expert.id, 
+                                  user_id: expert.user_id,  
                                   user_type: 'expert',
-                                  user_name: expert.name,
+                                  user_name: expertName,
                                   amount: amount,
                                   payment_method: 'UPI/Bank',
                                   payment_details: upiId
@@ -318,10 +321,9 @@ export default function ExpertDashboard() {
 
                           {job.status === 'accepted' && (
                               <div className="flex gap-3">
-                                  {/* 🚀 FINAL FIXED UNIVERSAL GOOGLE MAPS LINK */}
+                                  {/* 🚀 FIX: Corrected Google Maps Direction Link */}
                                   <button onClick={() => {
                                           if(job.latitude && job.longitude) {
-                                              // 👇 TRUE GOOGLE MAPS DIRECTIONS LINK
                                               window.open(`https://www.google.com/maps/dir/?api=1&destination=${job.latitude},${job.longitude}`, '_blank');
                                           } else {
                                               alert("Customer GPS Location not found!");

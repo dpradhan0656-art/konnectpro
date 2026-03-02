@@ -34,8 +34,8 @@ export default function WalletManager() {
     const { data: aData } = await supabase.from('area_heads').select('id, name, wallet_balance');
     if (aData) setAreaHeads(aData);
 
-    // 4. Fetch Ledger (Passbook)
-    const { data: tData } = await supabase.from('transactions').select('*').order('created_at', { ascending: false }).limit(30);
+    // 4. Fetch Ledger (Passbook) - 🚀 FIX: 'wallet_transactions'
+    const { data: tData } = await supabase.from('wallet_transactions').select('*').order('created_at', { ascending: false }).limit(30);
     if (tData) setTransactions(tData);
 
     setLoading(false);
@@ -57,7 +57,8 @@ export default function WalletManager() {
             const newBalance = parseFloat(userData.wallet_balance || 0) - parseFloat(req.amount);
             await supabase.from(table).update({ wallet_balance: newBalance }).eq('id', userData.id);
             
-            await supabase.from('transactions').insert({
+            // 🚀 FIX: 'wallet_transactions'
+            await supabase.from('wallet_transactions').insert({
                 user_type: req.user_type, user_id: userData.id,
                 amount: req.amount, transaction_type: 'debit',
                 description: `Bank Withdrawal to ${req.payment_method} (${req.payment_details})`
@@ -95,8 +96,8 @@ export default function WalletManager() {
           // 1. Update Balance
           await supabase.from(table).update({ wallet_balance: newBalance }).eq('id', id);
 
-          // 2. Add to Transactions Ledger
-          await supabase.from('transactions').insert({
+          // 2. Add to Transactions Ledger - 🚀 FIX: 'wallet_transactions'
+          await supabase.from('wallet_transactions').insert({
               user_type: type,
               user_id: id,
               amount: amt,
