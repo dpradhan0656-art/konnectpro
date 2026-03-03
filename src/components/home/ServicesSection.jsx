@@ -1,15 +1,53 @@
-import React from 'react';
-import { Tag } from 'lucide-react';
+import React, { useRef } from 'react';
+import { Tag, ChevronLeft, ChevronRight } from 'lucide-react';
 import ServiceCard from './ServiceCard';
 
+const SCROLL_STEP = 220;
+
 export default function ServicesSection({ services, cart, onAddToCart }) {
+  const scrollRef = useRef(null);
+
+  const scroll = (dir) => {
+    if (!scrollRef.current) return;
+    const step = dir === 'left' ? -SCROLL_STEP : SCROLL_STEP;
+    scrollRef.current.scrollBy({ left: step, behavior: 'smooth' });
+  };
+
   return (
-    <section className="px-6 max-w-4xl mx-auto" aria-labelledby="services-heading">
-      <h2 id="services-heading" className="font-black text-slate-900 text-xl tracking-tight mb-4 flex items-center gap-2">
-        <Tag size={20} className="text-amber-500" aria-hidden="true" />
-        Bestselling Services
-      </h2>
-      <div className="flex gap-5 overflow-x-auto pb-8 no-scrollbar px-1" role="list">
+    <section className="px-4 sm:px-6 max-w-4xl mx-auto" aria-labelledby="services-heading">
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <h2 id="services-heading" className="font-black text-slate-900 text-xl tracking-tight flex items-center gap-2">
+          <Tag size={20} className="text-amber-500" aria-hidden="true" />
+          Bestselling Services
+        </h2>
+        {services.length > 1 && (
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={() => scroll('left')}
+              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all duration-300 active:scale-95"
+              aria-label="Scroll left"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <button
+              type="button"
+              onClick={() => scroll('right')}
+              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all duration-300 active:scale-95"
+              aria-label="Scroll right"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        )}
+      </div>
+      {/* Visible scrollbar on mobile – no-scrollbar removed */}
+      <div
+        ref={scrollRef}
+        className="flex gap-4 sm:gap-5 overflow-x-auto pb-8 px-1 min-w-0 scroll-smooth"
+        style={{ scrollbarGutter: 'stable' }}
+        role="list"
+      >
         {services.length > 0 ? (
           services.map((service, i) => {
             const isInCart = cart.some((item) => item.id === service.id);
@@ -20,7 +58,7 @@ export default function ServicesSection({ services, cart, onAddToCart }) {
             );
           })
         ) : (
-          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest p-6 border border-dashed border-slate-200 rounded-3xl w-full text-center bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest p-6 border border-dashed border-slate-200 rounded-3xl w-full text-center bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] min-w-0">
             Loading popular services...
           </div>
         )}

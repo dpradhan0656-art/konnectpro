@@ -16,7 +16,7 @@ export default function CategorySection({ categories, loading }) {
   const navigate = useNavigate();
 
   return (
-    <section className="px-6 max-w-4xl mx-auto relative z-20" aria-labelledby="categories-heading">
+    <section className="px-4 sm:px-6 max-w-4xl mx-auto relative z-20 min-w-0" aria-labelledby="categories-heading">
       <div className="flex justify-between items-end mb-4">
         <h2 id="categories-heading" className="font-black text-slate-900 text-xl tracking-tight">
           Explore Categories
@@ -27,13 +27,13 @@ export default function CategorySection({ categories, loading }) {
       </div>
 
       {loading ? (
-        <div className="flex gap-5 overflow-x-auto pb-6 pt-2 no-scrollbar animate-pulse" role="status" aria-label="Loading categories">
+        <div className="flex gap-4 sm:gap-5 overflow-x-auto pb-6 pt-2 px-1 animate-pulse" role="status" aria-label="Loading categories">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="min-w-[90px] h-28 bg-slate-200 rounded-3xl" />
           ))}
         </div>
       ) : categories.length > 0 ? (
-        <div className="flex gap-5 overflow-x-auto pb-6 pt-2 no-scrollbar px-1" role="list">
+        <div className="flex gap-4 sm:gap-5 overflow-x-auto pb-6 pt-2 px-1 min-w-0 scroll-smooth" role="list">
           {categories.map((cat, i) => {
             const colorClass = BG_COLORS[i % BG_COLORS.length];
             const slugUrl = cat.slug || cat.name.toLowerCase().replace(/[\s_]+/g, '-');
@@ -42,7 +42,7 @@ export default function CategorySection({ categories, loading }) {
                 key={cat.id || i}
                 type="button"
                 onClick={() => navigate(`/category/${slugUrl}`)}
-                className="flex flex-col items-center gap-3 min-w-[85px] cursor-pointer group text-left"
+                className="flex flex-col items-center gap-3 min-w-[85px] min-h-[44px] cursor-pointer group text-left touch-manipulation"
                 role="listitem"
               >
                 <div className={`w-20 h-20 ${colorClass} rounded-3xl flex items-center justify-center shadow-[0_4px_20px_-10px_rgba(0,0,0,0.08)] group-hover:shadow-[0_10px_25px_-5px_rgba(20,184,166,0.25)] group-hover:-translate-y-0.5 transition-all duration-300 border border-white relative overflow-hidden`}>
