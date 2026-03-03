@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 // 🚀 NEW: Added 'FileCheck' icon for KYC
@@ -26,38 +26,68 @@ import ExpertVerification from './tabs/ExpertVerification';
 export default function DeepakHQ() {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [passcode, setPasscode] = useState('');
-  const [dbPasscode, setDbPasscode] = useState('Founder2026'); 
+  const [authChecking, setAuthChecking] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // --- AUTH CHECK ---
+  const checkAdminAccess = async (userId) => {
+    const { data } = await supabase.from('app_admin').select('user_id').eq('user_id', userId).limit(1);
+    return !!(data && data.length > 0);
+  };
+
   useEffect(() => {
-    const adminAuth = localStorage.getItem('adminAuth');
-    if (adminAuth === 'true') setIsAuthenticated(true);
-    
-    // Fetch Real Passcode from DB
-    const fetchConfig = async () => {
-        const { data } = await supabase.from('admin_settings').select('*').eq('setting_key', 'admin_passcode').single();
-        if (data) setDbPasscode(data.setting_value);
+    let mounted = true;
+    const init = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
+        if (mounted) setAuthChecking(false);
+        return;
+      }
+      const isAdmin = await checkAdminAccess(session.user.id);
+      if (mounted) {
+        if (isAdmin) setIsAuthenticated(true);
+        else await supabase.auth.signOut();
+        setAuthChecking(false);
+      }
     };
-    fetchConfig();
+    init();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_, session) => {
+      if (!mounted || !session?.user?.id) return;
+      const isAdmin = await checkAdminAccess(session.user.id);
+      if (mounted) setIsAuthenticated(isAdmin);
+    });
+    return () => {
+      mounted = false;
+      subscription?.unsubscribe();
+    };
   }, []);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (passcode === dbPasscode) {
-        localStorage.setItem('adminAuth', 'true');
-        setIsAuthenticated(true);
-    } else {
-        alert('⛔ Access Denied! Wrong Code.');
+    setLoginError('');
+    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    if (error) {
+      setLoginError(error.message?.includes('Invalid') ? 'Invalid email or password.' : 'Login failed. Try again.');
+      return;
+    }
+    const isAdmin = await checkAdminAccess(data.user.id);
+    if (isAdmin) setIsAuthenticated(true);
+    else {
+      await supabase.auth.signOut();
+      setLoginError('Not authorized. Your account is not an admin.');
     }
   };
 
-  const handleLogout = () => {
-      localStorage.removeItem('adminAuth');
-      setIsAuthenticated(false);
-      navigate('/'); 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsAuthenticated(false);
+    setEmail('');
+    setPassword('');
+    setLoginError('');
+    navigate('/');
   };
 
   const handleTabChange = (tabName) => {
@@ -66,18 +96,28 @@ export default function DeepakHQ() {
       window.scrollTo({top: 0, behavior: 'smooth'});
   };
 
-  // --- LOGIN SCREEN ---
+  if (authChecking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
+        <div className="animate-spin w-10 h-10 border-2 border-teal-500 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
         <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white p-4">
             <div className="bg-slate-900 p-8 rounded-[2rem] border border-teal-500/30 w-full max-w-sm text-center shadow-2xl relative">
                 <div className="flex justify-center mb-6"><div className="p-4 bg-teal-900/50 rounded-full text-teal-400 border border-teal-500 shadow-lg shadow-teal-500/20"><Shield size={40} /></div></div>
                 <h2 className="text-3xl font-black mb-1 uppercase tracking-widest">Deepak<span className="text-teal-500">HQ</span></h2>
-                <p className="text-xs text-slate-500 mb-8 uppercase tracking-widest">Authorized Personnel Only</p>
+                <p className="text-xs text-slate-500 mb-6 uppercase tracking-widest">Admin login (Supabase Auth)</p>
                 <form onSubmit={handleLogin} className="space-y-4">
-                    <input type="password" value={passcode} onChange={(e) => setPasscode(e.target.value)} placeholder="Enter Passcode" className="w-full p-4 bg-black rounded-xl border border-slate-700 text-center text-xl font-bold text-white tracking-[0.5em] focus:border-teal-500 outline-none" autoFocus />
-                    <button className="w-full bg-teal-600 hover:bg-teal-500 py-3 rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-teal-900/50 transition-all active:scale-95">Enter</button>
+                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Admin email" required className="w-full p-4 bg-black rounded-xl border border-slate-700 text-white focus:border-teal-500 outline-none" autoComplete="email" />
+                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required className="w-full p-4 bg-black rounded-xl border border-slate-700 text-white focus:border-teal-500 outline-none" autoComplete="current-password" />
+                    {loginError && <p className="text-red-400 text-sm">{loginError}</p>}
+                    <button type="submit" className="w-full bg-teal-600 hover:bg-teal-500 py-3 rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-teal-900/50 transition-all active:scale-95">Enter</button>
                 </form>
+                <p className="text-[10px] text-slate-500 mt-4">Your user must be in app_admin table.</p>
             </div>
         </div>
     );

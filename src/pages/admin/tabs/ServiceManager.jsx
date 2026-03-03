@@ -10,7 +10,7 @@ export default function ServiceManager() {
   
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
-  const [form, setForm] = useState({ name: '', category: '', price: '', image_url: '', note: '' });
+  const [form, setForm] = useState({ name: '', category: '', price: '', image_url: '', note: '', service_cities: '' });
 
   const [aiPrompt, setAiPrompt] = useState('');
   const [isAiThinking, setIsAiThinking] = useState(false);
@@ -38,19 +38,21 @@ export default function ServiceManager() {
     
     setLoading(true);
     
+    const citiesArr = parseServiceCities(form.service_cities);
     const { error } = await supabase.from('services').insert([{
         name: form.name,
         category: form.category,
-        base_price: parseFloat(form.price), 
-        image_url: form.image_url, 
-        note: form.note, 
+        base_price: parseFloat(form.price),
+        image_url: form.image_url,
+        note: form.note,
+        service_cities: citiesArr,
         is_active: true
     }]);
     
     if (error) {
         alert("Error: " + error.message);
     } else {
-        setForm({ ...form, name: '', price: '', image_url: '', note: '' }); 
+        setForm({ ...form, name: '', price: '', image_url: '', note: '', service_cities: '' }); 
         fetchData(); 
     }
     setLoading(false);
@@ -65,9 +67,17 @@ export default function ServiceManager() {
   };
 
   // --- 4. Edit Logic ---
-  const startEdit = (service) => { 
-      setEditingId(service.id); 
-      setEditForm({ ...service, price: service.base_price || service.price || 0 }); 
+  function parseServiceCities(raw) {
+    if (raw == null || String(raw).trim() === '') return null;
+    const s = String(raw).trim().toLowerCase();
+    if (s === 'all') return ['all'];
+    return s.split(/[\s,]+/).map((c) => c.trim()).filter(Boolean);
+  }
+
+  const startEdit = (service) => {
+      setEditingId(service.id);
+      const citiesRaw = Array.isArray(service.service_cities) ? service.service_cities.join(', ') : (service.service_cities || '');
+      setEditForm({ ...service, price: service.base_price || service.price || 0, service_cities_raw: citiesRaw });
   };
   
   const cancelEdit = () => { setEditingId(null); setEditForm({}); };
@@ -80,12 +90,14 @@ export default function ServiceManager() {
           }
 
           // 2. Database Update (with .select() to catch silent errors)
-          const { data, error } = await supabase.from('services').update({ 
-                name: editForm.name, 
+          const citiesArr = parseServiceCities(editForm.service_cities_raw);
+          const { data, error } = await supabase.from('services').update({
+                name: editForm.name,
                 base_price: parseFloat(editForm.price) || 0,
                 category: editForm.category,
                 image_url: editForm.image_url,
-                note: editForm.note
+                note: editForm.note,
+                service_cities: citiesArr
           }).eq('id', editingId).select(); // ✅ .select() se confirm hoga ki DB me update hua ya nahi
 
           // 3. Result Checking
@@ -229,7 +241,10 @@ export default function ServiceManager() {
                         <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1 flex items-center gap-1"><AlertCircle size={10}/> Customer Note (Optional)</label>
                         <input type="text" placeholder="e.g. Spare parts cost extra" className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-teal-100 focus:border-teal-500 outline-none text-xs" value={form.note} onChange={e => setForm({...form, note: e.target.value})} />
                     </div>
-                    
+                    <div>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Cities (optional)</label>
+                        <input type="text" placeholder="jabalpur, indore or leave empty for all" className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-teal-100 focus:border-teal-500 outline-none text-xs" value={form.service_cities} onChange={e => setForm({...form, service_cities: e.target.value})} />
+                    </div>
                     <button onClick={handleAdd} disabled={loading} className="w-full bg-teal-600 hover:bg-teal-500 text-white py-3.5 font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95 mt-2">
                         {loading ? <Loader2 className="animate-spin" size={18}/> : <><Plus size={18}/> Add to Database</>}
                     </button>
@@ -284,6 +299,7 @@ export default function ServiceManager() {
                                         <div className="flex flex-col gap-1 items-end">
                                             <input type="text" placeholder="URL or Emoji" className="bg-slate-950 border border-teal-500 rounded p-1 text-[10px] w-32 text-white outline-none mb-1" value={editForm.image_url || ''} onChange={e => setEditForm({...editForm, image_url: e.target.value})}/>
                                             <input type="text" placeholder="Customer Note" className="bg-slate-950 border border-teal-500 rounded p-1 text-[10px] w-32 text-white outline-none mb-1" value={editForm.note || ''} onChange={e => setEditForm({...editForm, note: e.target.value})}/>
+                                            <input type="text" placeholder="Cities: jabalpur, indore" className="bg-slate-950 border border-teal-500 rounded p-1 text-[10px] w-32 text-white outline-none mb-1" value={editForm.service_cities_raw || ''} onChange={e => setEditForm({...editForm, service_cities_raw: e.target.value})}/>
                                             <div className="flex justify-end gap-2"><button onClick={saveEdit} className="text-green-400 bg-slate-950 border border-slate-700 p-1.5 rounded-lg hover:border-green-500 transition-all"><Save size={16}/></button><button onClick={cancelEdit} className="text-red-400 bg-slate-950 border border-slate-700 p-1.5 rounded-lg hover:border-red-500 transition-all"><X size={16}/></button></div>
                                         </div>
                                     ) : (

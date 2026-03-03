@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { BRAND } from '../../config/brandConfig';
 import { useCart } from '../../context/CartContext';
+import { getUserCityKey, filterServicesByCity } from '../../lib/serviceCityUtils';
+import { reportError } from '../../lib/errorHandling';
 
 import SOSButton from '../../components/common/SOSButton';
 import HomeHero from '../../components/home/HomeHero';
@@ -31,6 +33,9 @@ export default function Home({ session }) {
     cat.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const userCity = getUserCityKey();
+  const filteredServices = filterServicesByCity(services, userCity);
+
   useEffect(() => {
     const fetchAllData = async () => {
       setLoading(true);
@@ -44,7 +49,7 @@ export default function Home({ session }) {
         const { data: serviceData } = await supabase.from('services').select('*').eq('is_active', true).limit(10);
         if (serviceData) setServices(serviceData);
       } catch (err) {
-        console.error('Fetch Error:', err);
+        reportError('Home fetch', err);
       }
       setLoading(false);
     };
@@ -134,7 +139,7 @@ export default function Home({ session }) {
       <div className="mt-14 flex flex-col gap-6">
         <CategorySection categories={filteredCategories} loading={loading} />
         <OffersSection offers={offers} />
-        <ServicesSection services={services} cart={cart} onAddToCart={addToCart} />
+        <ServicesSection services={filteredServices} cart={cart} onAddToCart={addToCart} />
         <RateCard />
         <div className="mb-10">
           <TrustBanner />

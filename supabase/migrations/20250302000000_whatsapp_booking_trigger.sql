@@ -1,13 +1,11 @@
 -- =============================================================================
--- WhatsApp Alert on New Booking (Supabase + Meta Cloud API)
--- Run this in Supabase SQL Editor. Ensure "pg_net" extension is enabled.
+-- DEPRECATED: Use 20250302110000_whatsapp_trigger_vault.sql instead (token from Vault).
+-- This file kept only for migration order; token must NOT be stored here.
 -- =============================================================================
 
--- 1. Clean up existing objects (idempotent)
 DROP TRIGGER IF EXISTS trigger_whatsapp_on_new_booking ON public.bookings;
 DROP FUNCTION IF EXISTS public.send_whatsapp_on_new_booking();
 
--- 2. Create the trigger function
 CREATE OR REPLACE FUNCTION public.send_whatsapp_on_new_booking()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -16,7 +14,7 @@ SET search_path = public
 AS $$
 DECLARE
   api_url     text := 'https://graph.facebook.com/v21.0/997778973421649/messages';
-  bearer_token text := 'EAAZAz4RZBgjWcBQ4qLfDG5eQZAQeMjDkrKz5jeMQ6ROto6FqjwZBm0IZBndTsN5Qj9sOUlEAaZC19akgwc6Gv5vOthRLKcfgEc7slBIaENOyYZARwYLykKH5VXXNRRZB5xYEhr2ZBfVk616jn0xvL1sKcipvHINVHS3zcXvDTm2ghjBlDGF1Nvi7FnLxVg9ohLgBb73Gp4WZAZCrZCDDJp01q3ZB0Y0xp5peGPoZBOpFtlRISW7TjnvZBgGGzyko6uF1fv4oiQEwbvZCwTfBAcdCWFenAe0bBwZDZD';
+  bearer_token text := '';  -- Use migration 20250302110000_whatsapp_trigger_vault.sql; set token in Vault
   to_phone    text := '919589634799';
   req_body    jsonb;
   req_headers jsonb;

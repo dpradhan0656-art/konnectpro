@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useCart } from '../../context/CartContext';
+import { getUserCityKey, filterServicesByCity } from '../../lib/serviceCityUtils';
 import BookingModal from '../../components/customer/BookingModal';
 import { ArrowLeft, Star, Clock, ShoppingBag, Plus, ShieldCheck, Zap, Info } from 'lucide-react';
 
@@ -35,9 +36,11 @@ export default function CategoryView() {
         .from('services')
         .select('*')
         .ilike('category', `%${cleanCategoryName}%`)
-        .eq('is_active', true); 
+        .eq('is_active', true);
 
-      if (!error) setServices(data || []);
+      const userCity = getUserCityKey();
+      const list = data || [];
+      if (!error) setServices(filterServicesByCity(list, userCity));
       setLoading(false);
     };
     fetchServices();
