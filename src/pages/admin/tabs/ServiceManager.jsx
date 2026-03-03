@@ -29,7 +29,10 @@ export default function ServiceManager() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // --- 2. Add Service ---
   const handleAdd = async () => {
@@ -104,7 +107,7 @@ export default function ServiceManager() {
           if (error) {
               alert("❌ Error: " + error.message);
           } else if (!data || data.length === 0) {
-              alert("⚠️ Save Failed! Supabase RLS is blocking the update. Please run the SQL command to disable RLS.");
+              alert("⚠️ Save failed: no row was updated. Please ensure you are logged in as an admin and RLS policies allow this change.");
           } else {
               // ✅ 100% Success
               setEditingId(null); 

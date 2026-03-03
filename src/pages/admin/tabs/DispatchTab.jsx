@@ -9,6 +9,7 @@ export default function DispatchTab() {
   const [bookings, setBookings] = useState([]);
   const [experts, setExperts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [cancellingId, setCancellingId] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -88,6 +89,26 @@ export default function DispatchTab() {
       }
   };
 
+  const handleCancel = async (job) => {
+    if (!window.confirm(`Cancel Order #${String(job.id).slice(0, 8)}?`)) return;
+    setCancellingId(job.id);
+    const { data, error } = await supabase
+      .from('bookings')
+      .update({ status: 'cancelled' })
+      .eq('id', job.id)
+      .select();
+    setCancellingId(null);
+    if (error) {
+      alert("Cancel failed: " + (error.message || "Check console for details."));
+      return;
+    }
+    if (!data || data.length === 0) {
+      alert("Cancel failed: No row updated. Ensure you are logged in as admin and RLS allows updates.");
+      return;
+    }
+    fetchData();
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-20 font-sans">
       
@@ -159,7 +180,7 @@ export default function DispatchTab() {
                       {job.latitude && job.longitude && (
                         <div className="mt-2 inline-block">
                           <a 
-                            href={`https://www.google.com/maps/search/?api=1&query=$${job.latitude},${job.longitude}`}
+                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${job.latitude},${job.longitude}`)}`}
                             target="_blank" 
                             rel="noreferrer"
                             className="inline-flex items-center gap-2 bg-slate-950 hover:bg-teal-900/40 text-teal-400 border border-teal-900/50 hover:border-teal-500/50 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
@@ -241,8 +262,14 @@ export default function DispatchTab() {
                           )}
                           
                           {job.status !== 'completed' && job.status !== 'cancelled' && (
-                              <button onClick={() => {if(window.confirm("Cancel Order?")) supabase.from('bookings').update({status:'cancelled'}).eq('id', job.id).then(fetchData)}} className="w-full text-slate-500 hover:text-red-400 py-2 text-[10px] font-black uppercase tracking-widest transition-all">
-                                  <XCircle size={12} className="inline mr-1"/> Cancel Booking
+                              <button
+                                type="button"
+                                onClick={() => handleCancel(job)}
+                                disabled={cancellingId === job.id}
+                                className="w-full text-slate-500 hover:text-red-400 py-2 text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {cancellingId === job.id ? <Loader2 size={12} className="inline animate-spin mr-1"/> : <XCircle size={12} className="inline mr-1"/>}
+                                {cancellingId === job.id ? 'Cancelling...' : 'Cancel Booking'}
                               </button>
                           )}
                       </div>
