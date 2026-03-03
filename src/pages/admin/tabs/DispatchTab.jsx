@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { 
   Navigation, Clock, MapPin, CheckCircle, XCircle, 
-  RefreshCw, IndianRupee, Zap, Phone, AlertCircle, Loader2, MapPinned, Building
+  RefreshCw, IndianRupee, Zap, Phone, AlertCircle, Loader2, MapPinned, Building, ExternalLink
 } from 'lucide-react';
 
 export default function DispatchTab() {
@@ -144,7 +144,7 @@ export default function DispatchTab() {
                         <Zap size={20} className="text-teal-500"/> {job.service_name}
                       </h3>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div className="flex items-start gap-2 text-slate-400">
                             <MapPin size={16} className="text-slate-600 shrink-0 mt-1"/>
                             <p className="text-xs font-medium leading-relaxed">{job.address}</p>
@@ -154,6 +154,20 @@ export default function DispatchTab() {
                             <p className="text-xs font-bold font-mono">{new Date(job.created_at).toLocaleString()}</p>
                         </div>
                       </div>
+
+                      {/* ✅ NAYA: VIEW ON MAP BUTTON */}
+                      {job.latitude && job.longitude && (
+                        <div className="mt-2 inline-block">
+                          <a 
+                            href={`https://www.google.com/maps/search/?api=1&query=$${job.latitude},${job.longitude}`}
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-2 bg-slate-950 hover:bg-teal-900/40 text-teal-400 border border-teal-900/50 hover:border-teal-500/50 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
+                          >
+                            <ExternalLink size={14} /> Open Customer Location in Maps
+                          </a>
+                        </div>
+                      )}
                   </div>
 
                   {/* RIGHT: PRICING & ACTION CENTER */}
