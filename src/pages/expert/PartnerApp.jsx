@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { Wallet, MapPin, Clock, ShieldCheck, LogOut, CheckCircle } from 'lucide-react';
@@ -44,25 +44,16 @@ export default function PartnerApp() {
   const handleCompleteJob = async (job) => {
       if (!confirm("Are you sure you have completed this job?")) return;
       setLoading(true);
-      const amount = parseFloat(job.total_amount || 0);
-      const platformFee = amount * 0.20;
-      const expertPayout = amount - platformFee;
-
-      await supabase.from('bookings').update({ status: 'completed', platform_fee: platformFee, expert_payout: expertPayout }).eq('id', job.id);
-
-      let newBalance = parseFloat(expert.wallet_balance || 0);
-      let transType = ''; let transAmount = 0; let reason = '';
-
-      if (job.payment_mode === 'cash_after_service' || job.payment_mode === 'cash') {
-          newBalance -= platformFee; transType = 'debit'; transAmount = platformFee; reason = 'commission_cut';
-      } else {
-          newBalance += expertPayout; transType = 'credit'; transAmount = expertPayout; reason = 'online_payout';
+      try {
+          const { error } = await supabase.rpc('process_job_payout', { p_booking_id: job.id });
+          if (error) throw error;
+          alert("Job Completed Successfully!");
+          checkExpertProfile();
+      } catch (err) {
+          alert("Error: " + (err?.message || err));
+      } finally {
+          setLoading(false);
       }
-
-      await supabase.from('experts').update({ wallet_balance: newBalance }).eq('id', expert.id);
-      await supabase.from('wallet_transactions').insert({ user_id: expert.id, user_type: 'expert', amount: transAmount, transaction_type: transType, reason: reason, description: `Job #${job.id.slice(0,6)}`, booking_id: job.id });
-
-      alert("Job Completed Successfully!"); checkExpertProfile();
   };
 
   const handleLogout = async () => {

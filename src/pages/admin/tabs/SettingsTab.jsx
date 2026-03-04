@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Settings, Save, Lock, Smartphone, Palette, Check, Star, Phone, Mail, MapPin } from 'lucide-react';
+import { Settings, Save, Lock, Smartphone, Palette, Check, Star, Phone, Mail, MapPin, KeyRound } from 'lucide-react';
 
 const THEMES = [
   { id: 'default', name: 'Kundali Bhagya (Libra)', color: '#2563eb' }, 
@@ -21,6 +21,10 @@ export default function SettingsTab() {
     company_email: 'apnahunars@gmail.com',
     company_address: 'Jabalpur, Madhya Pradesh,\nIndia - 482001'
   });
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordChanging, setPasswordChanging] = useState(false);
+  const [passwordMsg, setPasswordMsg] = useState('');
 
   useEffect(() => { fetchSettings(); }, []);
 
@@ -45,6 +49,28 @@ export default function SettingsTab() {
     } else {
         alert("⚠️ Error saving setting!");
     }
+  };
+
+  const changePassword = async () => {
+    setPasswordMsg('');
+    if (!newPassword || newPassword.length < 6) {
+      setPasswordMsg('Password must be at least 6 characters.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordMsg('Passwords do not match.');
+      return;
+    }
+    setPasswordChanging(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setPasswordChanging(false);
+    if (error) {
+      setPasswordMsg(error.message || 'Failed to update password.');
+      return;
+    }
+    setPasswordMsg('✅ Password changed successfully! Please use the new password next time.');
+    setNewPassword('');
+    setConfirmPassword('');
   };
 
   return (
@@ -93,6 +119,20 @@ export default function SettingsTab() {
                   <input className="flex-1 bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-bold tracking-widest" value={config.admin_passcode} onChange={e => setConfig({...config, admin_passcode: e.target.value})}/>
                   <button onClick={() => saveSetting('admin_passcode', config.admin_passcode)} className="bg-teal-600 hover:bg-teal-500 transition p-3 rounded-xl text-white"><Save size={18}/></button>
               </div>
+          </div>
+
+          {/* CHANGE DEEPAKHQ PASSWORD (Supabase Auth) */}
+          <div className="md:col-span-2 bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl">
+              <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-4"><KeyRound size={14} className="text-amber-500"/> Change DeepakHQ Login Password</label>
+              <p className="text-slate-400 text-xs mb-4">Yeh aapke Supabase Auth account ka password badalega. Next login se naya password use karein.</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <input type="password" placeholder="New password (min 6 chars)" className="bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-medium" value={newPassword} onChange={e => setNewPassword(e.target.value)} minLength={6} />
+                  <input type="password" placeholder="Confirm new password" className="bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-medium" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+              </div>
+              {passwordMsg && <p className={`mt-2 text-sm ${passwordMsg.startsWith('✅') ? 'text-green-400' : 'text-red-400'}`}>{passwordMsg}</p>}
+              <button onClick={changePassword} disabled={passwordChanging} className="mt-4 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 transition px-6 py-3 rounded-xl text-white font-bold flex items-center gap-2">
+                  {passwordChanging ? <span className="animate-pulse">Updating...</span> : <><KeyRound size={16}/> Change Password</>}
+              </button>
           </div>
 
           {/* COMPANY PHONE */}

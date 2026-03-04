@@ -263,6 +263,7 @@ export default function Checkout() {
 
   const createBookings = async (mode, paymentStatus, razorpayPaymentId, resolvedAddress) => {
     const { finalAddress, finalLat, finalLng } = resolvedAddress;
+    const bookingCity = (typeof window !== 'undefined' && localStorage.getItem('kshatr_user_city')) || 'Jabalpur';
     try {
       for (const item of cart) {
         const { error } = await supabase.from('bookings').insert({
@@ -273,6 +274,7 @@ export default function Checkout() {
           address: finalAddress,
           latitude: finalLat,
           longitude: finalLng,
+          city: bookingCity,
           status: 'pending',
           payment_mode: mode === 'online' ? 'online_prepaid' : 'cash_after_service',
           payment_method: mode,

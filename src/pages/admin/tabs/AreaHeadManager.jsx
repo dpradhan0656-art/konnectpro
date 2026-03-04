@@ -1,7 +1,7 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
-// 🚀 NEW: Added 'Phone' icon
-import { Shield, MapPin, Briefcase, Plus, User, Mail, Lock, Loader2, CheckCircle, XCircle, Phone } from 'lucide-react';
+import { adminResetPassword } from '../../../lib/authAdmin';
+import { Shield, MapPin, Briefcase, Plus, User, Mail, Lock, Loader2, CheckCircle, XCircle, Phone, KeyRound } from 'lucide-react';
 
 export default function AreaHeadManager() {
   const [managers, setManagers] = useState([]);
@@ -10,6 +10,9 @@ export default function AreaHeadManager() {
   // 🌟 New State for the 'Add Manager' Form (Added phone)
   const [showAddForm, setShowAddForm] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
+  const [pwModal, setPwModal] = useState(null);
+  const [pwValue, setPwValue] = useState('');
+  const [pwLoading, setPwLoading] = useState(false);
   const [formData, setFormData] = useState({
       name: '', email: '', phone: '', password: '', city: 'Jabalpur', type: 'salary', compensation: 0
   });
@@ -77,7 +80,25 @@ export default function AreaHeadManager() {
       if(!newVal || isNaN(newVal)) return;
       await supabase.from('area_heads').update({ compensation_value: parseFloat(newVal) }).eq('id', id);
       fetchManagers();
-  }
+  };
+
+  const handleChangePassword = async () => {
+      if (!pwModal?.user_id || !pwValue || pwValue.length < 6) {
+          alert('Password must be at least 6 characters.');
+          return;
+      }
+      setPwLoading(true);
+      try {
+          await adminResetPassword(pwModal.user_id, pwValue);
+          alert('✅ Password changed successfully!');
+          setPwModal(null);
+          setPwValue('');
+      } catch (e) {
+          alert('Error: ' + (e?.message || e));
+      } finally {
+          setPwLoading(false);
+      }
+  };
 
   if (loading) return <div className="text-teal-500 flex justify-center py-20"><Loader2 className="animate-spin" size={40}/></div>;
 
@@ -198,17 +219,33 @@ export default function AreaHeadManager() {
                           <p className="text-[10px] text-teal-500 font-bold mt-1 uppercase">Wallet: ₹{mgr.wallet_balance || 0}</p>
                       </div>
 
-                      <div className="flex justify-end">
+                      <div className="flex flex-col gap-2">
+                          <button onClick={() => { setPwModal({ name: mgr.name, user_id: mgr.user_id }); setPwValue(''); }} className="bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2"><KeyRound size={14}/> Change Password</button>
                           {mgr.status !== 'active' ? (
-                              <button onClick={() => updateStatus(mgr.id, 'active')} className="bg-green-600/20 hover:bg-green-600/30 text-green-400 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors w-full md:w-auto">Approve / Activate</button>
+                              <button onClick={() => updateStatus(mgr.id, 'active')} className="bg-green-600/20 hover:bg-green-600/30 text-green-400 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors w-full">Approve / Activate</button>
                           ) : (
-                              <button onClick={() => updateStatus(mgr.id, 'blocked')} className="bg-red-600/10 hover:bg-red-600/20 border border-red-500/20 text-red-400 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors w-full md:w-auto flex items-center justify-center gap-2"><XCircle size={14}/> Block Access</button>
+                              <button onClick={() => updateStatus(mgr.id, 'blocked')} className="bg-red-600/10 hover:bg-red-600/20 border border-red-500/20 text-red-400 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors w-full flex items-center justify-center gap-2"><XCircle size={14}/> Block Access</button>
                           )}
                       </div>
                   </div>
               </div>
           ))}
       </div>
+
+      {/* Change Password Modal */}
+      {pwModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+              <div className="bg-slate-900 w-full max-w-sm rounded-2xl border border-slate-700 p-6">
+                  <h3 className="text-lg font-black text-white mb-2 flex items-center gap-2"><KeyRound className="text-amber-500"/> Change Password</h3>
+                  <p className="text-slate-400 text-xs mb-4">Set new password for {pwModal.name}</p>
+                  <input type="password" placeholder="New password (min 6 chars)" value={pwValue} onChange={e => setPwValue(e.target.value)} className="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white mb-4 outline-none focus:border-amber-500" minLength={6} />
+                  <div className="flex gap-2">
+                      <button onClick={() => { setPwModal(null); setPwValue(''); }} className="flex-1 bg-slate-800 text-white py-3 rounded-xl font-bold">Cancel</button>
+                      <button onClick={handleChangePassword} disabled={pwLoading || pwValue.length < 6} className="flex-1 bg-amber-600 text-white py-3 rounded-xl font-bold disabled:opacity-50">{pwLoading ? 'Updating...' : 'Update'}</button>
+                  </div>
+              </div>
+          </div>
+      )}
     </div>
   );
 }

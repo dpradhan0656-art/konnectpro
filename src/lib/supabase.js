@@ -1,4 +1,4 @@
-﻿import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 
 // 1. Environment Variables Load karna
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -9,5 +9,9 @@ if (!supabaseUrl || !supabaseKey) {
   console.error("🚨 Supabase URL or Key is MISSING! Check your .env file.");
 }
 
-// 3. Client Create karna
-export const supabase = createClient(supabaseUrl, supabaseKey);
+// 3. Client Create karna (custom storageKey reduces multi-tab lock contention)
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    storageKey: 'apnahunar-auth-token',
+  },
+});

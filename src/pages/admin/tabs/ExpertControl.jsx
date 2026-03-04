@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
+import { adminResetPassword } from '../../../lib/authAdmin';
 import { 
   UserCheck, Search, Phone, MapPin, Plus, Edit, Trash2, X,
   Lock, Briefcase, Loader2, ShieldCheck, Power, PowerOff
@@ -18,6 +19,9 @@ export default function ExpertControl() {
   const [formData, setFormData] = useState({
       name: '', phone: '', service_category: '', city: 'Jabalpur', password: ''
   });
+  const [pwModal, setPwModal] = useState(null);
+  const [pwValue, setPwValue] = useState('');
+  const [pwLoading, setPwLoading] = useState(false);
 
   useEffect(() => { 
     fetchData(); 
@@ -79,10 +83,10 @@ export default function ExpertControl() {
           if (editingId) {
               await supabase.from('experts').update(payload).eq('id', editingId);
               if (formData.password?.trim()) {
-                  await supabase.rpc('admin_reset_password', {
-                      target_user_id: editingId,
-                      new_password: formData.password
-                  });
+                  const expert = experts.find(e => e.id === editingId);
+                  if (expert?.user_id) {
+                      await adminResetPassword(expert.user_id, formData.password);
+                  }
               }
           } else {
               await supabase.from('experts').insert([{ 
@@ -102,6 +106,24 @@ export default function ExpertControl() {
     exp.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
     exp.phone?.includes(searchTerm)
   );
+
+  const handleQuickPasswordChange = async () => {
+    if (!pwModal?.user_id || !pwValue || pwValue.length < 6) {
+      alert('Password must be at least 6 characters.');
+      return;
+    }
+    setPwLoading(true);
+    try {
+      await adminResetPassword(pwModal.user_id, pwValue);
+      alert('✅ Password changed successfully!');
+      setPwModal(null);
+      setPwValue('');
+    } catch (e) {
+      alert('Error: ' + (e?.message || e));
+    } finally {
+      setPwLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-20 font-sans">
@@ -184,6 +206,11 @@ export default function ExpertControl() {
                         </>
                     ) : (
                         <>
+                            {exp.user_id && (
+                                <button onClick={() => { setPwModal({ name: exp.name, user_id: exp.user_id }); setPwValue(''); }} className="p-3 bg-amber-600/20 text-amber-400 hover:bg-amber-600/30 rounded-xl transition-all" title="Change Password">
+                                    <Lock size={16}/>
+                                </button>
+                            )}
                             <button onClick={() => { setEditingId(exp.id); setFormData({name: exp.name, phone: exp.phone, service_category: exp.service_category, city: exp.city, password: ''}); setIsModalOpen(true); }} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all">
                                 <Edit size={14}/> Edit Profile
                             </button>
@@ -195,6 +222,21 @@ export default function ExpertControl() {
                 </div>
               </div>
             ))}
+          </div>
+      )}
+
+      {/* Change Password Modal */}
+      {pwModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
+              <div className="bg-slate-900 w-full max-w-sm rounded-[2.5rem] border border-slate-800 p-6">
+                  <h3 className="font-black text-white uppercase tracking-tight text-xl mb-2 flex items-center gap-2"><Lock className="text-amber-500"/> Change Password</h3>
+                  <p className="text-slate-400 text-xs mb-4">Set new password for {pwModal.name}</p>
+                  <input type="password" placeholder="New password (min 6 chars)" value={pwValue} onChange={e => setPwValue(e.target.value)} className="w-full bg-slate-950 border border-slate-800 p-4 rounded-2xl text-white mb-4 outline-none focus:border-amber-500" minLength={6} />
+                  <div className="flex gap-2">
+                      <button onClick={() => { setPwModal(null); setPwValue(''); }} className="flex-1 bg-slate-800 text-white py-3 rounded-xl font-bold">Cancel</button>
+                      <button onClick={handleQuickPasswordChange} disabled={pwLoading || pwValue.length < 6} className="flex-1 bg-amber-600 text-white py-3 rounded-xl font-bold disabled:opacity-50">{pwLoading ? 'Updating...' : 'Update'}</button>
+                  </div>
+              </div>
           </div>
       )}
 

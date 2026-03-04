@@ -8,6 +8,7 @@ import {
 export default function DispatchTab() {
   const [bookings, setBookings] = useState([]);
   const [experts, setExperts] = useState([]);
+  const [areaHeads, setAreaHeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState(null);
 
@@ -22,6 +23,10 @@ export default function DispatchTab() {
 
     const { data: eData } = await supabase.from('experts').select('*').eq('status', 'approved');
     if (eData) setExperts(eData);
+
+    const { data: ahData } = await supabase.from('area_heads').select('id, assigned_area').eq('status', 'active');
+    if (ahData) setAreaHeads(ahData);
+
     if (!silent) setLoading(false);
   };
 
@@ -42,14 +47,27 @@ export default function DispatchTab() {
     return (R * c).toFixed(1); 
   };
 
-  // 🛠️ Smart Assign Expert
-  const handleAssign = async (bookingId, expertId) => {
+  // 🛠️ Smart Assign Expert + Area Head (by city)
+  const handleAssign = async (bookingId, expertId, bookingCity) => {
       if (!expertId) return;
       if (!window.confirm("Confirm Assignment? Expert ko app par notification mil jayegi.")) return;
 
+      let areaHeadId = null;
+      const city = (bookingCity || 'Jabalpur').toString().trim().toLowerCase();
+      if (city && areaHeads.length > 0) {
+          const match = areaHeads.find(ah => {
+              const aa = (ah.assigned_area || '').toLowerCase();
+              return aa === city || aa.includes(city) || city.includes(aa);
+          });
+          if (match) areaHeadId = match.id;
+      }
+
+      const updatePayload = { expert_id: expertId, status: 'assigned' };
+      if (areaHeadId !== null) updatePayload.area_head_id = areaHeadId;
+
       const { error } = await supabase
         .from('bookings')
-        .update({ expert_id: expertId, status: 'assigned' })
+        .update(updatePayload)
         .eq('id', bookingId);
       
       if(!error) {
@@ -199,7 +217,7 @@ export default function DispatchTab() {
                                 </label>
                                 
                                 <select 
-                                    onChange={(e) => handleAssign(job.id, e.target.value)} 
+                                    onChange={(e) => handleAssign(job.id, e.target.value, job.city)} 
                                     className="w-full bg-slate-950 border border-slate-700 text-white text-xs font-bold rounded-xl p-4 outline-none focus:border-orange-500 transition-all cursor-pointer appearance-none shadow-inner"
                                     defaultValue=""
                                 >

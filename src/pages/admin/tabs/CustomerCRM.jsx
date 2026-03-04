@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
+import { adminResetPassword } from '../../../lib/authAdmin';
 import { 
   Users, Search, Phone, MapPin, Trash2, 
-  MessageCircle, Ban, CheckCircle, Plus, User 
+  MessageCircle, Ban, CheckCircle, Plus, User, KeyRound 
 } from 'lucide-react';
 
 export default function CustomerCRM() {
@@ -13,6 +14,11 @@ export default function CustomerCRM() {
   // --- MODAL STATE (Manual Add) ---
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', city: 'Jabalpur' });
+  
+  // --- PASSWORD MODAL ---
+  const [pwModal, setPwModal] = useState(null);
+  const [pwValue, setPwValue] = useState('');
+  const [pwLoading, setPwLoading] = useState(false);
 
   // --- 1. FETCH DATA ---
   useEffect(() => {
@@ -51,6 +57,24 @@ export default function CustomerCRM() {
     if(!confirm("🛑 DANGER: Delete this customer permanently?")) return;
     await supabase.from('customers').delete().eq('id', id);
     fetchCustomers();
+  };
+
+  const handleChangePassword = async () => {
+    if (!pwModal?.user_id || !pwValue || pwValue.length < 6) {
+      alert('Password must be at least 6 characters.');
+      return;
+    }
+    setPwLoading(true);
+    try {
+      await adminResetPassword(pwModal.user_id, pwValue);
+      alert('✅ Password changed successfully!');
+      setPwModal(null);
+      setPwValue('');
+    } catch (e) {
+      alert('Error: ' + (e?.message || e));
+    } finally {
+      setPwLoading(false);
+    }
   };
 
   const addManualCustomer = async (e) => {
@@ -145,7 +169,12 @@ export default function CustomerCRM() {
             </div>
 
             {/* Quick Actions Grid */}
-            <div className="grid grid-cols-4 gap-2 border-t border-slate-800 pt-4">
+            <div className={`grid gap-2 border-t border-slate-800 pt-4 ${cust.user_id ? 'grid-cols-5' : 'grid-cols-4'}`}>
+                {cust.user_id && (
+                    <button onClick={() => { setPwModal({ name: cust.name, user_id: cust.user_id }); setPwValue(''); }} className="col-span-1 bg-slate-950 hover:bg-amber-600 text-slate-400 hover:text-white py-2 rounded-xl flex justify-center items-center transition-colors border border-slate-800" title="Change Password">
+                        <KeyRound size={18}/>
+                    </button>
+                )}
                 {/* 1. Call */}
                 <a href={`tel:${cust.phone}`} className="col-span-1 bg-slate-950 hover:bg-blue-600 text-slate-400 hover:text-white py-2 rounded-xl flex justify-center items-center transition-colors border border-slate-800" title="Call Customer">
                     <Phone size={18}/>
@@ -183,6 +212,21 @@ export default function CustomerCRM() {
           </div>
         ))}
       </div>
+
+      {/* --- CHANGE PASSWORD MODAL --- */}
+      {pwModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+              <div className="bg-slate-900 w-full max-w-sm rounded-3xl border border-slate-700 shadow-2xl p-6">
+                  <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2"><KeyRound className="text-amber-500"/> Change Password</h3>
+                  <p className="text-slate-400 text-xs mb-4">Set new password for {pwModal.name}</p>
+                  <input type="password" placeholder="New password (min 6 chars)" value={pwValue} onChange={e => setPwValue(e.target.value)} className="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white mb-4 outline-none focus:border-amber-500" minLength={6} />
+                  <div className="flex gap-2">
+                      <button onClick={() => { setPwModal(null); setPwValue(''); }} className="flex-1 bg-slate-800 text-white py-3 rounded-xl font-bold">Cancel</button>
+                      <button onClick={handleChangePassword} disabled={pwLoading || pwValue.length < 6} className="flex-1 bg-amber-600 text-white py-3 rounded-xl font-bold disabled:opacity-50">{pwLoading ? 'Updating...' : 'Update'}</button>
+                  </div>
+              </div>
+          </div>
+      )}
 
       {/* --- ADD MANUAL CUSTOMER MODAL --- */}
       {isModalOpen && (
