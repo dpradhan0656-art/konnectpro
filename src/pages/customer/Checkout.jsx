@@ -56,12 +56,16 @@ function MapClickHandler({ onPick }) {
 
 function SuccessScreen() {
   return (
-    <div className="fixed inset-0 z-[100] bg-green-50 flex flex-col items-center justify-center p-6 text-center overflow-hidden h-[100dvh] w-full max-w-[100vw]">
-      <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mb-8 shadow-2xl shadow-green-500/40 animate-bounce">
-        <CheckCircle size={48} className="text-white" />
+    /* Centering & containment: full viewport, safe for notches/gesture bars */
+    <div
+      className="fixed inset-0 z-[100] bg-green-50 flex flex-col items-center justify-center p-6 text-center overflow-auto w-full max-w-[100vw] min-h-[100dvh]"
+      style={{ minHeight: '100dvh' }}
+    >
+      <div className="w-20 h-20 sm:w-24 sm:h-24 bg-green-500 rounded-full flex items-center justify-center mb-6 sm:mb-8 shadow-2xl shadow-green-500/40 animate-bounce shrink-0">
+        <CheckCircle size={40} className="text-white sm:w-12 sm:h-12" aria-hidden />
       </div>
-      <h1 className="text-4xl font-black text-slate-900 mb-3 tracking-tight">Booking Confirmed!</h1>
-      <p className="text-slate-500 font-medium text-lg">
+      <h1 className="text-2xl sm:text-4xl font-black text-slate-900 mb-3 tracking-tight">Booking Confirmed!</h1>
+      <p className="text-slate-500 font-medium text-base sm:text-lg max-w-sm">
         The expert will arrive at your selected location shortly.
       </p>
     </div>

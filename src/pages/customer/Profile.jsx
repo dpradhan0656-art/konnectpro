@@ -79,13 +79,15 @@ export default function Profile() {
   };
 
   if (loading) return (
-    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden flex items-center justify-center bg-gray-50">
-        <Loader2 className="animate-spin text-teal-600" size={32} />
+    /* OLD: min-h-screen only — NEW: centering & containment (Header+BottomNav ~120px) */
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-120px)] w-full max-w-[100vw] overflow-x-hidden bg-gray-50" style={{ minHeight: 'calc(100dvh - 120px)' }}>
+      <Loader2 className="animate-spin text-teal-600" size={32} aria-hidden />
     </div>
   );
 
   return (
-    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-gray-50 pb-24 font-sans">
+    /* OLD: pb-24 — NEW: viewport fit with safe-area for notches/gesture bars */
+    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-gray-50 font-sans" style={{ paddingBottom: 'max(6rem, env(safe-area-inset-bottom, 0px) + 5rem)' }}>
       
       {/* 🟢 HEADER BACKGROUND */}
       <div className="h-48 bg-gradient-to-br from-teal-900 via-teal-700 to-teal-600 rounded-b-[3rem] relative shadow-lg overflow-hidden">

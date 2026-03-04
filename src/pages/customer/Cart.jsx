@@ -26,17 +26,21 @@ export default function Cart() {
   // --- VIEW 1: EMPTY CART (Khali Tokri) ---
   if (cart.length === 0) {
     return (
-      <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-white flex flex-col items-center justify-center p-6 animate-in fade-in">
-        <div className="bg-slate-50 p-6 rounded-full mb-6">
-            <ShoppingBag size={64} className="text-slate-300" />
+      <div
+        className="flex flex-col items-center justify-center min-h-[calc(100vh-120px)] w-full max-w-[100vw] overflow-x-hidden bg-white p-6 animate-in fade-in"
+        style={{ minHeight: 'calc(100dvh - 120px)' }}
+      >
+        {/* OLD: min-h-screen — full viewport, could misalign with Header+BottomNav */}
+        <div className="bg-slate-50 p-5 rounded-full mb-5">
+          <ShoppingBag size={48} className="text-slate-300" aria-hidden />
         </div>
-        <h2 className="text-2xl font-black text-slate-800 mb-2">Aapki Cart Khali Hai!</h2>
-        <p className="text-slate-400 text-center mb-8 max-w-xs">
+        <h2 className="text-xl sm:text-2xl font-black text-slate-800 mb-2">Aapki Cart Khali Hai!</h2>
+        <p className="text-slate-400 text-center mb-6 sm:mb-8 max-w-xs text-sm">
           Lagta hai aapne abhi tak koi service select nahi ki hai.
         </p>
-        <button 
+        <button
           onClick={() => navigate('/')}
-          className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-slate-800 transition-all flex items-center gap-2"
+          className="bg-slate-900 text-white px-6 sm:px-8 py-3 rounded-xl font-bold hover:bg-slate-800 transition-all flex items-center gap-2"
         >
           <ArrowLeft size={18} /> Go to Services
         </button>
@@ -46,7 +50,7 @@ export default function Cart() {
 
   // --- VIEW 2: CART WITH ITEMS (Dukan ki list) ---
   return (
-    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-gray-50 pb-32 font-sans animate-in slide-in-from-right-10">
+    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-gray-50 font-sans animate-in slide-in-from-right-10" style={{ paddingBottom: 'max(6rem, env(safe-area-inset-bottom, 0px) + 5rem)' }}>
       
       {/* Header */}
       <div className="bg-white p-4 shadow-sm sticky top-0 z-10 flex items-center gap-4">

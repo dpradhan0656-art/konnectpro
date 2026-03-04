@@ -111,29 +111,36 @@ export default function Bookings() {
   };
 
   return (
-    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-slate-50 pt-24 pb-24 px-4">
+    /* OLD: pt-24 pb-24 — NEW: safe bottom padding for notches/gesture bars */
+    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-slate-50 pt-24 pb-28 px-4" style={{ paddingBottom: 'max(6rem, env(safe-area-inset-bottom, 0px) + 5rem)' }}>
       <div className="max-w-2xl mx-auto">
         <h1 className="text-2xl font-black text-slate-900 mb-2">My Bookings</h1>
         <p className="text-slate-400 text-sm mb-8">Live track your service requests.</p>
 
         {loading ? (
-            <div className="text-center py-20">
-                <Loader2 className="animate-spin w-8 h-8 text-teal-500 mx-auto mb-4" />
+            /* OLD: text-center py-20 — no centering/containment */
+            <div className="flex flex-col items-center justify-center min-h-[calc(100vh-120px)] w-full max-w-[100vw] text-center px-4" style={{ minHeight: 'calc(100dvh - 120px)' }}>
+                <Loader2 className="animate-spin w-8 h-8 text-teal-500 mb-4" />
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Loading Your Bookings...</p>
             </div>
         ) : errorMsg ? (
-            <div className="p-6 bg-red-50 text-red-600 rounded-3xl text-center border border-red-100 font-bold text-sm">
-                <AlertCircle size={24} className="mx-auto mb-2"/>
-                {errorMsg}
+            <div className="flex flex-col items-center justify-center min-h-[calc(100vh-120px)] w-full max-w-[100vw] px-4" style={{ minHeight: 'calc(100dvh - 120px)' }}>
+                <div className="p-6 bg-red-50 text-red-600 rounded-3xl text-center border border-red-100 font-bold text-sm w-full max-w-md">
+                    <AlertCircle size={24} className="mx-auto mb-2" />
+                    {errorMsg}
+                </div>
             </div>
         ) : bookings.length === 0 ? (
-            <div className="bg-white rounded-[2rem] p-10 text-center shadow-sm border border-slate-100">
-                <span className="text-5xl block mb-4">📅</span>
-                <h3 className="text-lg font-bold text-slate-700 mb-2">No bookings yet</h3>
-                <p className="text-slate-400 text-sm mb-6">You haven't booked any service yet.</p>
-                <button onClick={() => navigate('/')} className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all">
-                    Book Now
-                </button>
+            /* OLD: single card, no viewport centering */
+            <div className="flex flex-col items-center justify-center min-h-[calc(100vh-120px)] w-full max-w-[100vw] px-4" style={{ minHeight: 'calc(100dvh - 120px)' }}>
+                <div className="bg-white rounded-[2rem] p-8 sm:p-10 text-center shadow-sm border border-slate-100 w-full max-w-md">
+                    <span className="text-4xl sm:text-5xl block mb-4" aria-hidden>📅</span>
+                    <h3 className="text-lg font-bold text-slate-700 mb-2">No bookings yet</h3>
+                    <p className="text-slate-400 text-sm mb-6">You haven't booked any service yet.</p>
+                    <button onClick={() => navigate('/')} className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all">
+                        Book Now
+                    </button>
+                </div>
             </div>
         ) : (
             <div className="space-y-6">
