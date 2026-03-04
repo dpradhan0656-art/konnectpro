@@ -19,3 +19,16 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Added for Capacitor/Apna Hunar Production Stability
+-keep class com.getcapacitor.** { *; }
+-keep class com.kshatr.app.** { *; }
+-keepattributes *Annotation*
+-keepattributes EnclosingMethod
+-keepattributes Signature
+-keepattributes InnerClasses
+
+# Preserve JavaScript Interfaces
+-keepclassmembers class * {
+  @android.webkit.JavascriptInterface <methods>;
+}

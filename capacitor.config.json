@@ -7,5 +7,12 @@
   },
   "android": {
     "allowMixedContent": true
+  },
+  "plugins": {
+    "Keyboard": {
+      "resize": "body",
+      "style": "dark",
+      "resizeOnFullScreen": true
+    }
   }
 }

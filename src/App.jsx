@@ -65,7 +65,11 @@ const Layout = ({ children }) => {
   return (
     <div className="flex flex-col min-h-screen max-w-[100vw] overflow-x-hidden bg-slate-50 w-full">
        {!isHiddenPage && <Navbar />}
-       <main className={`flex-1 min-w-0 w-full max-w-[100vw] ${!isHiddenPage ? 'pt-24 md:pt-24' : ''}`}>
+       {/* OLD: main had no bottom safe-area — NEW: prevent content hidden by system nav/gesture bar */}
+       <main
+         className={`flex-1 min-w-0 w-full max-w-[100vw] ${!isHiddenPage ? 'pt-24 md:pt-24' : ''}`}
+         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+       >
           {children}
        </main>
        {!isHiddenPage && <Footer />}
