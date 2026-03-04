@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "cap:sync": "npm run build && npx cap sync",
     "cap:android": "npx cap open android",
-    "cap:run:android": "npx cap run android"
+    "cap:run:android": "npx cap run android",
+    "cap:apk:debug": "npm run cap:sync && node scripts/run-apk-build.cjs debug",
+    "cap:apk:release": "npm run cap:sync && node scripts/run-apk-build.cjs release"
   },
   "dependencies": {
     "@capacitor/android": "^8.1.0",

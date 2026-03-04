@@ -1,5 +1,6 @@
 import React from 'react';
-import { Zap, Plus, CheckCircle } from 'lucide-react';
+import { Plus, CheckCircle } from 'lucide-react';
+// import { Zap } from 'lucide-react'; // AI/star badge – removed for clean native-like UI
 import { isImageUrl, getServiceEmoji } from '../../lib/serviceIconUtils';
 
 const SERVICE_IMAGE_FALLBACK = 'https://images.unsplash.com/photo-1581578731117-e0a820379b73?w=400&q=80';
@@ -27,9 +28,10 @@ export default function ServiceCard({ service, isInCart, onAddToCart }) {
         ) : (
           <span className="text-6xl drop-shadow-md" aria-hidden="true">{emojiFallback}</span>
         )}
-        <div className="absolute top-2 right-2 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-lg flex items-center justify-center text-teal-600 shrink-0">
+        {/* AI star/Zap badge removed for world-class native-like UI */}
+        {/* <div className="absolute top-2 right-2 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-lg flex items-center justify-center text-teal-600 shrink-0">
           <Zap size={18} aria-hidden="true" />
-        </div>
+        </div> */}
       </div>
 
       <div className="p-4 flex flex-col flex-1 min-w-0">

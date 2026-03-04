@@ -56,7 +56,7 @@ function MapClickHandler({ onPick }) {
 
 function SuccessScreen() {
   return (
-    <div className="fixed inset-0 z-[100] bg-green-50 flex flex-col items-center justify-center p-6 text-center overflow-hidden h-[100dvh] w-screen">
+    <div className="fixed inset-0 z-[100] bg-green-50 flex flex-col items-center justify-center p-6 text-center overflow-hidden h-[100dvh] w-full max-w-[100vw]">
       <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mb-8 shadow-2xl shadow-green-500/40 animate-bounce">
         <CheckCircle size={48} className="text-white" />
       </div>
@@ -391,7 +391,7 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-32 pt-24 px-4 md:px-6">
+    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-slate-50 pb-32 pt-24 px-4 md:px-6">
       <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
          
          {/* LEFT SIDE: ADDRESS & DETAILS */}

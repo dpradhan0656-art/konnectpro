@@ -14,7 +14,7 @@ export default function ServicesSection({ services, cart, onAddToCart }) {
   };
 
   return (
-    <section className="px-4 sm:px-6 max-w-4xl mx-auto" aria-labelledby="services-heading">
+    <section className="px-4 sm:px-6 max-w-4xl mx-auto w-full min-w-0 overflow-hidden" aria-labelledby="services-heading">
       <div className="flex items-center justify-between gap-2 mb-4">
         <h2 id="services-heading" className="font-black text-slate-900 text-xl tracking-tight flex items-center gap-2">
           <Tag size={20} className="text-amber-500" aria-hidden="true" />
@@ -44,7 +44,7 @@ export default function ServicesSection({ services, cart, onAddToCart }) {
       {/* Visible scrollbar on mobile – no-scrollbar removed */}
       <div
         ref={scrollRef}
-        className="flex gap-4 sm:gap-5 overflow-x-auto pb-8 px-1 min-w-0 scroll-smooth"
+        className="flex gap-4 sm:gap-5 overflow-x-auto overflow-y-hidden pb-8 px-1 min-w-0 scroll-smooth"
         style={{ scrollbarGutter: 'stable' }}
         role="list"
       >

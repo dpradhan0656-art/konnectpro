@@ -63,9 +63,9 @@ const Layout = ({ children }) => {
                        location.pathname === '/login';
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50">
+    <div className="flex flex-col min-h-screen max-w-[100vw] overflow-x-hidden bg-slate-50 w-full">
        {!isHiddenPage && <Navbar />}
-       <main className={`flex-1 ${!isHiddenPage ? 'pt-24 md:pt-24' : ''}`}>
+       <main className={`flex-1 min-w-0 w-full max-w-[100vw] ${!isHiddenPage ? 'pt-24 md:pt-24' : ''}`}>
           {children}
        </main>
        {!isHiddenPage && <Footer />}

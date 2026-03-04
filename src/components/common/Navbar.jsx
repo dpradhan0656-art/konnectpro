@@ -26,17 +26,17 @@ export default function Navbar() {
   }, []);
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[100]">
+    <div className="fixed top-0 left-0 right-0 z-[100] w-full max-w-[100vw] overflow-hidden">
       {/* 🌟 YELLOW RUNNING PATTI */}
-      <div className="bg-amber-400 text-slate-900 py-1 overflow-hidden whitespace-nowrap border-b border-amber-500 shadow-sm">
+      <div className="bg-amber-400 text-slate-900 py-1 overflow-hidden whitespace-nowrap border-b border-amber-500 shadow-sm w-full">
         <div className="animate-marquee inline-block font-black text-[10px] uppercase tracking-[0.2em]">
            {ticker} &nbsp;&nbsp;&nbsp;&nbsp; 🚀 {ticker} &nbsp;&nbsp;&nbsp;&nbsp; 🚀 {ticker}
         </div>
       </div>
 
       {/* 🚀 MAIN NAVBAR */}
-      <nav className="bg-slate-900 text-white h-16 flex items-center shadow-xl border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-4 w-full flex justify-between items-center">
+      <nav className="bg-slate-900 text-white h-16 flex items-center shadow-xl border-b border-white/5 w-full box-border">
+        <div className="max-w-7xl mx-auto px-4 w-full min-w-0 flex justify-between items-center">
           
           {/* LOGO SECTION */}
           <Link to="/" className="flex items-center gap-3">

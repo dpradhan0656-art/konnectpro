@@ -16,7 +16,7 @@ export default function CategorySection({ categories, loading }) {
   const navigate = useNavigate();
 
   return (
-    <section className="px-4 sm:px-6 max-w-4xl mx-auto relative z-20 min-w-0" aria-labelledby="categories-heading">
+    <section className="px-4 sm:px-6 max-w-4xl mx-auto relative z-20 min-w-0 w-full overflow-hidden" aria-labelledby="categories-heading">
       <div className="flex justify-between items-end mb-4">
         <h2 id="categories-heading" className="font-black text-slate-900 text-xl tracking-tight">
           Explore Categories
@@ -33,7 +33,7 @@ export default function CategorySection({ categories, loading }) {
           ))}
         </div>
       ) : categories.length > 0 ? (
-        <div className="flex gap-4 sm:gap-5 overflow-x-auto pb-6 pt-2 px-1 min-w-0 scroll-smooth" role="list">
+        <div className="flex gap-4 sm:gap-5 overflow-x-auto overflow-y-hidden pb-6 pt-2 px-1 min-w-0 scroll-smooth" role="list">
           {categories.map((cat, i) => {
             const colorClass = BG_COLORS[i % BG_COLORS.length];
             const slugUrl = cat.slug || cat.name.toLowerCase().replace(/[\s_]+/g, '-');

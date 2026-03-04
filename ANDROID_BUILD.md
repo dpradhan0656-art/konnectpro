@@ -3,32 +3,59 @@
 ## Prerequisites
 
 - **Node.js** (v18+)
-- **Android Studio** (with Android SDK)
-- **Java 17** (JDK 17)
+- **Android Studio** (with Android SDK) – [Download](https://developer.android.com/studio)
+- **Java 17** (JDK 17) – Android Studio ke saath aata hai
 
-## Quick Start
+---
+
+## ✅ Recommended: Android Studio se APK banayein
+
+Windows par Gradle command-line build kabhi-kabhi "Could not move temporary workspace" error deta hai (antivirus/Defender ki wajah se). **Android Studio se build zyada reliable hai.**
+
+### Steps:
+
+1. **Sync karein:**
+   ```bash
+   npm run cap:sync
+   ```
+
+2. **Android Studio open karein:**
+   ```bash
+   npm run cap:android
+   ```
+
+3. **Build APK:**
+   - Menu: **Build → Build Bundle(s) / APK(s) → Build APK(s)**
+   - Ya toolbar pe **Build** dropdown → **Build APK(s)**
+
+4. **APK location:**
+   ```
+   android\app\build\outputs\apk\debug\app-debug.apk
+   ```
+
+5. **Install:** APK ko phone pe copy karke install karein.
+
+---
+
+## Command Line (Agar kaam kare)
+
+> ⚠️ Agar `JAVA_HOME` ya "Could not move temporary workspace" error aaye, Android Studio use karein (upar).
+
+## Quick Commands
 
 ```bash
-# 1. Install dependencies
-npm install
-
-# 2. Build web app + sync to Android
-npm run cap:sync
-
-# 3. Open in Android Studio
-npm run cap:android
-
-# 4. Run on device/emulator from Android Studio (▶️) or:
-npm run cap:run:android
+npm run cap:sync      # Build + sync web to Android
+npm run cap:android   # Open in Android Studio
+npm run cap:apk:debug # Command-line APK (Windows par kabhi fail ho sakta hai)
 ```
 
-## Build APK / AAB for Play Store
+## Play Store ke liye Signed AAB
 
-1. Open Android Studio: `npm run cap:android`
+1. Android Studio: `npm run cap:android`
 2. **Build → Generate Signed Bundle / APK**
-3. Create keystore (first time) or use existing
-4. Select **Android App Bundle (.aab)** for Play Store
-5. Build **release** variant
+3. Keystore create karein (pehli baar) ya existing use karein
+4. **Android App Bundle (.aab)** select karein
+5. Release build generate karein
 
 ## Project Structure
 

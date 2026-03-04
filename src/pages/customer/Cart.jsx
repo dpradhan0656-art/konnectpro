@@ -26,7 +26,7 @@ export default function Cart() {
   // --- VIEW 1: EMPTY CART (Khali Tokri) ---
   if (cart.length === 0) {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 animate-in fade-in">
+      <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-white flex flex-col items-center justify-center p-6 animate-in fade-in">
         <div className="bg-slate-50 p-6 rounded-full mb-6">
             <ShoppingBag size={64} className="text-slate-300" />
         </div>
@@ -46,7 +46,7 @@ export default function Cart() {
 
   // --- VIEW 2: CART WITH ITEMS (Dukan ki list) ---
   return (
-    <div className="min-h-screen bg-gray-50 pb-32 font-sans animate-in slide-in-from-right-10">
+    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-gray-50 pb-32 font-sans animate-in slide-in-from-right-10">
       
       {/* Header */}
       <div className="bg-white p-4 shadow-sm sticky top-0 z-10 flex items-center gap-4">

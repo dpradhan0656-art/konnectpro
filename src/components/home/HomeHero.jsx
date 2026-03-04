@@ -1,5 +1,6 @@
 import React from 'react';
-import { Search, Mic, MapPin, Sparkles, X } from 'lucide-react';
+import { Search, Mic, MapPin, X } from 'lucide-react';
+// import { Sparkles } from 'lucide-react'; // AI star icon – removed for clean native-like UI
 
 export default function HomeHero({
   locationName,
@@ -26,12 +27,12 @@ export default function HomeHero({
   };
 
   return (
-    <section className="relative pt-6 pb-28 px-4 sm:px-6 overflow-x-hidden overflow-y-visible min-h-0 bg-slate-950 rounded-b-[2.5rem] md:rounded-b-[4rem] shadow-2xl" aria-label="Welcome and search">
+    <section className="relative pt-6 pb-28 px-4 sm:px-6 w-full max-w-[100vw] overflow-x-hidden overflow-y-visible min-h-0 bg-slate-950 rounded-b-[2.5rem] md:rounded-b-[4rem] shadow-2xl box-border" aria-label="Welcome and search">
       <div className="absolute inset-0 z-0 opacity-25 pointer-events-none mix-blend-screen" style={{ backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.25) 1.5px, transparent 1.5px)', backgroundSize: '22px 22px' }} />
-      <div className="absolute top-0 right-0 w-80 h-80 bg-teal-500/20 rounded-full blur-[80px] -mr-20 -mt-20" aria-hidden="true" />
-      <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/20 rounded-full blur-[80px] -ml-20 -mb-20" aria-hidden="true" />
+      <div className="absolute top-0 right-0 w-80 h-80 bg-teal-500/20 rounded-full blur-[80px] -mr-20 -mt-20 pointer-events-none" aria-hidden="true" />
+      <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/20 rounded-full blur-[80px] -ml-20 -mb-20 pointer-events-none" aria-hidden="true" />
 
-      <div className="relative z-10 max-w-4xl mx-auto min-w-0">
+      <div className="relative z-10 max-w-4xl mx-auto min-w-0 w-full box-border">
         <div className="flex items-center gap-3 mb-6 sm:mb-8 bg-white/10 backdrop-blur-md w-fit max-w-full px-4 py-2.5 rounded-full border border-white/10 shadow-inner">
           <div className={`p-1.5 rounded-full ${cityStatus.active ? 'bg-gradient-to-br from-green-400 to-green-600' : 'bg-red-500'} shadow-[0_0_15px_rgba(74,222,128,0.4)]`}>
             <MapPin size={14} className="text-white" aria-hidden="true" />
@@ -60,12 +61,12 @@ export default function HomeHero({
           {greeting}
         </h1>
         <p className="text-slate-400 text-sm font-medium mb-8 sm:mb-10 flex items-center gap-2">
-          <Sparkles size={16} className="text-teal-400" aria-hidden="true" />
+          {/* AI star icon removed for world-class native-like UI */}
           Trusted by 10,000+ happy homes
         </p>
 
-        <div className="relative z-30 transform translate-y-6">
-          <div className="relative rounded-2xl bg-white border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center p-2 min-h-[52px]">
+        <div className="relative z-30 transform translate-y-6 w-full max-w-full">
+          <div className="relative rounded-2xl bg-white border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center p-2 min-h-[52px] w-full box-border">
             <Search className="absolute left-4 sm:left-5 text-slate-400" size={22} aria-hidden="true" />
             <input
               type="search"

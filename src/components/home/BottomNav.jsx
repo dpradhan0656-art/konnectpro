@@ -6,7 +6,7 @@ export default function BottomNav({ cartCount }) {
   const navigate = useNavigate();
 
   return (
-    <nav className="fixed bottom-0 w-full bg-white/80 backdrop-blur-xl border-t border-slate-100 px-4 sm:px-6 py-2.5 flex justify-between items-center z-50 max-w-md mx-auto left-0 right-0 md:hidden pb-safe min-h-[56px]" aria-label="Main navigation">
+    <nav className="fixed bottom-0 w-full max-w-[100vw] bg-white/80 backdrop-blur-xl border-t border-slate-100 px-4 sm:px-6 py-2.5 flex justify-between items-center z-50 max-w-md mx-auto left-0 right-0 md:hidden pb-safe min-h-[56px] overflow-hidden" aria-label="Main navigation">
       <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex flex-col items-center justify-center gap-0.5 min-h-[44px] min-w-[44px] py-1 text-teal-600 transition-all duration-300 active:scale-90 touch-manipulation" aria-label="Home">
         <HomeIcon size={22} />
         <span className="text-[10px] font-black">Home</span>

@@ -120,7 +120,7 @@ export default function Home({ session }) {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] font-sans selection:bg-teal-200 relative pb-32">
+    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-[#f8fafc] font-sans selection:bg-teal-200 relative pb-32">
       <SOSButton />
 
       <HomeHero
@@ -136,7 +136,7 @@ export default function Home({ session }) {
         setSearchQuery={setSearchQuery}
       />
 
-      <div className="mt-14 flex flex-col gap-6">
+      <div className="mt-14 flex flex-col gap-6 w-full min-w-0 max-w-[100vw]">
         <CategorySection categories={filteredCategories} loading={loading} />
         <OffersSection offers={offers} />
         <ServicesSection services={filteredServices} cart={cart} onAddToCart={addToCart} />

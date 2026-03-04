@@ -8,7 +8,7 @@ export default function RateCard() {
   const navigate = useNavigate();
 
   return (
-    <section className="px-4 sm:px-6 max-w-4xl mx-auto min-w-0" aria-labelledby="rate-heading">
+    <section className="px-4 sm:px-6 max-w-4xl mx-auto min-w-0 w-full overflow-hidden" aria-labelledby="rate-heading">
       <div className="bg-white rounded-3xl border border-slate-100 p-5 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-visible">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div>

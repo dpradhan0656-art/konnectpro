@@ -79,13 +79,13 @@ export default function Profile() {
   };
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden flex items-center justify-center bg-gray-50">
         <Loader2 className="animate-spin text-teal-600" size={32} />
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24 font-sans">
+    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-gray-50 pb-24 font-sans">
       
       {/* 🟢 HEADER BACKGROUND */}
       <div className="h-48 bg-gradient-to-br from-teal-900 via-teal-700 to-teal-600 rounded-b-[3rem] relative shadow-lg overflow-hidden">

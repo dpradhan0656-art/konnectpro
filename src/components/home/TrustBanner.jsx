@@ -3,7 +3,7 @@ import { ShieldCheck, CheckCircle, Clock } from 'lucide-react';
 
 export default function TrustBanner() {
   return (
-    <section className="px-6 max-w-4xl mx-auto" aria-labelledby="trust-heading">
+    <section className="px-6 max-w-4xl mx-auto w-full min-w-0 overflow-hidden" aria-labelledby="trust-heading">
       <div className="bg-slate-900 rounded-3xl p-6 md:p-8 text-white shadow-2xl relative overflow-hidden border border-slate-800">
         <div className="absolute inset-0 opacity-30 pointer-events-none mix-blend-color-dodge" style={{ backgroundImage: 'radial-gradient(#14b8a6 1.5px, transparent 1.5px)', backgroundSize: '16px 16px' }} aria-hidden="true" />
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">

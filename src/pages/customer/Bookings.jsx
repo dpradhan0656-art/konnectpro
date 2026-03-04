@@ -111,7 +111,7 @@ export default function Bookings() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pt-24 pb-24 px-4">
+    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-slate-50 pt-24 pb-24 px-4">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-2xl font-black text-slate-900 mb-2">My Bookings</h1>
         <p className="text-slate-400 text-sm mb-8">Live track your service requests.</p>

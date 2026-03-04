@@ -5,14 +5,14 @@ const OFFER_IMAGE_FALLBACK = 'https://images.unsplash.com/photo-1607082348824-0a
 
 export default function OffersSection({ offers }) {
   return (
-    <section className="px-4 sm:px-6 max-w-4xl mx-auto" aria-labelledby="offers-heading">
+    <section className="px-4 sm:px-6 max-w-4xl mx-auto w-full min-w-0 overflow-hidden" aria-labelledby="offers-heading">
       <div className="flex justify-between items-end mb-4">
         <h2 id="offers-heading" className="font-black text-slate-900 text-xl tracking-tight flex items-center gap-2">
           <Gift size={22} className="text-rose-500" aria-hidden="true" />
           Deals & Spotlight
         </h2>
       </div>
-      <div className="flex gap-4 sm:gap-5 overflow-x-auto pb-6 px-1 " role="list">
+      <div className="flex gap-4 sm:gap-5 overflow-x-auto overflow-y-hidden pb-6 px-1 min-w-0" role="list">
         {offers.length > 0 ? (
           offers.map((item) => {
             const imageUrl = item.image_url || OFFER_IMAGE_FALLBACK;
