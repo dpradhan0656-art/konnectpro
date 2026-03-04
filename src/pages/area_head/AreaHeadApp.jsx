@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { Shield, MapPin, Briefcase, LogOut, Users, Activity, Clock, CheckCircle, Navigation, Phone } from 'lucide-react';
@@ -127,7 +127,7 @@ export default function AreaHeadApp() {
                
                {areaBookings.length === 0 ? (
                    <div className="bg-slate-900 border border-slate-800 border-dashed rounded-2xl p-8 text-center shadow-sm">
-                       <MapPin size={32} className="mx-auto text-slate-700 mb-2"/>
+                       <span className="text-5xl block mb-3 opacity-60">📡</span>
                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">No territory activity detected.</p>
                    </div>
                ) : (

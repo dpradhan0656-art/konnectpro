@@ -46,7 +46,7 @@ export default function CategorySection({ categories, loading }) {
                 role="listitem"
               >
                 <div className={`w-20 h-20 ${colorClass} rounded-3xl flex items-center justify-center shadow-[0_4px_20px_-10px_rgba(0,0,0,0.08)] group-hover:shadow-[0_10px_25px_-5px_rgba(20,184,166,0.25)] group-hover:-translate-y-0.5 transition-all duration-300 border border-white relative overflow-hidden`}>
-                  <SmartIcon iconValue={cat.icon} />
+                  <SmartIcon iconValue={cat.icon} categoryName={cat.name} />
                 </div>
                 <span className="text-[11px] font-black text-slate-700 text-center leading-tight group-hover:text-teal-600 transition-colors duration-300">
                   {cat.name}
@@ -56,7 +56,10 @@ export default function CategorySection({ categories, loading }) {
           })}
         </div>
       ) : (
-        <p className="text-center text-slate-500 text-sm py-4">No categories found.</p>
+        <div className="text-center py-8">
+          <span className="text-4xl block mb-2">📂</span>
+          <p className="text-slate-500 text-sm font-bold">No categories found.</p>
+        </div>
       )}
     </section>
   );

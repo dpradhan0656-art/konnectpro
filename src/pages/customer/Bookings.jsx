@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { Calendar, MapPin, Clock, User, Phone, CheckCircle, AlertCircle, XCircle, Wrench, Loader2 } from 'lucide-react';
@@ -128,7 +128,7 @@ export default function Bookings() {
             </div>
         ) : bookings.length === 0 ? (
             <div className="bg-white rounded-[2rem] p-10 text-center shadow-sm border border-slate-100">
-                <Calendar size={32} className="mx-auto mb-4 text-slate-300"/>
+                <span className="text-5xl block mb-4">📅</span>
                 <h3 className="text-lg font-bold text-slate-700 mb-2">No bookings yet</h3>
                 <p className="text-slate-400 text-sm mb-6">You haven't booked any service yet.</p>
                 <button onClick={() => navigate('/')} className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all">

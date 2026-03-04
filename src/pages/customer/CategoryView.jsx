@@ -5,6 +5,7 @@ import { useCart } from '../../context/CartContext';
 import { getUserCityKey, filterServicesByCity } from '../../lib/serviceCityUtils';
 import BookingModal from '../../components/customer/BookingModal';
 import { ArrowLeft, Star, Clock, ShoppingBag, Plus, ShieldCheck, Zap, Info } from 'lucide-react';
+import { getServiceEmoji } from '../../lib/serviceIconUtils';
 
 export default function CategoryView() {
   const { category } = useParams();
@@ -82,7 +83,7 @@ export default function CategoryView() {
            </div>
         ) : services.length === 0 ? (
            <div className="text-center py-16 bg-white rounded-[2rem] shadow-lg border border-slate-100 p-8">
-              <Zap size={48} className="mx-auto mb-4 text-slate-300"/>
+              <span className="text-5xl block mb-4">{getServiceEmoji(cleanCategoryName)}</span>
               <p className="text-slate-500 font-bold">No active services found for <span className="text-slate-800 capitalize">{cleanCategoryName}</span>.</p>
            </div>
         ) : (

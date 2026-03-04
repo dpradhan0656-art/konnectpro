@@ -53,8 +53,8 @@ export const CartProvider = ({ children }) => {
       const newItem = {
         id: item.id,
         name: item.name || item.service_name || 'Service', 
-        price: finalPrice, // Ab yahan sahi rate aayega
-        image: item.image_url || item.image || '',
+        price: finalPrice,
+        image: item.image_url || item.image || item.profile_photo_url || '',
         category: item.category || 'Expert Service'
       };
 

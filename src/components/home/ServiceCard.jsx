@@ -1,24 +1,32 @@
 import React from 'react';
 import { Zap, Plus, CheckCircle } from 'lucide-react';
+import { isImageUrl, getServiceEmoji } from '../../lib/serviceIconUtils';
 
 const SERVICE_IMAGE_FALLBACK = 'https://images.unsplash.com/photo-1581578731117-e0a820379b73?w=400&q=80';
 
 export default function ServiceCard({ service, isInCart, onAddToCart }) {
   const displayPrice = service.base_price ?? service.price ?? 199;
   const wasPrice = displayPrice + 100;
-  const imageSrc = service.image || service.image_url || service.img || SERVICE_IMAGE_FALLBACK;
+  const rawImage = service.image || service.image_url || service.img || '';
+  const useImageUrl = isImageUrl(rawImage);
+  const imageSrc = useImageUrl ? rawImage : SERVICE_IMAGE_FALLBACK;
+  const emojiFallback = !useImageUrl && rawImage ? rawImage : getServiceEmoji(service.category || service.name);
 
   return (
     <article className="min-w-[200px] w-[200px] max-w-[200px] flex flex-col bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_12px_40px_-12px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 transition-all duration-300 group overflow-hidden">
-      {/* Image block – fixed aspect ratio for uniform cards */}
-      <div className="relative w-full aspect-[4/3] bg-slate-100 shrink-0">
-        <img
-          src={imageSrc}
-          alt=""
-          loading="lazy"
-          className="absolute inset-0 w-full h-full object-cover"
-          onError={(e) => { e.target.onerror = null; e.target.src = SERVICE_IMAGE_FALLBACK; }}
-        />
+      {/* Image block – URL, emoji, ya fallback */}
+      <div className="relative w-full aspect-[4/3] bg-slate-100 shrink-0 flex items-center justify-center overflow-hidden">
+        {useImageUrl ? (
+          <img
+            src={imageSrc}
+            alt={service.name}
+            loading="lazy"
+            className="absolute inset-0 w-full h-full object-cover"
+            onError={(e) => { e.target.onerror = null; e.target.src = SERVICE_IMAGE_FALLBACK; }}
+          />
+        ) : (
+          <span className="text-6xl drop-shadow-md" aria-hidden="true">{emojiFallback}</span>
+        )}
         <div className="absolute top-2 right-2 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-lg flex items-center justify-center text-teal-600 shrink-0">
           <Zap size={18} aria-hidden="true" />
         </div>

@@ -1,7 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCart } from '../../context/CartContext'; // ✅ Cart Logic Connection
-import { Trash2, ArrowRight, ShoppingBag, ArrowLeft, Plus, Minus } from 'lucide-react';
+import { useCart } from '../../context/CartContext';
+import { getServiceEmoji, isImageUrl } from '../../lib/serviceIconUtils';
+import { Trash2, ArrowRight, ShoppingBag, ArrowLeft } from 'lucide-react';
+
+function CartItemIcon({ item }) {
+  const [imgError, setImgError] = useState(false);
+  const showImg = isImageUrl(item.image) && !imgError;
+  const emoji = item.image && !isImageUrl(item.image) ? item.image : getServiceEmoji(item.category || item.name);
+  return (
+    <div className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden shrink-0 bg-teal-50">
+      {showImg ? (
+        <img src={item.image} alt={item.name} className="w-full h-full object-cover" onError={() => setImgError(true)} />
+      ) : (
+        <span className="text-2xl">{emoji}</span>
+      )}
+    </div>
+  );
+}
 
 export default function Cart() {
   const { cart, removeFromCart, cartTotal } = useCart();
@@ -47,10 +63,7 @@ export default function Cart() {
             
             {/* Item Info */}
             <div className="flex gap-4 items-center">
-              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-xl font-bold">
-                 {/* Emoji icon fallback */}
-                 {item.icon || '🛠️'}
-              </div>
+              <CartItemIcon item={item} />
               <div>
                 <h3 className="font-bold text-slate-800 text-sm">{item.name}</h3>
                 <p className="text-[10px] text-slate-400 uppercase font-black">{item.category || 'Service'}</p>

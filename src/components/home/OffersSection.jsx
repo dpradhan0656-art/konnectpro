@@ -27,7 +27,7 @@ export default function OffersSection({ offers }) {
                 <div className="absolute inset-0 z-0">
                   <img
                     src={imageUrl}
-                    alt=""
+                    alt={item.title || 'Offer'}
                     loading="lazy"
                     className="absolute inset-0 w-full h-full object-cover"
                     onError={(e) => { e.target.onerror = null; e.target.src = OFFER_IMAGE_FALLBACK; }}
@@ -50,6 +50,7 @@ export default function OffersSection({ offers }) {
           })
         ) : (
           <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest w-full text-center p-6 border border-dashed border-slate-200 rounded-3xl bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+            <span className="text-4xl block mb-2">🎁</span>
             No active offers currently running.
           </div>
         )}

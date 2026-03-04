@@ -20,7 +20,6 @@ import {
   User,
   Phone,
   Search,
-  Crosshair,
   Layers
 } from 'lucide-react';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -135,10 +134,34 @@ export default function Checkout() {
             setSelectedAddressId(addresses[0].id);
         } else {
             setShowNewForm(true);
+            autoDetectOnNewAddress();
         }
     };
     fetchUserData();
   }, [cart, navigate]);
+
+  const autoDetectOnNewAddress = () => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setNewCoords({ lat: latitude, lng: longitude });
+        setManualLat(latitude.toString());
+        setManualLng(longitude.toString());
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=en`, { headers: { 'User-Agent': 'KshatrApp/1.0' } });
+          const data = await res.json();
+          const addr = data.address;
+          const full = [addr.road, addr.suburb, addr.city || addr.town, addr.state, addr.postcode].filter(Boolean).join(", ");
+          setNewAddress(`House/Flat No: \nLandmark: \n${full}`);
+        } catch {
+          setNewAddress("Location detected. Add your house/flat number above.");
+        }
+      },
+      () => {},
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+    );
+  };
 
   const detectLocation = () => {
     if (!navigator.geolocation) {
@@ -197,6 +220,7 @@ export default function Checkout() {
       const lat = parseFloat(place.lat);
       const lng = parseFloat(place.lon);
 
+      setNewCoords({ lat, lng });
       setManualLat(lat.toString());
       setManualLng(lng.toString());
 
@@ -422,86 +446,97 @@ export default function Checkout() {
              {showNewForm && (
                  <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] animate-in fade-in slide-in-from-top-4 transition-all duration-300">
                      <div className="flex justify-between items-center mb-5 border-b border-slate-50 pb-4">
-                        <h3 className="font-black text-slate-800 flex items-center gap-2 text-lg"><MapPin className="text-teal-500"/> Add New Address</h3>
+                        <h3 className="font-black text-slate-800 flex items-center gap-2 text-lg"><MapPin className="text-teal-500"/> Service Location</h3>
                         {savedAddresses.length > 0 && (
                             <button onClick={() => setShowNewForm(false)} className="text-slate-500 hover:text-slate-800 text-[11px] font-bold uppercase tracking-widest px-4 py-2 bg-slate-50 hover:bg-slate-100 rounded-full transition-colors">Cancel</button>
                         )}
                      </div>
+
+                     {/* 🎯 Primary CTA: Use My Location */}
+                     <button
+                       type="button"
+                       onClick={detectLocation}
+                       disabled={locationLoading}
+                       className="w-full mb-6 py-4 rounded-2xl bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-lg shadow-teal-500/25 transition-all duration-300 disabled:opacity-70 active:scale-[0.98]"
+                     >
+                       {locationLoading ? <Loader2 size={22} className="animate-spin" /> : <Navigation size={22} />}
+                       {locationLoading ? 'Finding your location...' : '📍 Use My Current Location'}
+                     </button>
 
                      <div className="flex gap-2 mb-5">
                          {['Home', 'Work', 'Other'].map(tag => (
                              <button 
                                 key={tag} 
                                 onClick={() => setNewTag(tag)}
-                                className={`px-5 py-2 rounded-xl text-xs font-bold border transition-all duration-300 ${newTag === tag ? 'bg-slate-900 text-white border-slate-900 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
+                                className={`px-5 py-2.5 rounded-xl text-xs font-bold border transition-all duration-300 ${newTag === tag ? 'bg-slate-900 text-white border-slate-900 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
                              >
+                                 {tag === 'Home' && <Home size={12} className="inline mr-1.5 -mt-0.5" />}
+                                 {tag === 'Work' && <Briefcase size={12} className="inline mr-1.5 -mt-0.5" />}
                                  {tag}
                              </button>
                          ))}
                      </div>
                      
+                     <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">House / Flat / Landmark</label>
                      <textarea 
                         value={newAddress}
                         onChange={(e) => setNewAddress(e.target.value)}
-                        placeholder="House No, Building, Landmark, Area..."
-                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-slate-900 font-medium focus:ring-2 focus:ring-teal-500 focus:bg-white focus:border-transparent transition-all duration-300 outline-none h-28 resize-none mb-2"
+                        placeholder="e.g. House 12, Near City Mall, Ranjhi..."
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-slate-900 font-medium focus:ring-2 focus:ring-teal-500 focus:bg-white focus:border-transparent transition-all duration-300 outline-none h-24 resize-none mb-5"
                      />
 
-                     {/* 🧭 Manual Map Pin */}
-                     <div className="mt-4">
-                        <div className="flex items-center gap-2 mb-2">
-                            <MapPinned className="text-teal-600" size={16}/>
-                            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Pin Exact Location</p>
+                     {/* 🗺️ Map & Search */}
+                     <div className="mt-6">
+                        <div className="flex items-center gap-2 mb-3">
+                            <MapPinned className="text-teal-600" size={18}/>
+                            <p className="text-sm font-black text-slate-800">Pin your exact location</p>
                         </div>
-                        <p className="text-xs text-slate-500 mb-4 font-medium leading-relaxed">
-                            Search your area or tap on the map to drop a pin. This helps the expert reach you faster.
+                        <p className="text-xs text-slate-500 mb-4 font-medium">
+                            Search area or tap on map to drop pin. Drag to adjust. Expert will reach this spot.
                         </p>
 
-                        <div className="flex flex-col sm:flex-row gap-2 mb-4 p-2 bg-white border border-slate-200 shadow-sm rounded-2xl">
-                          <div className="flex-1 flex items-center gap-2 px-3 bg-transparent">
+                        <div className="flex flex-col sm:flex-row gap-2 mb-4 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                          <div className="flex-1 flex items-center gap-2 px-4 py-2.5 bg-white rounded-xl border border-slate-200 focus-within:ring-2 focus-within:ring-teal-500 focus-within:border-transparent transition-all">
                             <Search size={18} className="text-slate-400 shrink-0" />
                             <input
                               type="text"
                               value={searchQuery}
                               onChange={(e) => setSearchQuery(e.target.value)}
-                              placeholder="Search area or landmark..."
+                              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleSearchLocation())}
+                              placeholder="Search: area, landmark, address..."
                               className="w-full bg-transparent text-sm text-slate-900 font-medium outline-none placeholder-slate-400"
                             />
                           </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <button
-                              type="button"
-                              onClick={detectLocation}
-                              disabled={locationLoading}
-                              className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-[11px] font-bold uppercase tracking-widest flex items-center gap-1 transition-all duration-300 disabled:opacity-60"
-                              title="Use GPS"
-                            >
-                              {locationLoading ? <Loader2 size={14} className="animate-spin" /> : <Navigation size={14} />}
-                              GPS
-                            </button>
-                            <button
-                              type="button"
-                              onClick={handleSearchLocation}
-                              disabled={searchLoading}
-                              className="px-6 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 shadow-md shadow-teal-600/20 text-white text-[11px] font-bold uppercase tracking-widest flex items-center justify-center transition-all duration-300 disabled:opacity-60"
-                            >
-                              {searchLoading ? <Loader2 size={14} className="animate-spin" /> : 'Search'}
-                            </button>
-                          </div>
+                          <button
+                            type="button"
+                            onClick={handleSearchLocation}
+                            disabled={searchLoading || !searchQuery.trim()}
+                            className="px-6 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 shadow-md shadow-teal-600/20 text-white text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {searchLoading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+                            Search
+                          </button>
                         </div>
 
-                        {/* Map Container - THE FIX IS HERE (Explicit style={{height, width}}) */}
-                        <div className="relative rounded-2xl overflow-hidden border-2 border-slate-100 shadow-md">
-                          
-                          {/* 🌍 Map Type Toggle Button */}
+                        <div className="relative rounded-2xl overflow-hidden border-2 border-slate-200 shadow-lg">
                           <button
                             type="button"
                             onClick={() => setMapType(mapType === 'street' ? 'satellite' : 'street')}
-                            className="absolute top-4 right-4 z-[400] bg-white p-2.5 rounded-xl shadow-lg border border-slate-200 text-slate-700 hover:text-teal-600 hover:border-teal-300 transition-all font-bold text-[10px] uppercase tracking-widest flex items-center gap-2"
+                            className="absolute top-3 right-3 z-[400] bg-white/95 backdrop-blur p-2.5 rounded-xl shadow-md border border-slate-200 text-slate-700 hover:text-teal-600 hover:border-teal-300 transition-all font-bold text-[10px] uppercase tracking-widest flex items-center gap-2"
                           >
                             <Layers size={14} />
-                            {mapType === 'street' ? 'Satellite View' : 'Map View'}
+                            {mapType === 'street' ? 'Satellite' : 'Map'}
                           </button>
+
+                          {!manualLat && !manualLng && (
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] pointer-events-none">
+                              <div className="bg-white/95 backdrop-blur-xl px-6 py-4 rounded-2xl shadow-xl border border-slate-200 text-center">
+                                <MapPinned className="mx-auto text-teal-500 mb-2" size={32} />
+                                <p className="text-sm font-bold text-slate-700">Tap on map to pin</p>
+                                <p className="text-xs text-slate-500 mt-0.5">Or use "Use My Location" above</p>
+                              </div>
+                            </div>
+                          )}
 
                           <MapContainer
                             center={
@@ -514,28 +549,19 @@ export default function Checkout() {
                             style={{ height: "400px", width: "100%" }}
                             scrollWheelZoom
                           >
-                            {/* Toggle between Street Map and Google Hybrid Imagery */}
                             {mapType === 'street' ? (
-                                <TileLayer
-                                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                  attribution='© OpenStreetMap'
-                                />
+                                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='© OpenStreetMap' />
                             ) : (
-                                <TileLayer
-                                  url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
-                                  attribution='© Google Maps'
-                                />
+                                <TileLayer url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}" attribution='© Google' />
                             )}
 
                             {manualLat && manualLng && (
-                              <MapFocusController
-                                lat={parseFloat(manualLat)}
-                                lng={parseFloat(manualLng)}
-                              />
+                              <MapFocusController lat={parseFloat(manualLat)} lng={parseFloat(manualLng)} />
                             )}
 
                             <MapClickHandler
                               onPick={(lat, lng) => {
+                                setNewCoords({ lat, lng });
                                 setManualLat(lat.toString());
                                 setManualLng(lng.toString());
                               }}
@@ -555,26 +581,22 @@ export default function Checkout() {
                               />
                             )}
                           </MapContainer>
-
-                          {/* Visual cue: center target */}
-                          <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
-                            <div className="relative">
-                              <div className="absolute inset-0 rounded-full bg-teal-500/20 blur-md animate-pulse" />
-                              <div className="w-12 h-12 rounded-full border-2 border-teal-500/50 bg-white/60 backdrop-blur-sm flex items-center justify-center shadow-lg">
-                                <Crosshair size={20} className="text-teal-600" />
-                              </div>
-                            </div>
-                          </div>
                         </div>
+
                         {manualLat && manualLng && (
-                          <a
-                            href={`https://www.google.com/maps/search/?api=1&query=${manualLat},${manualLng}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-teal-600 hover:text-teal-800 transition-colors bg-teal-50 px-3 py-1.5 rounded-lg"
-                          >
-                            <Navigation size={12}/> Open in Google Maps
-                          </a>
+                          <div className="mt-3 flex items-center justify-between gap-4">
+                            <a
+                              href={`https://www.google.com/maps/search/?api=1&query=${manualLat},${manualLng}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-2 text-xs font-bold text-teal-600 hover:text-teal-800 transition-colors bg-teal-50 px-4 py-2 rounded-xl"
+                            >
+                              <Navigation size={14}/> Open in Google Maps
+                            </a>
+                            <span className="text-[10px] font-bold text-green-600 uppercase tracking-widest flex items-center gap-1">
+                              <CheckCircle size={12}/> Location pinned
+                            </span>
+                          </div>
                         )}
                      </div>
                  </div>

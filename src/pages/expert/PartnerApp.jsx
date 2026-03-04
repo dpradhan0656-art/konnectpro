@@ -92,7 +92,10 @@ export default function PartnerApp() {
            <div>
                <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-3 flex items-center gap-2"><Clock size={16} className="text-amber-500"/> Active Jobs ({bookings.length})</h2>
                {bookings.length === 0 ? (
-                   <div className="bg-white border border-slate-200 border-dashed rounded-2xl p-6 text-center text-slate-400 text-xs font-bold">No new jobs assigned.</div>
+                   <div className="bg-white border border-slate-200 border-dashed rounded-2xl p-6 text-center">
+                     <span className="text-4xl block mb-3">📋</span>
+                     <p className="text-slate-400 text-xs font-bold">No new jobs assigned.</p>
+                   </div>
                ) : (
                    <div className="space-y-4">
                        {bookings.map(job => (

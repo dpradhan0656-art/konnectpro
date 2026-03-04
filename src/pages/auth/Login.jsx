@@ -1,14 +1,17 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, ArrowRight, ShieldCheck, User, Loader2 } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();
@@ -20,7 +23,33 @@ export default function Login() {
   };
 
   // ✅ MAGIC: Google Login Function
+  const handleSignUp = async (e) => {
+    e.preventDefault();
+    if (!name.trim()) { setError("Please enter your name."); return; }
+    if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    setLoading(true); setError(''); setSuccessMsg('');
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: { data: { full_name: name.trim() } }
+    });
+    if (error) {
+      setError(error.message?.includes('already registered') ? "This email is already registered. Try logging in." : error.message);
+      setLoading(false);
+      return;
+    }
+    if (data?.user?.identities?.length === 0) {
+      setError("This email is already registered. Try logging in.");
+      setLoading(false);
+      return;
+    }
+    setSuccessMsg("Account created! Check your email to confirm, or login directly.");
+    setIsSignUp(false);
+    setLoading(false);
+  };
+
   const handleGoogleLogin = async () => {
+    setError('');
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: window.location.origin }
@@ -34,10 +63,11 @@ export default function Login() {
         
         <div className="text-center mb-8">
             <div className="flex justify-center mb-4"><div className="p-3 bg-blue-50 text-blue-600 rounded-full"><ShieldCheck size={32} /></div></div>
-            <h1 className="text-2xl font-black text-slate-900">Welcome Back</h1>
-            <p className="text-sm text-slate-500 mt-1">Login to access your account</p>
+            <h1 className="text-2xl font-black text-slate-900">{isSignUp ? 'Create Account' : 'Welcome Back'}</h1>
+            <p className="text-sm text-slate-500 mt-1">{isSignUp ? 'Sign up to get started' : 'Login to access your account'}</p>
         </div>
 
+        {successMsg && <div className="mb-4 p-3 bg-teal-50 text-teal-700 text-xs font-bold rounded-xl text-center">{successMsg}</div>}
         {error && <div className="mb-4 p-3 bg-red-50 text-red-600 text-xs font-bold rounded-xl text-center">{error}</div>}
 
         {/* ✅ GOOGLE LOGIN BUTTON */}
@@ -56,19 +86,34 @@ export default function Login() {
             <span className="bg-white px-4 text-xs text-slate-400 font-bold uppercase tracking-widest relative z-10">Or use email</span>
         </div>
 
-        <form onSubmit={handleEmailLogin} className="space-y-4">
+        <form onSubmit={isSignUp ? handleSignUp : handleEmailLogin} className="space-y-4">
+            {isSignUp && (
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input type="text" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl py-3 pl-12 pr-4 outline-none focus:border-blue-500" />
+              </div>
+            )}
             <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl py-3 pl-12 pr-4 outline-none focus:border-blue-500" placeholder="Email Address" />
             </div>
             <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl py-3 pl-12 pr-4 outline-none focus:border-blue-500" placeholder="Password" />
+                <input type="password" required minLength={isSignUp ? 6 : undefined} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl py-3 pl-12 pr-4 outline-none focus:border-blue-500" placeholder={isSignUp ? "Password (min 6 characters)" : "Password"} />
             </div>
             <button type="submit" disabled={loading} className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold flex justify-center items-center gap-2 shadow-lg shadow-blue-500/30 disabled:opacity-50">
-                {loading ? 'Logging in...' : <>Login securely <ArrowRight size={16}/></>}
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (isSignUp ? 'Create Account' : <>Login securely <ArrowRight size={16}/></>)}
             </button>
         </form>
+
+        <p className="mt-6 text-sm text-slate-500 text-center">
+          {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+          <button type="button" onClick={() => { setIsSignUp(!isSignUp); setError(''); setSuccessMsg(''); }} className="text-blue-600 hover:underline font-semibold">
+            {isSignUp ? 'Login' : 'Sign up'}
+          </button>
+          {' · '}
+          <Link to="/register-expert" className="text-blue-600 hover:underline font-semibold">Register as Expert</Link>
+        </p>
       </div>
     </div>
   );
