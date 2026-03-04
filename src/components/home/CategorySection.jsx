@@ -27,13 +27,15 @@ export default function CategorySection({ categories, loading }) {
       </div>
 
       {loading ? (
-        <div className="flex gap-4 sm:gap-5 overflow-x-auto pb-6 pt-2 px-1 animate-pulse" role="status" aria-label="Loading categories">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="min-w-[90px] h-28 bg-slate-200 rounded-3xl" />
+        /* OLD: horizontal scroll skeleton */
+        <div className="grid grid-cols-3 gap-3 sm:gap-4 animate-pulse" role="status" aria-label="Loading categories">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="aspect-[0.95] bg-slate-200 rounded-2xl" />
           ))}
         </div>
       ) : categories.length > 0 ? (
-        <div className="flex gap-4 sm:gap-5 overflow-x-auto overflow-y-hidden pb-6 pt-2 px-1 min-w-0 scroll-smooth" role="list">
+        /* NEW: 3-column grid, rounded card boxes, subtle shadows — premium boxed style */
+        <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4" role="list">
           {categories.map((cat, i) => {
             const colorClass = BG_COLORS[i % BG_COLORS.length];
             const slugUrl = cat.slug || cat.name.toLowerCase().replace(/[\s_]+/g, '-');
@@ -42,13 +44,13 @@ export default function CategorySection({ categories, loading }) {
                 key={cat.id || i}
                 type="button"
                 onClick={() => navigate(`/category/${slugUrl}`)}
-                className="flex flex-col items-center gap-3 min-w-[85px] min-h-[44px] cursor-pointer group text-left touch-manipulation"
+                className="flex flex-col items-center justify-center gap-2 sm:gap-3 min-h-[100px] sm:min-h-[110px] cursor-pointer group text-left touch-manipulation rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_24px_-8px_rgba(20,184,166,0.35)] hover:border-teal-200/80 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden p-3 sm:p-4"
                 role="listitem"
               >
-                <div className={`w-20 h-20 ${colorClass} rounded-3xl flex items-center justify-center shadow-[0_4px_20px_-10px_rgba(0,0,0,0.08)] group-hover:shadow-[0_10px_25px_-5px_rgba(20,184,166,0.25)] group-hover:-translate-y-0.5 transition-all duration-300 border border-white relative overflow-hidden`}>
+                <div className={`w-12 h-12 sm:w-14 sm:h-14 ${colorClass} rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow duration-300 border border-white/80 flex-shrink-0`}>
                   <SmartIcon iconValue={cat.icon} categoryName={cat.name} />
                 </div>
-                <span className="text-[11px] font-black text-slate-700 text-center leading-tight group-hover:text-teal-600 transition-colors duration-300">
+                <span className="text-[10px] sm:text-[11px] font-black text-slate-700 text-center leading-tight group-hover:text-teal-600 transition-colors duration-300 line-clamp-2">
                   {cat.name}
                 </span>
               </button>

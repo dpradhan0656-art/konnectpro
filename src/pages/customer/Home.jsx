@@ -136,7 +136,8 @@ export default function Home({ session }) {
         setSearchQuery={setSearchQuery}
       />
 
-      <div className="mt-14 flex flex-col gap-6 w-full min-w-0 max-w-[100vw]">
+      {/* Consistent gap between sections — premium boxed layout */}
+      <div className="mt-14 flex flex-col gap-8 w-full min-w-0 max-w-[100vw]">
         <CategorySection categories={filteredCategories} loading={loading} />
         <OffersSection offers={offers} />
         <ServicesSection services={filteredServices} cart={cart} onAddToCart={addToCart} />

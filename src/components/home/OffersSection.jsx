@@ -19,11 +19,11 @@ export default function OffersSection({ offers }) {
             return (
               <article
                 key={item.id}
-                className={`min-w-[280px] w-[280px] md:min-w-[320px] md:w-[320px] flex-shrink-0 rounded-3xl relative overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 cursor-pointer group transition-all duration-300 hover:shadow-lg bg-gradient-to-br ${item.gradient_color || 'from-teal-600 to-emerald-800'}`}
+                className={`min-w-[280px] w-[280px] md:min-w-[320px] md:w-[320px] flex-shrink-0 rounded-2xl relative overflow-hidden shadow-[0_8px_24px_-4px_rgba(0,0,0,0.15)] hover:shadow-[0_16px_40px_-8px_rgba(0,0,0,0.25)] border border-slate-200/60 cursor-pointer group transition-all duration-300 hover:-translate-y-0.5 bg-gradient-to-br ${item.gradient_color || 'from-teal-600 to-emerald-800'}`}
                 style={{ aspectRatio: '16/10' }}
                 role="listitem"
               >
-                {/* Image layer – fixed aspect, lazy, object-cover */}
+                {/* NEW: rounded-2xl + stronger shadow so offers "pop" — Image layer: fixed aspect, lazy, object-cover */}
                 <div className="absolute inset-0 z-0">
                   <img
                     src={imageUrl}

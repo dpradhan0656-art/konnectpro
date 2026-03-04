@@ -41,7 +41,7 @@ export default function ServicesSection({ services, cart, onAddToCart }) {
           </div>
         )}
       </div>
-      {/* Visible scrollbar on mobile – no-scrollbar removed */}
+      {/* Card-style list with consistent gap */}
       <div
         ref={scrollRef}
         className="flex gap-4 sm:gap-5 overflow-x-auto overflow-y-hidden pb-8 px-1 min-w-0 scroll-smooth"

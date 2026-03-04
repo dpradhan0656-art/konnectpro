@@ -14,32 +14,32 @@ export default function ServiceCard({ service, isInCart, onAddToCart }) {
   const emojiFallback = !useImageUrl && rawImage ? rawImage : getServiceEmoji(service.category || service.name);
 
   return (
-    <article className="min-w-[200px] w-[200px] max-w-[200px] flex flex-col bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_12px_40px_-12px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 transition-all duration-300 group overflow-hidden">
-      {/* Image block – URL, emoji, ya fallback */}
+    /* OLD: border-slate-100 shadow-[0_8px_30px...] — lighter card */
+    <article className="min-w-[200px] w-[200px] max-w-[200px] flex flex-col bg-white rounded-2xl border-2 border-slate-200/90 shadow-[0_4px_20px_-6px_rgba(0,0,0,0.1)] hover:shadow-[0_12px_32px_-8px_rgba(0,0,0,0.18)] hover:border-teal-200 hover:-translate-y-1 transition-all duration-300 group overflow-hidden active:scale-[0.99]">
+      {/* Image block – more prominent, interactive */}
       <div className="relative w-full aspect-[4/3] bg-slate-100 shrink-0 flex items-center justify-center overflow-hidden">
         {useImageUrl ? (
           <img
             src={imageSrc}
             alt={service.name}
             loading="lazy"
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             onError={(e) => { e.target.onerror = null; e.target.src = SERVICE_IMAGE_FALLBACK; }}
           />
         ) : (
           <span className="text-6xl drop-shadow-md" aria-hidden="true">{emojiFallback}</span>
         )}
         {/* AI star/Zap badge removed for world-class native-like UI */}
-        {/* <div className="absolute top-2 right-2 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-lg flex items-center justify-center text-teal-600 shrink-0">
-          <Zap size={18} aria-hidden="true" />
-        </div> */}
+        {/* <div className="absolute top-2 right-2 ..."><Zap size={18} /></div> */}
       </div>
 
       <div className="p-4 flex flex-col flex-1 min-w-0">
         <div className="flex justify-between items-start gap-2 mb-2">
           <span className="text-[11px] font-bold text-slate-400 line-through shrink-0">₹{wasPrice}</span>
-          <span className="text-slate-900 text-base font-black shrink-0">₹{displayPrice}</span>
+          <span className="text-slate-900 text-lg font-black shrink-0">₹{displayPrice}</span>
         </div>
-        <h3 className="font-black text-slate-800 text-sm leading-tight mb-1 line-clamp-2 min-h-[36px]">
+        {/* OLD: text-sm — NEW: more prominent title */}
+        <h3 className="font-black text-slate-800 text-base leading-tight mb-1 line-clamp-2 min-h-[40px] group-hover:text-teal-800 transition-colors">
           {service.name}
         </h3>
         <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest truncate mb-4">

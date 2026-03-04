@@ -36,39 +36,44 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer className="bg-slate-900 text-slate-300 pt-16 pb-24 md:pb-8 border-t border-slate-800 w-full max-w-[100vw] overflow-hidden">
-      <div className="max-w-7xl mx-auto px-6 w-full min-w-0">
-        
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-          
-          {/* Brand Section */}
-          <div className="col-span-1 md:col-span-1">
-            <Link to="/" className="flex items-center gap-2 mb-1 group">
-               <ShieldCheck size={28} className="text-teal-500 group-hover:scale-110 transition-transform"/>
-               <span className="text-2xl font-black text-white tracking-tighter uppercase">
-                 KSHATR<span className="text-teal-500">.COM</span>
-               </span>
+    <footer
+      className={
+        /* OLD: pt-16 pb-24 md:pb-8 — more padding */
+        'bg-slate-900 text-slate-300 py-6 md:py-8 md:pt-12 md:pb-8 border-t border-slate-800 w-full max-w-[100vw] overflow-hidden'
+      }
+    >
+      <div className="max-w-7xl mx-auto px-4 md:px-6 w-full min-w-0">
+        {/* OLD: single column on mobile — NEW: 2-col sidewise on mobile, 4-col on md; boxed sections */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-10 mb-4 md:mb-10">
+          {/* Brand Section — full width on mobile */}
+          <div className="col-span-2 md:col-span-1 mb-2 md:mb-0">
+            <Link to="/" className="flex items-center gap-2 mb-0.5 md:mb-1 group">
+              <span className="inline-block scale-90 md:scale-100 origin-left">
+                <ShieldCheck size={24} className="text-teal-500 group-hover:scale-110 transition-transform" />
+              </span>
+              <span className="text-lg md:text-2xl font-black text-white tracking-tighter uppercase">
+                KSHATR<span className="text-teal-500">.COM</span>
+              </span>
             </Link>
-            
-            <p className="text-[10px] text-teal-400 font-bold uppercase tracking-widest mb-4">
-               Powered by Apna Hunar
+            <p className="text-[9px] md:text-[10px] text-teal-400 font-bold uppercase tracking-widest mb-2 md:mb-4">
+              Powered by Apna Hunar
             </p>
-
-            <p className="text-sm leading-relaxed opacity-70 mb-6">
+            <p className="text-xs md:text-sm leading-snug md:leading-relaxed opacity-70 mb-4 md:mb-6">
               India's most trusted home service partner. We shield your home with verified experts and transparent pricing.
             </p>
-            
-            <div className="flex gap-4">
-               <a href="#" className="bg-slate-800 p-2 rounded-full hover:bg-blue-600 hover:text-white transition-all"><Facebook size={18}/></a>
-               <a href="#" className="bg-slate-800 p-2 rounded-full hover:bg-pink-600 hover:text-white transition-all"><Instagram size={18}/></a>
-               <a href="#" className="bg-slate-800 p-2 rounded-full hover:bg-sky-500 hover:text-white transition-all"><Twitter size={18}/></a>
+            <div className="flex gap-2 md:gap-4">
+              <a href="#" className="bg-slate-800 p-1.5 md:p-2 rounded-full hover:bg-blue-600 hover:text-white transition-all [&>svg]:scale-90 md:[&>svg]:scale-100 [&>svg]:origin-center" aria-label="Facebook"><Facebook size={18} /></a>
+              <a href="#" className="bg-slate-800 p-1.5 md:p-2 rounded-full hover:bg-pink-600 hover:text-white transition-all [&>svg]:scale-90 md:[&>svg]:scale-100 [&>svg]:origin-center" aria-label="Instagram"><Instagram size={18} /></a>
+              <a href="#" className="bg-slate-800 p-1.5 md:p-2 rounded-full hover:bg-sky-500 hover:text-white transition-all [&>svg]:scale-90 md:[&>svg]:scale-100 [&>svg]:origin-center" aria-label="Twitter"><Twitter size={18} /></a>
             </div>
           </div>
 
-          {/* Quick Links */}
-          <div>
-            <h3 className="text-white font-bold uppercase tracking-widest text-xs mb-6">Company</h3>
-            <ul className="space-y-4 text-sm">
+          {/* Company — boxed on mobile */}
+          <div className="col-span-1 rounded-xl border border-slate-700/80 bg-slate-800/40 p-3 md:p-0 md:bg-transparent md:border-0 md:rounded-none">
+            <h3 className="text-white font-bold uppercase tracking-widest text-[10px] md:text-xs mb-2 md:mb-6">
+              Company
+            </h3>
+            <ul className="space-y-1.5 md:space-y-4 text-xs md:text-sm">
               <li><Link to="/about" className="hover:text-teal-400 transition-colors">About Us</Link></li>
               <li><Link to="/careers" className="hover:text-teal-400 transition-colors">Careers @ Apna Hunar</Link></li>
               <li><Link to="/register-expert" className="hover:text-teal-400 transition-colors font-bold text-teal-200">Join as Partner</Link></li>
@@ -76,10 +81,12 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Legal */}
-          <div>
-            <h3 className="text-white font-bold uppercase tracking-widest text-xs mb-6">Legal</h3>
-            <ul className="space-y-4 text-sm">
+          {/* Legal — boxed on mobile */}
+          <div className="col-span-1 rounded-xl border border-slate-700/80 bg-slate-800/40 p-3 md:p-0 md:bg-transparent md:border-0 md:rounded-none">
+            <h3 className="text-white font-bold uppercase tracking-widest text-[10px] md:text-xs mb-2 md:mb-6">
+              Legal
+            </h3>
+            <ul className="space-y-1.5 md:space-y-4 text-xs md:text-sm">
               <li><Link to="/terms" className="hover:text-teal-400 transition-colors">Terms of Service</Link></li>
               <li><Link to="/privacy" className="hover:text-teal-400 transition-colors">Privacy Policy</Link></li>
               <li><Link to="/refund-policy" className="hover:text-teal-400 transition-colors">Refund Policy</Link></li>
@@ -88,31 +95,37 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Contact (🚀 NOW DYNAMIC) */}
-          <div>
-            <h3 className="text-white font-bold uppercase tracking-widest text-xs mb-6">Contact Us</h3>
-            <ul className="space-y-4 text-sm">
-              <li className="flex items-start gap-3">
-                <MapPin size={18} className="text-teal-500 shrink-0 mt-0.5"/>
-                {/* whitespace-pre-wrap ensures that line breaks (\n) in address show up correctly */}
+          {/* Contact Us — full-width box at bottom on mobile */}
+          <div className="col-span-2 mt-2 md:mt-0 rounded-xl border border-slate-700/80 bg-slate-800/40 p-3 md:p-0 md:bg-transparent md:border-0 md:rounded-none">
+            <h3 className="text-white font-bold uppercase tracking-widest text-[10px] md:text-xs mb-2 md:mb-6">
+              Contact Us
+            </h3>
+            <ul className="space-y-1.5 md:space-y-4 text-xs md:text-sm">
+              <li className="flex items-start gap-2 md:gap-3">
+                <span className="shrink-0 mt-0.5 [&>svg]:scale-90 md:[&>svg]:scale-100 [&>svg]:origin-center text-teal-500"><MapPin size={18} /></span>
                 <span className="whitespace-pre-wrap">{contactInfo.address}</span>
               </li>
-              <li className="flex items-center gap-3">
-                <Mail size={18} className="text-teal-500 shrink-0"/>
-                <a href={`mailto:${contactInfo.email}`} className="hover:text-white">{contactInfo.email}</a>
+              <li className="flex items-center gap-2 md:gap-3">
+                <span className="shrink-0 [&>svg]:scale-90 md:[&>svg]:scale-100 text-teal-500"><Mail size={18} /></span>
+                <a href={`mailto:${contactInfo.email}`} className="hover:text-white truncate">{contactInfo.email}</a>
               </li>
-              <li className="flex items-center gap-3">
-                <Phone size={18} className="text-teal-500 shrink-0"/>
+              <li className="flex items-center gap-2 md:gap-3">
+                <span className="shrink-0 [&>svg]:scale-90 md:[&>svg]:scale-100 text-teal-500"><Phone size={18} /></span>
                 <span>{contactInfo.phone}</span>
               </li>
             </ul>
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs opacity-50">
-           <p>© 2026 Apna Hunar. All rights reserved.</p>
-           <p>Made with <span className="text-red-500">❤</span> in Jabalpur.</p>
+        {/* Bottom Bar — more slender on mobile */}
+        <div
+          className={
+            /* OLD: pt-8 ... gap-4 — thicker bottom bar */
+            'border-t border-slate-800 pt-4 pb-1 md:pt-8 md:pb-0 flex flex-col md:flex-row justify-between items-center gap-2 md:gap-4 text-[10px] md:text-xs opacity-50'
+          }
+        >
+          <p className="text-center md:text-left">© 2026 Apna Hunar. All rights reserved.</p>
+          <p className="text-center md:text-right">Made with <span className="text-red-500">❤</span> in Jabalpur.</p>
         </div>
       </div>
     </footer>
