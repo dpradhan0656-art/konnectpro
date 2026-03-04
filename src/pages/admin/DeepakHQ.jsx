@@ -1,27 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-// 🚀 NEW: Added 'FileCheck' icon for KYC
 import { 
   Shield, Menu, X, LogOut, LayoutGrid, Users, Briefcase, Settings, 
-  Megaphone, Navigation, CreditCard, UserCheck, Grid, Zap, DollarSign, FileCheck 
+  Megaphone, Navigation, CreditCard, UserCheck, Grid, DollarSign, FileCheck 
 } from 'lucide-react';
 
-// Import All Tabs
-import DashboardTab from './tabs/DashboardTab'; 
-import ExpertControl from './tabs/ExpertControl';
-import ServiceManager from './tabs/ServiceManager';
-import ManageOffers from './tabs/ManageOffers';
-import DispatchTab from './tabs/DispatchTab';
-import SettingsTab from './tabs/SettingsTab';
-import CustomerCRM from './tabs/CustomerCRM';  
-import WalletManager from './tabs/WalletManager'; 
-import CategoryManager from './tabs/CategoryManager';
-import MarketingTab from './tabs/MarketingTab';       
-import RevenueTab from './tabs/RevenueTab';
-import AreaHeadManager from './tabs/AreaHeadManager'; 
-// ✅ NAYA TAB IMPORT KIYA (Expert KYC Verification)
-import ExpertVerification from './tabs/ExpertVerification'; 
+// Lazy-load tabs so DeepakHQ opens fast and tabs load on demand
+const DashboardTab = lazy(() => import('./tabs/DashboardTab'));
+const ExpertControl = lazy(() => import('./tabs/ExpertControl'));
+const ServiceManager = lazy(() => import('./tabs/ServiceManager'));
+const ManageOffers = lazy(() => import('./tabs/ManageOffers'));
+const DispatchTab = lazy(() => import('./tabs/DispatchTab'));
+const SettingsTab = lazy(() => import('./tabs/SettingsTab'));
+const CustomerCRM = lazy(() => import('./tabs/CustomerCRM'));
+const WalletManager = lazy(() => import('./tabs/WalletManager'));
+const CategoryManager = lazy(() => import('./tabs/CategoryManager'));
+const MarketingTab = lazy(() => import('./tabs/MarketingTab'));
+const RevenueTab = lazy(() => import('./tabs/RevenueTab'));
+const AreaHeadManager = lazy(() => import('./tabs/AreaHeadManager'));
+const ExpertVerification = lazy(() => import('./tabs/ExpertVerification'));
+
+const TabFallback = () => (
+  <div className="flex items-center justify-center py-24">
+    <div className="w-10 h-10 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+  </div>
+); 
 
 export default function DeepakHQ() {
   const navigate = useNavigate();
@@ -178,22 +182,21 @@ export default function DeepakHQ() {
 
         <main className="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth pb-24">
             <div className="max-w-7xl mx-auto">
-                {activeTab === 'dashboard' && <DashboardTab />}
-                {activeTab === 'categories' && <CategoryManager />} 
-                {activeTab === 'services' && <ServiceManager />}
-                {activeTab === 'dispatch' && <DispatchTab />}
-                
-                {/* ✅ NAYA TAB JODA (KYC Verification Show Karega) */}
-                {activeTab === 'kyc_verification' && <ExpertVerification />}
-                
-                {activeTab === 'experts' && <ExpertControl />}
-                {activeTab === 'area_heads' && <AreaHeadManager />}
-                {activeTab === 'customers' && <CustomerCRM />} 
-                {activeTab === 'wallet' && <WalletManager />}
-                {activeTab === 'marketing' && <MarketingTab />}
-                {activeTab === 'revenue' && <RevenueTab />} 
-                {activeTab === 'offers' && <ManageOffers />}
-                {activeTab === 'settings' && <SettingsTab />}
+                <Suspense fallback={<TabFallback />}>
+                    {activeTab === 'dashboard' && <DashboardTab />}
+                    {activeTab === 'categories' && <CategoryManager />}
+                    {activeTab === 'services' && <ServiceManager />}
+                    {activeTab === 'dispatch' && <DispatchTab />}
+                    {activeTab === 'kyc_verification' && <ExpertVerification />}
+                    {activeTab === 'experts' && <ExpertControl />}
+                    {activeTab === 'area_heads' && <AreaHeadManager />}
+                    {activeTab === 'customers' && <CustomerCRM />}
+                    {activeTab === 'wallet' && <WalletManager />}
+                    {activeTab === 'marketing' && <MarketingTab />}
+                    {activeTab === 'revenue' && <RevenueTab />}
+                    {activeTab === 'offers' && <ManageOffers />}
+                    {activeTab === 'settings' && <SettingsTab />}
+                </Suspense>
             </div>
         </main>
       </div>

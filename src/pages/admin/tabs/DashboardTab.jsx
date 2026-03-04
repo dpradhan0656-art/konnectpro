@@ -6,18 +6,17 @@ export default function DashboardTab() {
   const [stats, setStats] = useState({ orders: 0, revenue: 0, experts: 0 });
   const [recentBookings, setRecentBookings] = useState([]);
 
-  // Fetch Live Stats
   useEffect(() => {
     const fetchData = async () => {
-        // 1. Get Bookings
-        const { data: bookings } = await supabase.from('bookings').select('*').order('created_at', { ascending: false });
-        // 2. Get Experts
-        const { count: expertCount } = await supabase.from('experts').select('*', { count: 'exact', head: true });
-        
+        const [{ data: bookings }, { count: orderCount }, { count: expertCount }] = await Promise.all([
+            supabase.from('bookings').select('id, total_amount, service_name, contact_name').order('created_at', { ascending: false }).limit(50),
+            supabase.from('bookings').select('*', { count: 'exact', head: true }),
+            supabase.from('experts').select('*', { count: 'exact', head: true })
+        ]);
         if (bookings) {
-            const totalRev = bookings.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
-            setStats({ orders: bookings.length, revenue: totalRev, experts: expertCount || 0 });
-            setRecentBookings(bookings.slice(0, 5)); // Top 5
+            const totalRev = bookings.reduce((sum, item) => sum + (Number(item.total_amount) || 0), 0);
+            setStats({ orders: orderCount ?? 0, revenue: totalRev, experts: expertCount ?? 0 });
+            setRecentBookings(bookings.slice(0, 5));
         }
     };
     fetchData();
@@ -51,9 +50,9 @@ export default function DashboardTab() {
                     <tbody className="divide-y divide-slate-700">
                         {recentBookings.length > 0 ? recentBookings.map(b => (
                             <tr key={b.id} className="hover:bg-slate-700/50">
-                                <td className="p-4 font-bold text-white">{b.customer_name || 'Guest User'}</td>
+                                <td className="p-4 font-bold text-white">{b.contact_name || 'Guest'}</td>
                                 <td className="p-4">{b.service_name}</td>
-                                <td className="p-4 text-right font-mono text-teal-400">₹{b.price}</td>
+                                <td className="p-4 text-right font-mono text-teal-400">₹{b.total_amount ?? '—'}</td>
                             </tr>
                         )) : (
                             <tr><td colSpan="3" className="p-8 text-center text-slate-500">No bookings yet.</td></tr>

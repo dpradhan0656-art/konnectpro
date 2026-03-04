@@ -11,37 +11,25 @@ export default function DispatchTab() {
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState(null);
 
-  useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 15000); // Har 15 sec me auto-refresh
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchData = async () => {
-    setLoading(true);
-    
-    // 1. Fetch Bookings 
+  const fetchData = async (silent = false) => {
+    if (!silent) setLoading(true);
     const { data: bData, error: bError } = await supabase
         .from('bookings')
-        .select(`*, experts(*)`) 
+        .select(`*, experts(*)`)
         .order('created_at', { ascending: false });
-        
-    if (bError && bError.code !== 'PGRST116') {
-        console.error("Booking Fetch Error:", bError);
-    } else if (bData) {
-        setBookings(bData);
-    }
+    if (bError && bError.code !== 'PGRST116') console.error("Booking Fetch Error:", bError);
+    else if (bData) setBookings(bData);
 
-    // 2. Fetch Active Experts
-    const { data: eData, error: eError } = await supabase
-        .from('experts')
-        .select('*')
-        .eq('status', 'approved'); 
-        
+    const { data: eData } = await supabase.from('experts').select('*').eq('status', 'approved');
     if (eData) setExperts(eData);
-    
-    setLoading(false);
+    if (!silent) setLoading(false);
   };
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(() => fetchData(true), 30000); // 30 sec silent refresh, no spinner
+    return () => clearInterval(interval);
+  }, []);
 
   // 🌍 THE RADAR MATH
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
