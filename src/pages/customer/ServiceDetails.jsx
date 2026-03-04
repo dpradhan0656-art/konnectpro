@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import BookingModal from '../../components/customer/BookingModal';
 import SOSButton from '../../components/common/SOSButton';
+import { getServiceEmoji, isImageUrl } from '../../lib/serviceIconUtils';
 import { Star, Clock, MapPin, Camera, Play, ShieldCheck, ArrowLeft } from 'lucide-react';
+
+const IMAGE_FALLBACK = 'https://images.unsplash.com/photo-1581578731117-e0a820379b73?w=800&q=80';
 
 const ServiceDetails = () => {
   const { id } = useParams();
@@ -55,8 +58,12 @@ const ServiceDetails = () => {
       <SOSButton />
 
       {/* HEADER IMAGE & NAV */}
-      <div className="relative h-64 w-full">
-        <img src={service.image} className="w-full h-full object-cover" alt={service.name} onError={(e) => { e.target.onerror = null; e.target.src = 'https://images.unsplash.com/photo-1581578731117-e0a820379b73?w=800&q=80'; }} />
+      <div className="relative h-64 w-full bg-slate-200 flex items-center justify-center overflow-hidden">
+        {isImageUrl(service.image || service.image_url) ? (
+          <img src={service.image || service.image_url} className="w-full h-full object-cover" alt={service.name} onError={(e) => { e.target.onerror = null; e.target.src = IMAGE_FALLBACK; }} />
+        ) : (
+          <span className="text-8xl">{service.image || service.image_url || getServiceEmoji(service.name)}</span>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-teal-900 to-transparent opacity-80"></div>
         
         <button 

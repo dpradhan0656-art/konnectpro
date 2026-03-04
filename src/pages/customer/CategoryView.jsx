@@ -5,7 +5,7 @@ import { useCart } from '../../context/CartContext';
 import { getUserCityKey, filterServicesByCity } from '../../lib/serviceCityUtils';
 import BookingModal from '../../components/customer/BookingModal';
 import { ArrowLeft, Star, Clock, ShoppingBag, Plus, ShieldCheck, Zap, Info } from 'lucide-react';
-import { getServiceEmoji } from '../../lib/serviceIconUtils';
+import { getServiceEmoji, isImageUrl } from '../../lib/serviceIconUtils';
 
 export default function CategoryView() {
   const { category } = useParams();
@@ -90,18 +90,26 @@ export default function CategoryView() {
           services.map((service) => {
             const finalPrice = findDisplayPrice(service); 
             const fallbackImg = getFallbackImage(cleanCategoryName);
+            const rawImg = service.image_url || service.image || service.img || '';
+            const useImgUrl = isImageUrl(rawImg);
+            const imgSrc = useImgUrl ? (rawImg || fallbackImg) : fallbackImg;
+            const emojiFallback = !useImgUrl && rawImg ? rawImg : getServiceEmoji(service.category || service.name);
 
             return (
             <div key={service.id} className="bg-white p-4 rounded-[2rem] shadow-lg shadow-slate-200/50 border border-slate-100 flex gap-4 transition-all hover:border-teal-500/30 group">
               
-              {/* IMAGE SECTION */}
-              <div className="w-24 h-24 bg-slate-100 rounded-2xl overflow-hidden shrink-0 shadow-inner relative">
-                 <img 
-                   src={service.image_url || fallbackImg} 
-                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                   onError={(e) => { e.target.onerror = null; e.target.src = fallbackImg; }} 
-                   alt={service.name}
-                 />
+              {/* IMAGE SECTION – URL ya emoji */}
+              <div className="w-24 h-24 bg-slate-100 rounded-2xl overflow-hidden shrink-0 shadow-inner relative flex items-center justify-center">
+                 {useImgUrl ? (
+                   <img 
+                     src={imgSrc} 
+                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                     onError={(e) => { e.target.onerror = null; e.target.src = fallbackImg; }} 
+                     alt={service.name}
+                   />
+                 ) : (
+                   <span className="text-4xl">{emojiFallback}</span>
+                 )}
               </div>
 
               {/* INFO SECTION */}
