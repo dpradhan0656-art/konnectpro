@@ -12,7 +12,7 @@ export default function ManageOffers() {
   const initialFormState = {
     title: '',
     discount_text: '',
-    image_url: '/assets/banners/ac-service.jpg', // Default example path (corrected 'banners')
+    image_url: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=600&q=80',
     gradient_color: 'from-blue-600 to-blue-800',
     is_active: true
   };
@@ -85,14 +85,15 @@ export default function ManageOffers() {
     setLoading(false);
   };
 
-  // --- 3. Delete Logic ---
   const handleDelete = async (id) => {
-    if (window.confirm("🛑 WARNING: Are you sure you want to delete this offer?")) {
-      await supabase.from('spotlight_offers').delete().eq('id', id);
-      fetchOffers();
-      // If deleting the currently edited item, reset form
-      if(id === editingId) resetForm(); 
+    if (!window.confirm("🛑 WARNING: Are you sure you want to delete this offer?")) return;
+    const { error } = await supabase.from('spotlight_offers').delete().eq('id', id);
+    if (error) {
+      alert("Delete failed: " + error.message);
+      return;
     }
+    fetchOffers();
+    if (id === editingId) resetForm();
   };
 
   return (

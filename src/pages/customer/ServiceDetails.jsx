@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import BookingModal from '../../components/customer/BookingModal';
 import SOSButton from '../../components/common/SOSButton';
@@ -56,7 +56,7 @@ const ServiceDetails = () => {
 
       {/* HEADER IMAGE & NAV */}
       <div className="relative h-64 w-full">
-        <img src={service.image} className="w-full h-full object-cover" alt={service.name} />
+        <img src={service.image} className="w-full h-full object-cover" alt={service.name} onError={(e) => { e.target.onerror = null; e.target.src = 'https://images.unsplash.com/photo-1581578731117-e0a820379b73?w=800&q=80'; }} />
         <div className="absolute inset-0 bg-gradient-to-t from-teal-900 to-transparent opacity-80"></div>
         
         <button 
@@ -135,7 +135,7 @@ const ServiceDetails = () => {
           <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
             {videoReviews.map((review) => (
               <div key={review.id} className="min-w-[140px] relative rounded-xl overflow-hidden shadow-md group cursor-pointer">
-                <img src={review.thumbnail} className="w-full h-24 object-cover" alt="User review" />
+                <img src={review.thumbnail} className="w-full h-24 object-cover" alt="User review" onError={(e) => { e.target.onerror = null; e.target.src = 'https://images.unsplash.com/photo-1590541673322-959c5d1406c1?w=300&q=80'; }} />
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/20 transition">
                   <div className="bg-white/20 backdrop-blur-sm p-2 rounded-full">
                     <Play size={16} className="text-white fill-current" />

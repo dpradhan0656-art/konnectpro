@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { reportError } from '../../lib/errorHandling';
 
 export default class ErrorBoundary extends React.Component {
   state = { hasError: false, error: null };
@@ -9,7 +10,7 @@ export default class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('ErrorBoundary caught:', error, errorInfo);
+    reportError('ErrorBoundary', error, { severity: 'critical' });
   }
 
   render() {

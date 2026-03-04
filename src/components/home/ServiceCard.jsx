@@ -17,6 +17,7 @@ export default function ServiceCard({ service, isInCart, onAddToCart }) {
           alt=""
           loading="lazy"
           className="absolute inset-0 w-full h-full object-cover"
+          onError={(e) => { e.target.onerror = null; e.target.src = SERVICE_IMAGE_FALLBACK; }}
         />
         <div className="absolute top-2 right-2 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-lg flex items-center justify-center text-teal-600 shrink-0">
           <Zap size={18} aria-hidden="true" />

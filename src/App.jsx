@@ -8,8 +8,9 @@ import { ConfigProvider } from './context/ConfigContext';
 import { ThemeProvider } from './context/ThemeContext'; 
 
 // Components
-import Navbar from './components/common/Navbar'; 
-import Footer from './components/common/Footer'; 
+import Navbar from './components/common/Navbar';
+import Footer from './components/common/Footer';
+import InstallAppPrompt from './components/common/InstallAppPrompt'; 
 
 // 1. CUSTOMER PAGES
 import Home from './pages/customer/Home';
@@ -41,6 +42,7 @@ import Terms from './pages/legal/Terms';
 import Refund from './pages/legal/Refund';
 import AntiDiscrimination from './pages/legal/AntiDiscrimination';
 import Careers from './pages/legal/Careers';
+import ContactSupport from './pages/customer/ContactSupport';
 
 // Helper: Scroll to Top
 function ScrollToTop() {
@@ -66,7 +68,8 @@ const Layout = ({ children }) => {
        <main className={`flex-1 ${!isHiddenPage ? 'pt-24 md:pt-24' : ''}`}>
           {children}
        </main>
-       {!isHiddenPage && <Footer />} 
+       {!isHiddenPage && <Footer />}
+       {!isHiddenPage && <InstallAppPrompt />}
     </div>
   );
 };
@@ -123,6 +126,7 @@ const AppRoutes = () => {
           <Route path="/refund-policy" element={<Refund />} />
           <Route path="/anti-discrimination" element={<AntiDiscrimination />} />
           <Route path="/careers" element={<Careers />} />
+          <Route path="/contact-support" element={<ContactSupport />} />
           
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { BRAND } from '../../config/brandConfig';
 import { User, LogOut, Camera, Edit2, ShieldCheck, Phone, MapPin, ArrowLeft, Loader2, Save, Package, ChevronRight } from 'lucide-react';
@@ -111,7 +111,7 @@ export default function Profile() {
           <div className="relative -mt-20 mb-4 group">
             <div className="w-32 h-32 rounded-full border-[6px] border-white shadow-lg overflow-hidden bg-slate-100 flex items-center justify-center">
               {profile.avatar_url ? (
-                <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || 'User')}&background=0d9488&color=fff`; }} />
               ) : (
                 <User size={50} className="text-slate-300" />
               )}

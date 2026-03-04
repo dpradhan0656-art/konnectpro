@@ -187,7 +187,7 @@ export default function ExpertControl() {
                             <button onClick={() => { setEditingId(exp.id); setFormData({name: exp.name, phone: exp.phone, service_category: exp.service_category, city: exp.city, password: ''}); setIsModalOpen(true); }} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all">
                                 <Edit size={14}/> Edit Profile
                             </button>
-                            <button onClick={() => { if(window.confirm("Permanently remove this expert?")) supabase.from('experts').delete().eq('id', exp.id).then(fetchData); }} className="p-3 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all">
+                            <button onClick={async () => { if(window.confirm("Permanently remove this expert?")) { const { error } = await supabase.from('experts').delete().eq('id', exp.id); if (error) alert("Delete failed: " + error.message); else fetchData(); } }} className="p-3 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all">
                                 <Trash2 size={16}/>
                             </button>
                         </>

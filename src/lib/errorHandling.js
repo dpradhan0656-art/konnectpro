@@ -1,14 +1,41 @@
 /**
  * Central error handling: log and optionally report. Replace critical alert(err) with this.
+ * - Logs to console
+ * - Optionally reports to Sentry (when DSN is set)
+ * - Logs critical errors to Supabase error_logs for production monitoring
  */
 
-export function reportError(message, error) {
+import { supabase } from './supabase';
+
+export function reportError(message, error, options = {}) {
   const err = error instanceof Error ? error : new Error(String(error));
   console.error(`[${message}]`, err);
-  if (typeof window !== 'undefined' && window.__SENTRY_DSN__) {
-    try {
-      window.__reportToSentry?.(message, err);
-    } catch (_) {}
+
+  if (typeof window !== 'undefined') {
+    // Sentry (when founder pastes DSN)
+    if (window.__SENTRY_DSN__) {
+      try {
+        window.__reportToSentry?.(message, err);
+      } catch (_) {}
+    }
+
+    // Supabase error_logs (production fallback)
+    if (options.logToDb !== false) {
+      supabase
+        .from('error_logs')
+        .insert({
+          message: String(message).slice(0, 500),
+          error_message: err.message?.slice(0, 500),
+          error_stack: err.stack?.slice(0, 2000),
+          path: window.location?.pathname,
+          user_agent: navigator?.userAgent?.slice(0, 500),
+          severity: options.severity || 'error'
+        })
+        .then(({ error }) => {
+          if (error) console.warn('[reportError] DB log failed:', error.message);
+        })
+        .catch(() => {});
+    }
   }
 }
 
