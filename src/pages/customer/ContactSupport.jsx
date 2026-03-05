@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Mail, Phone, MapPin, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
 
 const FAQ_ITEMS = [
   { q: 'How do I book a service?', a: 'Browse categories, add services to cart, and proceed to checkout. You can pay online or choose Cash After Service.' },
@@ -13,40 +12,13 @@ const FAQ_ITEMS = [
 
 const OFFICIAL_CONTACT = {
   phone: '+91-9589634799',
+  phoneHref: '+919589634799',
   email: 'apnahunars@gmail.com',
   address: 'H-36, Mastana Road, Ranjhi, Jabalpur, MP - 482005'
 };
 
 export default function ContactSupport() {
-  const [contactInfo, setContactInfo] = useState({
-    phone: OFFICIAL_CONTACT.phone,
-    email: OFFICIAL_CONTACT.email,
-    address: OFFICIAL_CONTACT.address
-  });
   const [expandedFaq, setExpandedFaq] = useState(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const { data } = await supabase.from('admin_settings').select('setting_key, setting_value')
-          .in('setting_key', ['company_phone', 'company_email', 'company_address']);
-        if (cancelled || !data?.length) return;
-        setContactInfo(prev => {
-          const next = { ...prev };
-          data.forEach((item) => {
-            if (item.setting_key === 'company_phone') next.phone = item.setting_value;
-            if (item.setting_key === 'company_email') next.email = item.setting_value;
-            if (item.setting_key === 'company_address') next.address = item.setting_value;
-          });
-          return next;
-        });
-      } catch {
-        // Fallback: initial state uses OFFICIAL_CONTACT
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
 
   return (
     <div className="min-h-screen bg-slate-50 pt-20 pb-20">
@@ -67,22 +39,22 @@ export default function ContactSupport() {
               <MessageCircle size={22} className="text-teal-500" /> Get in Touch
             </h2>
             <div className="grid gap-6">
-              <a href={`mailto:${contactInfo.email}`} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 hover:bg-teal-50 border border-slate-100 hover:border-teal-200 transition-all group">
+              <a href={`mailto:${OFFICIAL_CONTACT.email}`} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 hover:bg-teal-50 border border-slate-100 hover:border-teal-200 transition-all group">
                 <div className="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center group-hover:bg-teal-200 transition-colors">
                   <Mail size={22} className="text-teal-600" />
                 </div>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Email</p>
-                  <p className="font-bold text-slate-900">{contactInfo.email}</p>
+                  <p className="font-bold text-slate-900">{OFFICIAL_CONTACT.email}</p>
                 </div>
               </a>
-              <a href={`tel:${contactInfo.phone.replace(/\s/g, '')}`} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 hover:bg-teal-50 border border-slate-100 hover:border-teal-200 transition-all group">
+              <a href={`tel:${OFFICIAL_CONTACT.phoneHref}`} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 hover:bg-teal-50 border border-slate-100 hover:border-teal-200 transition-all group">
                 <div className="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center group-hover:bg-teal-200 transition-colors">
                   <Phone size={22} className="text-teal-600" />
                 </div>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Phone</p>
-                  <p className="font-bold text-slate-900">{contactInfo.phone}</p>
+                  <p className="font-bold text-slate-900">{OFFICIAL_CONTACT.phone}</p>
                 </div>
               </a>
               <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
@@ -91,7 +63,7 @@ export default function ContactSupport() {
                 </div>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Address</p>
-                  <p className="font-bold text-slate-900 whitespace-pre-wrap">{contactInfo.address}</p>
+                  <p className="font-bold text-slate-900 whitespace-pre-wrap">{OFFICIAL_CONTACT.address}</p>
                 </div>
               </div>
             </div>
