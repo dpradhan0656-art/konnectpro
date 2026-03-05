@@ -36,10 +36,10 @@ export default function Navbar() {
 
       {/* 🚀 MAIN NAVBAR */}
       <nav className="bg-slate-900 text-white h-16 flex items-center shadow-xl border-b border-white/5 w-full box-border">
-        <div className="max-w-7xl mx-auto px-4 w-full min-w-0 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 w-full min-w-0 flex justify-between items-center gap-2">
           
           {/* LOGO SECTION */}
-          <Link to="/" className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-2 sm:gap-3 min-w-0">
              <div className="h-10 w-10 flex items-center justify-center bg-white/10 rounded-xl border border-white/10 overflow-hidden p-1">
                 <img 
                   src="/logo.png" 
@@ -49,19 +49,23 @@ export default function Navbar() {
                 />
                 <ShieldCheck size={24} className="text-teal-400 hidden" />
              </div>
-             <div className="flex flex-col">
-                 <span className="text-xl font-black tracking-tighter uppercase leading-none">KSHATR<span className="text-teal-400">.COM</span></span>
-                 <span className="text-[8px] text-slate-400 font-bold uppercase tracking-[0.2em]">Partner of Apna Hunar</span>
+             <div className="flex flex-col overflow-hidden">
+                 <span className="text-lg sm:text-xl font-black tracking-tighter uppercase leading-none">
+                   KSHATR<span className="text-teal-400">.COM</span>
+                 </span>
+                 <span className="hidden xs:block text-[8px] text-slate-400 font-bold uppercase tracking-[0.2em] sm:block">
+                   Partner of Apna Hunar
+                 </span>
              </div>
           </Link>
 
           {/* RIGHT SIDE BUTTONS */}
-          <div className="flex items-center gap-3 md:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-shrink-0">
              
-             {/* 🚀 NEW: PARTNER LOGIN BUTTON */}
+             {/* 🚀 NEW: PARTNER LOGIN BUTTON (hidden on very small screens to keep Cart & Login visible) */}
              <Link 
                 to="/expert/login" 
-                className="flex items-center gap-1.5 text-[10px] md:text-xs font-bold text-teal-400 bg-teal-500/10 border border-teal-500/30 px-2.5 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-teal-500/20 transition-all uppercase tracking-wider"
+                className="hidden sm:flex items-center gap-1.5 text-[10px] md:text-xs font-bold text-teal-400 bg-teal-500/10 border border-teal-500/30 px-2.5 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-teal-500/20 transition-all uppercase tracking-wider"
              >
                 <Briefcase size={14} className="md:w-4 md:h-4" />
                 <span className="hidden md:inline">Partner Login</span>
@@ -69,7 +73,7 @@ export default function Navbar() {
              </Link>
 
              {/* CART BUTTON */}
-             <Link to="/cart" className="relative p-2 hover:bg-white/5 rounded-full transition-all">
+             <Link to="/cart" className="relative p-1.5 sm:p-2 hover:bg-white/5 rounded-full transition-all">
                 <ShoppingCart size={20} className="text-slate-300" />
                 {cart.length > 0 && <span className="absolute -top-1 -right-1 bg-teal-500 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full">{cart.length}</span>}
              </Link>
@@ -80,8 +84,11 @@ export default function Navbar() {
                   {user.email?.charAt(0)}
                </button>
              ) : (
-               <button onClick={() => navigate('/login')} className="bg-white hover:bg-slate-200 text-slate-900 px-3 md:px-5 py-1.5 md:py-2 rounded-lg font-bold text-[10px] md:text-xs uppercase tracking-wider transition-colors shadow-lg">
-                   Login
+               <button
+                 onClick={() => navigate('/login')}
+                 className="bg-white hover:bg-slate-200 text-slate-900 px-2.5 sm:px-3 md:px-5 py-1.5 md:py-2 rounded-lg font-bold text-[10px] md:text-xs uppercase tracking-wider transition-colors shadow-lg whitespace-nowrap"
+               >
+                 Login
                </button>
              )}
           </div>
