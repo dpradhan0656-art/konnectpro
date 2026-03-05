@@ -27,8 +27,8 @@ export const BRAND = {
   },
 
   contact: {
-    email: "support@Kshatr.in",
-    phone: "+91-9425451382", // Aapka registered number
+    email: "apnahunars@gmail.com",
+    phone: "+91-9589634799", // Official support number
     address: "H-36, Mastana Road, Ranjhi, Jabalpur, MP - 482005"
   }
 };

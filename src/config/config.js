@@ -21,7 +21,7 @@ export const BRAND = {
 
   // Contact/Legal Info (Centralized)
   contact: {
-    email: "support@Kshatr.in",
-    phone: "+91-XXXXXXXXXX"
+    email: "apnahunars@gmail.com",
+    phone: "+91-9589634799"
   }
 };
