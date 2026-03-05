@@ -344,7 +344,7 @@ export default function Checkout() {
     }
 
     const options = {
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_YourDummyKeyHere',
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID, // was TEST fallback: || 'rzp_test_YourDummyKeyHere'
       amount: grandTotal * 100,
       currency: 'INR',
       name: 'Kshatr Home Services',

@@ -171,7 +171,8 @@ export default function BookingModal({ service, onClose, user }) {
     const amountInPaise = service.price * 100;
 
     const options = {
-      key: 'rzp_test_YourDummyKeyHere',
+      // TEST key (commented): 'rzp_test_YourDummyKeyHere'
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
       amount: amountInPaise,
       currency: 'INR',
       name: 'Kshatr Home Services',
