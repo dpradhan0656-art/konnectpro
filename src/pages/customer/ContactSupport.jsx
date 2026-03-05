@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Mail, Phone, MapPin, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react';
-import { BRAND } from '../../config/brandConfig';
 import { supabase } from '../../lib/supabase';
 
 const FAQ_ITEMS = [
@@ -12,11 +11,17 @@ const FAQ_ITEMS = [
   { q: 'Is my payment secure?', a: 'Yes. We use Razorpay for secure PCI-compliant payments. We never store your card details.' },
 ];
 
+const OFFICIAL_CONTACT = {
+  phone: '+91-9589634799',
+  email: 'apnahunars@gmail.com',
+  address: 'H-36, Mastana Road, Ranjhi, Jabalpur, MP - 482005'
+};
+
 export default function ContactSupport() {
   const [contactInfo, setContactInfo] = useState({
-    phone: BRAND.contact.phone,
-    email: BRAND.contact.email,
-    address: BRAND.contact.address
+    phone: OFFICIAL_CONTACT.phone,
+    email: OFFICIAL_CONTACT.email,
+    address: OFFICIAL_CONTACT.address
   });
   const [expandedFaq, setExpandedFaq] = useState(null);
 
@@ -37,7 +42,7 @@ export default function ContactSupport() {
           return next;
         });
       } catch {
-        // Fallback to BRAND defaults
+        // Fallback: initial state uses OFFICIAL_CONTACT
       }
     })();
     return () => { cancelled = true; };
