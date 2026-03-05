@@ -22,6 +22,17 @@ allprojects {
         google()
         mavenCentral()
     }
+
+    // Fix for AAR metadata issues (Dependency requiring higher API)
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            project.android {
+                if (namespace != 'com.kshatr.app') {
+                    compileSdk = rootProject.ext.compileSdkVersion
+                }
+            }
+        }
+    }
 }
 
 task clean(type: Delete) {

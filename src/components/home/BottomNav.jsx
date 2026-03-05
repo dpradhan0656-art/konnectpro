@@ -5,9 +5,10 @@ import { Home as HomeIcon, Calendar, Bell, User, ShoppingCart } from 'lucide-rea
 export default function BottomNav({ cartCount }) {
   const navigate = useNavigate();
 
+  // OLD: nav had overflow-hidden — clipped floating cart at top edge
   return (
     <nav
-      className="fixed bottom-0 w-full bg-white/80 backdrop-blur-xl border-t border-slate-100 px-4 sm:px-6 py-2.5 flex justify-between items-center z-50 max-w-md mx-auto left-0 right-0 md:hidden min-h-[56px] overflow-hidden"
+      className="fixed bottom-0 w-full bg-white/80 backdrop-blur-xl border-t border-slate-100 px-4 sm:px-6 py-2.5 flex justify-between items-center z-50 max-w-md mx-auto left-0 right-0 md:hidden min-h-[56px] overflow-visible"
       style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))' }}
       aria-label="Main navigation"
     >
