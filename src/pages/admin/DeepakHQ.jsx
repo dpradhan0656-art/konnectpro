@@ -38,33 +38,68 @@ export default function DeepakHQ() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const checkAdminAccess = async (userId) => {
-    const { data } = await supabase.from('app_admin').select('user_id').eq('user_id', userId).limit(1);
-    return !!(data && data.length > 0);
+    try {
+      const { data, error } = await supabase.from('app_admin').select('user_id').eq('user_id', userId).limit(1);
+      if (error) {
+        console.warn('DeepakHQ checkAdminAccess error:', error);
+        return false;
+      }
+      return !!(data && data.length > 0);
+    } catch (e) {
+      console.warn('DeepakHQ checkAdminAccess exception:', e);
+      return false;
+    }
   };
 
   useEffect(() => {
     let mounted = true;
+
     const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+          console.warn('DeepakHQ getSession error:', sessionError);
+          return;
+        }
+        if (!session?.user?.id) {
+          return;
+        }
+        const isAdmin = await checkAdminAccess(session.user.id);
+        if (mounted) {
+          if (isAdmin) setIsAuthenticated(true);
+          else await supabase.auth.signOut();
+        }
+      } catch (e) {
+        console.warn('DeepakHQ auth init exception:', e);
+      } finally {
         if (mounted) setAuthChecking(false);
-        return;
-      }
-      const isAdmin = await checkAdminAccess(session.user.id);
-      if (mounted) {
-        if (isAdmin) setIsAuthenticated(true);
-        else await supabase.auth.signOut();
-        setAuthChecking(false);
       }
     };
+
     init();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_, session) => {
-      if (!mounted || !session?.user?.id) return;
-      const isAdmin = await checkAdminAccess(session.user.id);
-      if (mounted) setIsAuthenticated(isAdmin);
+
+    // Timeout fallback: never leave spinner forever (e.g. getSession or network hangs)
+    const timeoutId = setTimeout(() => {
+      if (mounted) setAuthChecking(false);
+    }, 10000);
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+      // No session → always exit loading and show login
+      if (!session?.user?.id) {
+        setAuthChecking(false);
+        setIsAuthenticated(false);
+        return;
+      }
+      // Session exists → check admin in background (don't block UI)
+      checkAdminAccess(session.user.id).then((isAdmin) => {
+        if (mounted) setIsAuthenticated(isAdmin);
+      });
     });
+
     return () => {
       mounted = false;
+      clearTimeout(timeoutId);
       subscription?.unsubscribe();
     };
   }, []);
