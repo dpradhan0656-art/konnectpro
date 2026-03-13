@@ -34,9 +34,11 @@ export default defineConfig({
             options: { cacheName: 'unsplash-images', expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 30 } }
           },
           {
+            // Supabase Auth + REST: NEVER cache for admin/state-changing traffic
+            // This covers https://<project>.supabase.co/auth/v1/* and /rest/v1/* etc.
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-            handler: 'NetworkFirst',
-            options: { cacheName: 'supabase-api', networkTimeoutSeconds: 10, expiration: { maxEntries: 30, maxAgeSeconds: 60 * 5 } }
+            handler: 'NetworkOnly',
+            options: { cacheName: 'supabase-api-live' }
           }
         ]
       }

@@ -76,14 +76,14 @@ export const CartProvider = ({ children }) => {
   // 🧮 LIVE CALCULATIONS (Billing Logic)
   const cartTotal = cart.reduce((total, item) => total + (Number(item.price) || 0), 0);
   
-  // Logic: ₹199 se jyada hone par Delivery Fee MAAF
-  const convenienceFee = cartTotal > 199 ? 0 : 49; 
+  // Logic: ₹199 ya usse jyada hone par Delivery Fee MAAF
+  const convenienceFee = cartTotal >= 199 ? 0 : 49; 
   
   const grandTotal = cartTotal > 0 ? cartTotal + convenienceFee : 0;
   
-  const feeMessage = cartTotal > 199 
+  const feeMessage = cartTotal >= 199 
     ? "🎉 Convenience Fee FREE!" 
-    : `💡 Add items worth ₹${200 - cartTotal} more to save ₹49 Fee!`;
+    : `💡 Add items worth ₹${199 - cartTotal} more to save ₹49 Fee!`;
 
   return (
     <CartContext.Provider value={{ 

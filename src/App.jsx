@@ -51,6 +51,21 @@ function ScrollToTop() {
   return null;
 }
 
+// Admin par Service Worker unregister — PWA cache ki wajah se DeepakHQ kabhi atakta tha / password nahi khulta
+// Ab /deepakhq pe aate hi SW hata diya jata hai, isse hamesha fresh code chalta hai
+function AdminServiceWorkerDisable() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    if (!pathname.startsWith('/deepakhq')) return;
+    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((regs) => {
+        regs.forEach((reg) => reg.unregister());
+      });
+    }
+  }, [pathname]);
+  return null;
+}
+
 // 🛡️ 4 Separate Worlds Layout
 const Layout = ({ children }) => {
   const location = useLocation();
@@ -90,6 +105,7 @@ const AppRoutes = () => {
   return (
     <Router>
       <ScrollToTop />
+      <AdminServiceWorkerDisable />
       <Layout>
         <Routes>
           {/* ========================================== */}

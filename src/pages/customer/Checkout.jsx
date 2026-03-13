@@ -368,6 +368,9 @@ export default function Checkout() {
     rzp.open();
   };
 
+  // 🚩 Feature Flag: Set to false to disable online payments pending backend integration
+  const isOnlinePaymentEnabled = false;
+
   const handleBooking = async () => {
     if (!date) {
       alert('⚠️ Please select a preferred Date!');
@@ -383,9 +386,11 @@ export default function Checkout() {
       setLoading(false);
       return;
     }
-    if (paymentMethod === 'online') {
+
+    if (isOnlinePaymentEnabled && paymentMethod === 'online') {
       await handleOnlinePayment(resolvedAddress);
     } else {
+      // Direct booking: Pay After Service
       await createBookings('cash', 'pending', null, resolvedAddress);
     }
   };
@@ -715,38 +720,52 @@ export default function Checkout() {
               <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                 <CreditCard size={14} className="text-teal-400"/> Payment Method
               </p>
-              <div className="grid grid-cols-2 gap-3">
-                 <button
-                   type="button"
-                   onClick={() => setPaymentMethod('online')}
-                   className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 text-[11px] font-bold uppercase tracking-widest transition-all duration-300 ${
-                     paymentMethod === 'online'
-                       ? 'border-teal-500 bg-teal-500/10 text-teal-300 shadow-[0_0_15px_rgba(20,184,166,0.15)]'
-                       : 'border-slate-800 text-slate-400 hover:border-slate-600 hover:text-slate-200 bg-slate-900/50'
-                   }`}
-                 >
-                   <CreditCard size={20} className={paymentMethod === 'online' ? 'text-teal-400' : 'text-slate-500'}/>
-                   Pay Online
-                 </button>
-                 <button
-                   type="button"
-                   onClick={() => setPaymentMethod('cash')}
-                   className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 text-[11px] font-bold uppercase tracking-widest transition-all duration-300 ${
-                     paymentMethod === 'cash'
-                       ? 'border-slate-400 bg-slate-800 text-white shadow-[0_0_15px_rgba(255,255,255,0.05)]'
-                       : 'border-slate-800 text-slate-400 hover:border-slate-600 hover:text-slate-200 bg-slate-900/50'
-                   }`}
-                 >
-                   <ShieldCheck size={20} className={paymentMethod === 'cash' ? 'text-slate-300' : 'text-slate-500'}/>
-                   Pay After
-                 </button>
-              </div>
+              
+              {isOnlinePaymentEnabled ? (
+                <div className="grid grid-cols-2 gap-3">
+                   <button
+                     type="button"
+                     onClick={() => setPaymentMethod('online')}
+                     className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 text-[11px] font-bold uppercase tracking-widest transition-all duration-300 ${
+                       paymentMethod === 'online'
+                         ? 'border-teal-500 bg-teal-500/10 text-teal-300 shadow-[0_0_15px_rgba(20,184,166,0.15)]'
+                         : 'border-slate-800 text-slate-400 hover:border-slate-600 hover:text-slate-200 bg-slate-900/50'
+                     }`}
+                   >
+                     <CreditCard size={20} className={paymentMethod === 'online' ? 'text-teal-400' : 'text-slate-500'}/>
+                     Pay Online
+                   </button>
+                   <button
+                     type="button"
+                     onClick={() => setPaymentMethod('cash')}
+                     className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 text-[11px] font-bold uppercase tracking-widest transition-all duration-300 ${
+                       paymentMethod === 'cash'
+                         ? 'border-slate-400 bg-slate-800 text-white shadow-[0_0_15px_rgba(255,255,255,0.05)]'
+                         : 'border-slate-800 text-slate-400 hover:border-slate-600 hover:text-slate-200 bg-slate-900/50'
+                     }`}
+                   >
+                     <ShieldCheck size={20} className={paymentMethod === 'cash' ? 'text-slate-300' : 'text-slate-500'}/>
+                     Pay After
+                   </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3">
+                   <button
+                     type="button"
+                     onClick={() => setPaymentMethod('cash')}
+                     className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-slate-400 bg-slate-800 text-white shadow-[0_0_15px_rgba(255,255,255,0.05)] text-[11px] font-bold uppercase tracking-widest transition-all duration-300"
+                   >
+                     <ShieldCheck size={20} className="text-slate-300" />
+                     Pay After Service (Cash / UPI)
+                   </button>
+                </div>
+              )}
             </div>
 
             <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800/80 flex items-start gap-3 mb-8 relative z-10">
                 <CreditCard className="text-teal-400 shrink-0 mt-0.5" size={16}/>
                 <p className="text-xs font-medium text-slate-300 leading-relaxed">
-                  {paymentMethod === 'online'
+                  {isOnlinePaymentEnabled && paymentMethod === 'online'
                     ? 'Secure payment via Razorpay. You will be redirected to complete the payment.'
                     : 'Pay via Cash or UPI directly to the expert after the service is completed.'}
                 </p>
@@ -758,7 +777,7 @@ export default function Checkout() {
                className="w-full relative z-10 bg-teal-600 hover:bg-teal-500 text-white py-4 rounded-2xl font-black uppercase tracking-[0.2em] shadow-[0_8px_20px_rgba(13,148,136,0.3)] active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-70 disabled:active:scale-100"
             >
                {loading ? <Loader2 className="animate-spin" size={18}/> : <ShieldCheck size={18}/>} 
-               {loading ? 'Processing...' : (paymentMethod === 'online' ? 'Pay & Book Now' : 'Confirm Booking')}
+               {loading ? 'Processing...' : (isOnlinePaymentEnabled && paymentMethod === 'online' ? 'Pay & Book Now' : 'Confirm Booking')}
             </button>
          </div>
       </div>
