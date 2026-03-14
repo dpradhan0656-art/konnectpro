@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase'; 
-import { useNavigate, Link } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Briefcase, User, Phone, Mail, Lock, ArrowRight, CheckCircle, Edit3 } from 'lucide-react';
 
 export default function RegisterExpert() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromExpertLogin = location.state?.fromExpertLogin;
+  const fromExpertMessage = location.state?.message;
   // 🌟 Old State preserved
   const [formData, setFormData] = useState({ name: '', phone: '', email: '', password: '', category: '' });
   
@@ -138,6 +141,12 @@ export default function RegisterExpert() {
                 <p className="text-[10px] text-teal-500 font-bold uppercase tracking-widest mb-1">Join Apna Hunar</p>
                 <h1 className="text-2xl font-black text-white">Expert Registration</h1>
             </div>
+
+            {fromExpertLogin && (
+                <div className="mb-4 p-3 bg-teal-500/15 border border-teal-500/40 text-teal-300 text-xs font-bold rounded-xl text-center">
+                    {fromExpertMessage || 'You are signed in. Complete the form below to register as an Expert.'}
+                </div>
+            )}
 
             {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/50 text-red-400 text-xs font-bold rounded-xl text-center">{error}</div>}
 

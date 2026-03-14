@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useNavigate, Link } from 'react-router-dom';
 // 🚀 NEW: PhoneIcon ki jagah User icon laga diya taaki Email/Phone dono ke liye sahi lage
@@ -44,27 +44,30 @@ export default function ExpertLogin() {
   };
 
   const checkExpertStatus = async (userId) => {
-      // 2. Experts table me check karna ki kya ye approved expert hai
       const { data: expertData, error: dbError } = await supabase
         .from('experts')
         .select('status, id')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
-      if (dbError || !expertData) {
+      if (dbError) {
         console.error("Database Error:", dbError);
         setError("Account mil gaya par Expert list me nahi hai.");
-        await supabase.auth.signOut();
+        setLoading(false);
+        return;
+      }
+
+      if (!expertData) {
+        navigate('/register-expert', { state: { fromExpertLogin: true, message: 'Google se sign-in ho chuka. Ab Expert registration complete karein.' } });
         setLoading(false);
         return;
       }
 
       if (expertData.status === 'approved') {
-          // ✅ SUCCESS: Dashboard par bhejen
-          navigate('/expert-dashboard');
+        navigate('/expert-dashboard');
       } else {
-          setError("Aapka account abhi Approved nahi hai. Admin se baat karen.");
-          await supabase.auth.signOut();
+        setError("Aapka account abhi Approved nahi hai. Admin se baat karen.");
+        await supabase.auth.signOut();
       }
       setLoading(false);
   };
@@ -142,11 +145,12 @@ export default function ExpertLogin() {
                     <button 
                         type="button" 
                         onClick={handleGoogleLogin} 
-                        className="w-full mb-6 bg-white hover:bg-slate-100 text-slate-950 py-4 rounded-2xl font-black flex justify-center items-center gap-3 transition-all active:scale-95 shadow-xl text-sm"
+                        className="w-full mb-2 bg-white hover:bg-slate-100 text-slate-950 py-4 rounded-2xl font-black flex justify-center items-center gap-3 transition-all active:scale-95 shadow-xl text-sm"
                     >
                         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" className="w-5 h-5"/>
                         SIGN IN WITH GOOGLE
                     </button>
+                    <p className="text-[10px] text-slate-500 text-center mb-6">Not registered? You&apos;ll be taken to registration to complete your profile.</p>
 
                     <div className="relative flex items-center justify-center mb-8">
                         <div className="absolute border-t border-slate-800 w-full"></div>

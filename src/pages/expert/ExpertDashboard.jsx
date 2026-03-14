@@ -80,20 +80,36 @@ export default function ExpertDashboard() {
   const checkExpertLogin = async () => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) { navigate('/expert/login'); return; }
 
-    const { data: expData } = await supabase.from('experts').select('*').eq('user_id', user.id).single();
-    
+    if (!user) {
+      setLoading(false);
+      navigate('/expert/login');
+      return;
+    }
+
+    // maybeSingle() avoids 406 when no row found (e.g. Google login but not in experts table)
+    const { data: expData, error: expError } = await supabase
+      .from('experts')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (expError) {
+      console.error('Expert fetch error:', expError);
+      setLoading(false);
+      navigate('/expert/login');
+      return;
+    }
+
     if (expData) {
-        setExpert(expData);
-        fetchMyJobs(expData.id);
-        if (expData.is_active) {
-            startLiveTracking(expData.id);
-        }
+      setExpert(expData);
+      fetchMyJobs(expData.id);
+      if (expData.is_active) {
+        startLiveTracking(expData.id);
+      }
     } else {
-        alert("Access Denied: You are not registered as an Expert.");
-        navigate('/expert/login'); 
+      // Signed in (e.g. Google) but not registered as expert → send to registration, keep session
+      navigate('/register-expert', { state: { fromExpertLogin: true, message: 'Google se sign-in ho chuka. Ab Expert registration complete karein.' } });
     }
     setLoading(false);
   };

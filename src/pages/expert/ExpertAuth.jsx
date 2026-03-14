@@ -36,12 +36,12 @@ export default function ExpertAuth({ onLoginSuccess }) {
         const { data: expertData, error: dbError } = await supabase
           .from('experts')
           .select('status')
-          .eq('user_id', user.id) 
-          .single();
+          .eq('user_id', user.id)
+          .maybeSingle();
 
         if (dbError || !expertData) {
-           await supabase.auth.signOut(); 
-           throw new Error("⛔ Access Denied. You are not registered as an expert.");
+           await supabase.auth.signOut();
+           throw new Error("⛔ Access Denied. You are not registered as an expert. Please register first.");
         }
 
         if (expertData.status !== 'approved') {

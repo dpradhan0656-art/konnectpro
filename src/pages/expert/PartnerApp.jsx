@@ -16,17 +16,31 @@ export default function PartnerApp() {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-        navigate('/expert/login'); // ✅ Fixed Route
-        return;
+      setLoading(false);
+      navigate('/expert/login');
+      return;
     }
 
-    const { data: expertData } = await supabase.from('experts').select('*').eq('user_id', user.id).single();
+    const { data: expertData, error: expError } = await supabase
+      .from('experts')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (expError) {
+      setLoading(false);
+      navigate('/expert/login');
+      return;
+    }
 
     if (expertData) {
-        setExpert(expertData);
-        if (expertData.status === 'approved') {
-            fetchJobs(expertData.id); fetchWallet(expertData.id);
-        }
+      setExpert(expertData);
+      if (expertData.status === 'approved') {
+        fetchJobs(expertData.id);
+        fetchWallet(expertData.id);
+      }
+    } else {
+      navigate('/register-expert', { state: { fromExpertLogin: true, message: 'Google se sign-in ho chuka. Ab Expert registration complete karein.' } });
     }
     setLoading(false);
   };
