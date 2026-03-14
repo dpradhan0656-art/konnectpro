@@ -121,16 +121,13 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Expert not found for this account.' }, { status: 403, headers: corsHeaders });
     }
 
-    const expertId = expert.id;
-    if (expertId == null || (typeof expertId !== 'number' && typeof expertId !== 'string')) {
+    const expertIdRaw = expert.id;
+    const expertIdNum = typeof expertIdRaw === 'number' ? expertIdRaw : parseInt(String(expertIdRaw ?? ''), 10);
+    if (!Number.isFinite(expertIdNum) || expertIdNum < 1) {
       return Response.json(
-        { error: 'Invalid expert id from database.', details: `id=${expertId}` },
+        { error: 'Invalid expert id from database.', details: `id=${expertIdRaw}` },
         { status: 500, headers: corsHeaders }
       );
-    }
-    const expertIdNum = typeof expertId === 'string' ? parseInt(expertId, 10) : expertId;
-    if (!Number.isFinite(expertIdNum)) {
-      return Response.json({ error: 'Expert id must be a number.' }, { status: 500, headers: corsHeaders });
     }
 
     // Temporarily allow pending, verified, OR approved so you can test immediately
