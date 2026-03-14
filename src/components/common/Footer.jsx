@@ -62,9 +62,9 @@ export default function Footer() {
               India's most trusted home service partner. We shield your home with verified experts and transparent pricing.
             </p>
             <div className="flex gap-2 md:gap-4">
-              <a href="#" className="bg-slate-800 p-1.5 md:p-2 rounded-full hover:bg-blue-600 hover:text-white transition-all [&>svg]:scale-90 md:[&>svg]:scale-100 [&>svg]:origin-center" aria-label="Facebook"><Facebook size={18} /></a>
-              <a href="#" className="bg-slate-800 p-1.5 md:p-2 rounded-full hover:bg-pink-600 hover:text-white transition-all [&>svg]:scale-90 md:[&>svg]:scale-100 [&>svg]:origin-center" aria-label="Instagram"><Instagram size={18} /></a>
-              <a href="#" className="bg-slate-800 p-1.5 md:p-2 rounded-full hover:bg-sky-500 hover:text-white transition-all [&>svg]:scale-90 md:[&>svg]:scale-100 [&>svg]:origin-center" aria-label="Twitter"><Twitter size={18} /></a>
+              <Link to="/contact-support" className="bg-slate-800 p-1.5 md:p-2 rounded-full hover:bg-blue-600 hover:text-white transition-all [&>svg]:scale-90 md:[&>svg]:scale-100 [&>svg]:origin-center" aria-label="Facebook"><Facebook size={18} /></Link>
+              <Link to="/contact-support" className="bg-slate-800 p-1.5 md:p-2 rounded-full hover:bg-pink-600 hover:text-white transition-all [&>svg]:scale-90 md:[&>svg]:scale-100 [&>svg]:origin-center" aria-label="Instagram"><Instagram size={18} /></Link>
+              <Link to="/contact-support" className="bg-slate-800 p-1.5 md:p-2 rounded-full hover:bg-sky-500 hover:text-white transition-all [&>svg]:scale-90 md:[&>svg]:scale-100 [&>svg]:origin-center" aria-label="Twitter"><Twitter size={18} /></Link>
             </div>
           </div>
 

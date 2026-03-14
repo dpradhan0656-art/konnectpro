@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { isImageUrl } from '../../lib/serviceIconUtils';
 
@@ -24,9 +24,9 @@ export default function CategorySection({ categories, loading }) {
         <h2 id="categories-heading" className="font-black text-slate-900 text-xl sm:text-2xl tracking-tight">
           Explore Categories
         </h2>
-        <span className="text-teal-600 text-[11px] font-bold uppercase tracking-widest cursor-pointer flex items-center gap-1 hover:text-teal-700 transition-colors duration-300">
+        <Link to="/" className="text-teal-600 text-[11px] font-bold uppercase tracking-widest cursor-pointer flex items-center gap-1 hover:text-teal-700 transition-colors duration-300">
           See All <ChevronRight size={14} aria-hidden="true" />
-        </span>
+        </Link>
       </div>
 
       {loading ? (

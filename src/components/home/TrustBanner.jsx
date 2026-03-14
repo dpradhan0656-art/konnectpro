@@ -1,6 +1,10 @@
 import React from 'react';
 import { ShieldCheck, CheckCircle, Clock } from 'lucide-react';
 
+/** Edit these for TrustBanner stats (no Supabase — change here to update) */
+export const TRUST_VERIFIED_LABEL = '100%';
+export const TRUST_FAST_ARRIVAL_LABEL = '45m';
+
 export default function TrustBanner() {
   return (
     <section className="px-6 max-w-4xl mx-auto w-full min-w-0 overflow-hidden" aria-labelledby="trust-heading">
@@ -21,12 +25,12 @@ export default function TrustBanner() {
           <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
             <div className="bg-slate-950/50 p-4 rounded-3xl border border-slate-800 text-center backdrop-blur-sm">
               <CheckCircle size={28} className="mx-auto mb-2 text-teal-400" aria-hidden="true" />
-              <div className="text-xl font-black text-white">100%</div>
+              <div className="text-xl font-black text-white">{TRUST_VERIFIED_LABEL}</div>
               <div className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mt-1">Verified</div>
             </div>
             <div className="bg-slate-950/50 p-4 rounded-3xl border border-slate-800 text-center backdrop-blur-sm">
               <Clock size={28} className="mx-auto mb-2 text-blue-400" aria-hidden="true" />
-              <div className="text-xl font-black text-white">45m</div>
+              <div className="text-xl font-black text-white">{TRUST_FAST_ARRIVAL_LABEL}</div>
               <div className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mt-1">Fast Arrival</div>
             </div>
           </div>

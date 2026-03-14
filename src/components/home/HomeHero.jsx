@@ -2,6 +2,9 @@ import React from 'react';
 import { Search, Mic, MapPin, X } from 'lucide-react';
 // import { Sparkles } from 'lucide-react'; // AI star icon – removed for clean native-like UI
 
+/** Edit this for hero trust line (e.g. "Trusted by 10,000+ happy homes") */
+export const HERO_TRUST_LINE = 'Trusted by 10,000+ happy homes';
+
 export default function HomeHero({
   locationName,
   setLocationName,
@@ -61,8 +64,7 @@ export default function HomeHero({
           {greeting}
         </h1>
         <p className="text-slate-400 text-sm font-medium mb-8 sm:mb-10 flex items-center gap-2">
-          {/* AI star icon removed for world-class native-like UI */}
-          Trusted by 10,000+ happy homes
+          {HERO_TRUST_LINE}
         </p>
 
         <div className="relative z-30 transform translate-y-6 w-full max-w-full">
