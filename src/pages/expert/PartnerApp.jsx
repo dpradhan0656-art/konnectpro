@@ -143,14 +143,25 @@ export default function PartnerApp() {
     setRechargeError('');
     setRechargeLoading(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setRechargeError('Session expired. Please sign in again.');
+        setRechargeLoading(false);
+        return;
+      }
+      const authHeader = { Authorization: `Bearer ${session.access_token}` };
       const { data: orderData, error: orderError } = await supabase.functions.invoke('create-wallet-order', {
         body: { amount: amountRupees },
+        headers: authHeader,
       });
-      if (orderError) throw orderError;
       const body = orderData?.data ?? orderData ?? {};
+      if (orderError) {
+        const msg = body?.error || body?.details || orderError?.message || 'Could not create payment order.';
+        throw new Error(msg);
+      }
       const { order_id, amount_paise, currency, key_id } = body;
       if (!order_id || !amount_paise) {
-        throw new Error(body?.error || orderError?.message || 'Could not create payment order.');
+        throw new Error(body?.error || 'Could not create payment order.');
       }
       const sdkLoaded = await loadRazorpayScript();
       if (!sdkLoaded || !window.Razorpay) {
@@ -165,11 +176,14 @@ export default function PartnerApp() {
         description: 'Wallet Recharge',
         handler: async function (response) {
           try {
+            const { data: { session: confirmSession } } = await supabase.auth.getSession();
+            const confirmAuth = confirmSession?.access_token ? { Authorization: `Bearer ${confirmSession.access_token}` } : {};
             const { data: confirmData, error: confirmError } = await supabase.functions.invoke('confirm-wallet-recharge', {
               body: {
                 order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
               },
+              headers: confirmAuth,
             });
             const result = confirmData?.data ?? confirmData;
             if (confirmError || result?.error) {

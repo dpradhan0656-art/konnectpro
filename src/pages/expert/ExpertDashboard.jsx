@@ -239,9 +239,19 @@ export default function ExpertDashboard() {
     setRechargeError('');
     setRechargeLoading(true);
     try {
-      const { data: orderData, error: orderError } = await supabase.functions.invoke('create-wallet-order', { body: { amount: amountRupees } });
-      if (orderError) throw orderError;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setRechargeError('Session expired. Please sign in again.');
+        setRechargeLoading(false);
+        return;
+      }
+      const authHeader = { Authorization: `Bearer ${session.access_token}` };
+      const { data: orderData, error: orderError } = await supabase.functions.invoke('create-wallet-order', {
+        body: { amount: amountRupees },
+        headers: authHeader,
+      });
       const body = orderData?.data ?? orderData ?? {};
+      if (orderError) throw new Error(body?.error || body?.details || orderError?.message || 'Could not create payment order.');
       const { order_id, amount_paise, currency, key_id } = body;
       if (!order_id || !amount_paise) throw new Error(body?.error || 'Could not create payment order.');
       const sdkLoaded = await loadRazorpayScript();
@@ -255,8 +265,11 @@ export default function ExpertDashboard() {
         description: 'Wallet Recharge',
         handler: async function (response) {
           try {
+            const { data: { session: confirmSession } } = await supabase.auth.getSession();
+            const confirmAuth = confirmSession?.access_token ? { Authorization: `Bearer ${confirmSession.access_token}` } : {};
             const { data: confirmData, error: confirmError } = await supabase.functions.invoke('confirm-wallet-recharge', {
               body: { order_id: response.razorpay_order_id, razorpay_payment_id: response.razorpay_payment_id },
+              headers: confirmAuth,
             });
             const result = confirmData?.data ?? confirmData;
             if (confirmError || result?.error) {
