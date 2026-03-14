@@ -143,13 +143,14 @@ export default function PartnerApp() {
     setRechargeError('');
     setRechargeLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      const session = refreshData?.session ?? (await supabase.auth.getSession()).data?.session;
       if (!session?.access_token) {
-        setRechargeError('Session expired. Please sign in again.');
+        setRechargeError(refreshError?.message || 'Session expired. Please sign in again.');
         setRechargeLoading(false);
         return;
       }
-      const authHeader = { Authorization: `Bearer ${session.access_token}` };
+      const authHeader = { Authorization: 'Bearer ' + session.access_token };
       const { data: orderData, error: orderError } = await supabase.functions.invoke('create-wallet-order', {
         body: { amount: amountRupees },
         headers: authHeader,
@@ -176,8 +177,13 @@ export default function PartnerApp() {
         description: 'Wallet Recharge',
         handler: async function (response) {
           try {
-            const { data: { session: confirmSession } } = await supabase.auth.getSession();
-            const confirmAuth = confirmSession?.access_token ? { Authorization: `Bearer ${confirmSession.access_token}` } : {};
+            const { data: refData } = await supabase.auth.refreshSession();
+            const confirmSession = refData?.session ?? (await supabase.auth.getSession()).data?.session;
+            if (!confirmSession?.access_token) {
+              alert('Session expired. Please sign in again and retry.');
+              return;
+            }
+            const confirmAuth = { Authorization: 'Bearer ' + confirmSession.access_token };
             const { data: confirmData, error: confirmError } = await supabase.functions.invoke('confirm-wallet-recharge', {
               body: {
                 order_id: response.razorpay_order_id,
