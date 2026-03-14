@@ -45,29 +45,17 @@
   <body>
     <div id="root"></div>
 
-    <!-- Smart reload: after deploy, cached index may point to old JS (404 → HTML → MIME error). Fetch latest index; if server has a different script src than our last run, reload once so user gets fresh app. -->
+    <!-- On chunk/MIME load error, refresh once to recover from stale cache after deploy. -->
     <script>
       (function() {
-        var key = 'kshatr_last_run';
-        try {
-          fetch('/?_=' + Date.now(), { cache: 'no-store' })
-            .then(function(r) { return r.text(); })
-            .then(function(html) {
-              var match = html.match(/<script[^>]*\stype\s*=\s*["']module["'][^>]*\ssrc\s*=\s*["']([^"']+)["']/) ||
-                          html.match(/<script[^>]*\ssrc\s*=\s*["']([^"']+)["'][^>]*\stype\s*=\s*["']module["']/);
-              var latestSrc = match ? match[1] : '';
-              var lastRun = null;
-              try { lastRun = sessionStorage.getItem(key); } catch (e) {}
-              if (latestSrc && lastRun !== null && lastRun !== latestSrc) {
-                try { sessionStorage.setItem(key, latestSrc); } catch (e) {}
-                window.location.reload();
-              }
-            })
-            .catch(function() {
-              var once = 'kshatr_reload_once';
-              try { if (!sessionStorage.getItem(once)) { sessionStorage.setItem(once, '1'); window.location.reload(); } } catch (e) {}
-            });
-        } catch (e) {}
+        var key = 'kshatr_chunk_error_reload';
+        window.onerror = function(msg, source, line, col, err) {
+          var s = (msg || '') + (source || '');
+          if ((s.indexOf('Loading chunk failed') !== -1 || s.indexOf('MIME type') !== -1) && !sessionStorage.getItem(key)) {
+            try { sessionStorage.setItem(key, '1'); } catch (e) {}
+            window.location.reload();
+          }
+        };
       })();
     </script>
     <script type="module" src="/src/main.jsx"></script>
