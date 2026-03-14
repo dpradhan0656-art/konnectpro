@@ -64,8 +64,9 @@ export default function RegisterExpert() {
       const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
-              redirectTo: window.location.href // Wapas isi page par aayega
-          }
+              redirectTo: window.location.href,
+              queryParams: { prompt: 'select_account' },
+          },
       });
       if (error) setError("Google Sign Up Failed: " + error.message);
   };

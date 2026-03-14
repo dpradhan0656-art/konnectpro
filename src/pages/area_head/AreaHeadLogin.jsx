@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Lock, Mail, ArrowRight, Map, Loader2 } from 'lucide-react';
@@ -37,7 +37,10 @@ export default function AreaHeadLogin() {
   const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/area-head/dashboard` }
+      options: {
+        redirectTo: `${window.location.origin}/area-head/dashboard`,
+        queryParams: { prompt: 'select_account' },
+      },
     });
     if (error) setError("Google Login Failed!");
   };

@@ -76,7 +76,10 @@ export default function ExpertLogin() {
   const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/expert-dashboard` }
+      options: {
+        redirectTo: `${window.location.origin}/expert-dashboard`,
+        queryParams: { prompt: 'select_account' },
+      },
     });
     if (error) setError("Google Login Failed!");
   };
