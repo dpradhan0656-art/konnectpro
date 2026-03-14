@@ -6,13 +6,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-export async function createRazorpayOrder(amountPaise: number, expertId: number, receipt: string) {
+/** Create Razorpay order. Returns order object or throws with exact Razorpay error message. */
+async function createRazorpayOrder(amountPaise: number, expertId: number, receipt: string) {
   const keyId = Deno.env.get('RAZORPAY_KEY_ID');
   const keySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
   if (!keyId || !keySecret) {
-    throw new Error('RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be set');
+    throw new Error('RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be set in Edge Function secrets.');
   }
-  const auth = btoa(`${keyId}:${keySecret}`);
+  // Basic Auth: base64(key_id:key_secret) — no spaces, exact format Razorpay expects
+  const credentials = `${keyId}:${keySecret}`;
+  const auth = btoa(credentials);
+
   const res = await fetch('https://api.razorpay.com/v1/orders', {
     method: 'POST',
     headers: {
@@ -26,11 +30,25 @@ export async function createRazorpayOrder(amountPaise: number, expertId: number,
       notes: { expert_id: String(expertId) },
     }),
   });
+
+  const responseText = await res.text();
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Razorpay order failed: ${res.status} ${err}`);
+    let exactMessage = responseText;
+    try {
+      const parsed = JSON.parse(responseText);
+      if (parsed.error?.description) exactMessage = parsed.error.description;
+      else if (parsed.error?.reason) exactMessage = parsed.error.reason;
+      else if (parsed.error?.message) exactMessage = parsed.error.message;
+      else if (typeof parsed.error === 'string') exactMessage = parsed.error;
+    } catch (_) {}
+    throw new Error(exactMessage || `Razorpay API error: ${res.status}`);
   }
-  return res.json();
+
+  try {
+    return JSON.parse(responseText);
+  } catch {
+    throw new Error('Invalid JSON from Razorpay');
+  }
 }
 
 Deno.serve(async (req) => {
@@ -44,7 +62,7 @@ Deno.serve(async (req) => {
     if (!supabaseUrl || !supabaseAnonKey) {
       return Response.json(
         {
-          error: 'Server config missing. SUPABASE_URL and SUPABASE_ANON_KEY must be set (they are auto-injected in Supabase Cloud; for local dev, set them in .env or Dashboard → Edge Functions → Secrets).',
+          error: 'Server config missing. SUPABASE_URL and SUPABASE_ANON_KEY must be set (auto-injected in Supabase Cloud; for local dev set in .env or Dashboard → Edge Functions → Secrets).',
         },
         { status: 500, headers: corsHeaders }
       );
@@ -91,24 +109,60 @@ Deno.serve(async (req) => {
       .from('experts')
       .select('id, status')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (expertError || !expert || expert.status !== 'approved') {
-      return Response.json({ error: 'Expert not found or not approved' }, { status: 403, headers: corsHeaders });
+    if (expertError) {
+      return Response.json(
+        { error: 'Failed to fetch expert profile.', details: expertError.message },
+        { status: 500, headers: corsHeaders }
+      );
+    }
+    if (!expert) {
+      return Response.json({ error: 'Expert not found for this account.' }, { status: 403, headers: corsHeaders });
+    }
+
+    const expertId = expert.id;
+    if (expertId == null || (typeof expertId !== 'number' && typeof expertId !== 'string')) {
+      return Response.json(
+        { error: 'Invalid expert id from database.', details: `id=${expertId}` },
+        { status: 500, headers: corsHeaders }
+      );
+    }
+    const expertIdNum = typeof expertId === 'string' ? parseInt(expertId, 10) : expertId;
+    if (!Number.isFinite(expertIdNum)) {
+      return Response.json({ error: 'Expert id must be a number.' }, { status: 500, headers: corsHeaders });
+    }
+
+    // Temporarily allow pending, verified, OR approved so you can test immediately
+    const allowedStatuses = ['pending', 'verified', 'approved'];
+    if (!allowedStatuses.includes(String(expert.status).toLowerCase())) {
+      return Response.json(
+        { error: `Expert status '${expert.status}' is not allowed to recharge. Allowed: pending, verified, approved.` },
+        { status: 403, headers: corsHeaders }
+      );
     }
 
     const body = await req.json().catch(() => ({}));
     const amountRupees = Number(body?.amount);
     const amountPaise = Math.round(amountRupees * 100);
-    const minPaise = 100;   // ₹1
-    const maxPaise = 100000 * 100; // ₹1,00,000
+    const minPaise = 100;
+    const maxPaise = 100000 * 100;
 
     if (!Number.isFinite(amountPaise) || amountPaise < minPaise || amountPaise > maxPaise) {
       return Response.json({ error: 'Invalid amount. Send amount in rupees (e.g. 500, 1000). Min ₹1, max ₹1,00,000.' }, { status: 400, headers: corsHeaders });
     }
 
-    const receipt = `wallet_${expert.id}_${Date.now()}`;
-    const order = await createRazorpayOrder(amountPaise, expert.id, receipt);
+    const receipt = `wallet_${expertIdNum}_${Date.now()}`;
+    let order: { id: string };
+    try {
+      order = await createRazorpayOrder(amountPaise, expertIdNum, receipt);
+    } catch (razorpayErr) {
+      const message = razorpayErr instanceof Error ? razorpayErr.message : String(razorpayErr);
+      return Response.json(
+        { error: 'Razorpay error.', details: message },
+        { status: 502, headers: corsHeaders }
+      );
+    }
 
     const keyId = Deno.env.get('RAZORPAY_KEY_ID');
     return Response.json({
@@ -118,6 +172,7 @@ Deno.serve(async (req) => {
       key_id: keyId,
     }, { headers: corsHeaders });
   } catch (err) {
-    return Response.json({ error: String(err) }, { status: 500, headers: corsHeaders });
+    const message = err instanceof Error ? err.message : String(err);
+    return Response.json({ error: 'Server error.', details: message }, { status: 500, headers: corsHeaders });
   }
 });

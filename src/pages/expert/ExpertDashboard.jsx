@@ -251,7 +251,7 @@ export default function ExpertDashboard() {
         headers: authHeader,
       });
       const body = orderData?.data ?? orderData ?? {};
-      if (orderError) throw new Error(body?.error || body?.details || orderError?.message || 'Could not create payment order.');
+      if (orderError) throw new Error(body?.details || body?.error || orderError?.message || 'Could not create payment order.');
       const { order_id, amount_paise, currency, key_id } = body;
       if (!order_id || !amount_paise) throw new Error(body?.error || 'Could not create payment order.');
       const sdkLoaded = await loadRazorpayScript();
@@ -405,13 +405,13 @@ export default function ExpertDashboard() {
                   ))}
                 </div>
                 <div className="mb-4">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Custom amount (₹)</label>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Amount (₹) — preset or custom</label>
                   <input
                     type="number"
                     min={1}
                     max={100000}
-                    placeholder="e.g. 5000"
-                    value={rechargeAmount === null ? customAmount : ''}
+                    placeholder="e.g. 500 or 5000"
+                    value={rechargeAmount !== null ? String(rechargeAmount) : customAmount}
                     onChange={(e) => { setRechargeAmount(null); setCustomAmount(e.target.value); setRechargeError(''); }}
                     className="w-full mt-1 bg-slate-950 border border-slate-700 text-white rounded-xl py-3 px-4 font-medium placeholder-slate-500"
                   />

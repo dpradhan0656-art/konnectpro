@@ -156,7 +156,7 @@ export default function PartnerApp() {
       });
       const body = orderData?.data ?? orderData ?? {};
       if (orderError) {
-        const msg = body?.error || body?.details || orderError?.message || 'Could not create payment order.';
+        const msg = body?.details || body?.error || orderError?.message || 'Could not create payment order.';
         throw new Error(msg);
       }
       const { order_id, amount_paise, currency, key_id } = body;
@@ -289,13 +289,13 @@ export default function PartnerApp() {
                    ))}
                  </div>
                  <div className="mb-4">
-                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Custom amount (₹)</label>
+                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Amount (₹) — preset or custom</label>
                    <input
                      type="number"
                      min={1}
                      max={100000}
-                     placeholder="e.g. 5000"
-                     value={rechargeAmount === null ? customAmount : ''}
+                     placeholder="e.g. 500 or 5000"
+                     value={rechargeAmount !== null ? String(rechargeAmount) : customAmount}
                      onChange={(e) => { setRechargeAmount(null); setCustomAmount(e.target.value); setRechargeError(''); }}
                      className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 font-medium text-slate-900 placeholder-slate-400"
                    />
