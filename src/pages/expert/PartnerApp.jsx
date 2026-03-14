@@ -150,14 +150,20 @@ export default function PartnerApp() {
         setRechargeLoading(false);
         return;
       }
-      const authHeader = { Authorization: 'Bearer ' + session.access_token };
-      const { data: orderData, error: orderError } = await supabase.functions.invoke('create-wallet-order', {
-        body: { amount: amountRupees },
-        headers: authHeader,
+      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const res = await fetch(`${baseUrl}/functions/v1/create-wallet-order`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token,
+          'apikey': anonKey,
+        },
+        body: JSON.stringify({ amount: amountRupees }),
       });
-      const body = orderData?.data ?? orderData ?? {};
-      if (orderError) {
-        const msg = body?.details || body?.error || orderError?.message || 'Could not create payment order.';
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg = body?.details || body?.error || body?.message || res.statusText || 'Could not create payment order.';
         throw new Error(msg);
       }
       const { order_id, amount_paise, currency, key_id } = body;
@@ -183,17 +189,23 @@ export default function PartnerApp() {
               alert('Session expired. Please sign in again and retry.');
               return;
             }
-            const confirmAuth = { Authorization: 'Bearer ' + confirmSession.access_token };
-            const { data: confirmData, error: confirmError } = await supabase.functions.invoke('confirm-wallet-recharge', {
-              body: {
+            const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+            const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+            const confirmRes = await fetch(`${baseUrl}/functions/v1/confirm-wallet-recharge`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + confirmSession.access_token,
+                'apikey': anonKey,
+              },
+              body: JSON.stringify({
                 order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
-              },
-              headers: confirmAuth,
+              }),
             });
-            const result = confirmData?.data ?? confirmData;
-            if (confirmError || result?.error) {
-              alert('Recharge failed: ' + (result?.error || confirmError?.message || 'Unknown error'));
+            const result = await confirmRes.json().catch(() => ({}));
+            if (!confirmRes.ok || result?.error) {
+              alert('Recharge failed: ' + (result?.details || result?.error || confirmRes.statusText || 'Unknown error'));
               return;
             }
             setExpert((e) => (e ? { ...e, wallet_balance: result?.new_balance ?? e.wallet_balance } : e));

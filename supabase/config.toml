@@ -1,0 +1,7 @@
+# Edge Functions: skip gateway JWT check so our function receives the request
+# and validates the token itself with auth.getUser(token). Fixes 401 from gateway.
+[functions.create-wallet-order]
+verify_jwt = false
+
+[functions.confirm-wallet-recharge]
+verify_jwt = false

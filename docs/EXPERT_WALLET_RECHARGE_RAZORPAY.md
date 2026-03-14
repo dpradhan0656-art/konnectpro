@@ -33,6 +33,8 @@ Edge Functions need the **Razorpay secret** and Key ID to create orders and veri
 
 ## 3. Deploy the two Edge Functions
 
+**Important:** The project has `supabase/config.toml` with `verify_jwt = false` for both wallet functions. This stops the Supabase **gateway** from returning 401 before the request reaches your function; your function still validates the JWT with `auth.getUser(token)`.
+
 From the project root (where `supabase` folder lives):
 
 ```bash
@@ -42,7 +44,7 @@ npx supabase login
 # Link project (if not already)
 npx supabase link --project-ref YOUR_PROJECT_REF
 
-# Deploy both functions
+# Deploy both functions (config.toml is applied automatically)
 npx supabase functions deploy create-wallet-order
 npx supabase functions deploy confirm-wallet-recharge
 ```
