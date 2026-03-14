@@ -6,17 +6,33 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-async function fetchRazorpayPayment(paymentId: string) {
+function getRazorpayAuth() {
   const keyId = Deno.env.get('RAZORPAY_KEY_ID');
   const keySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
   if (!keyId || !keySecret) throw new Error('Razorpay secrets not set');
-  const auth = btoa(`${keyId}:${keySecret}`);
+  return { auth: 'Basic ' + btoa(`${keyId}:${keySecret}`) };
+}
+
+async function fetchRazorpayPayment(paymentId: string) {
+  const { auth } = getRazorpayAuth();
   const res = await fetch(`https://api.razorpay.com/v1/payments/${paymentId}`, {
-    headers: { 'Authorization': `Basic ${auth}` },
+    headers: { 'Authorization': auth },
   });
   if (!res.ok) {
     const t = await res.text();
     throw new Error(`Razorpay payment fetch failed: ${res.status} ${t}`);
+  }
+  return res.json();
+}
+
+async function fetchRazorpayOrder(orderId: string): Promise<{ notes?: { expert_uuid?: string; expert_id?: string } }> {
+  const { auth } = getRazorpayAuth();
+  const res = await fetch(`https://api.razorpay.com/v1/orders/${orderId}`, {
+    headers: { 'Authorization': auth },
+  });
+  if (!res.ok) {
+    const t = await res.text();
+    throw new Error(`Razorpay order fetch failed: ${res.status} ${t}`);
   }
   return res.json();
 }
@@ -59,10 +75,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Order ID mismatch' }, { status: 400, headers: corsHeaders });
     }
 
-    const amountPaise = Number(payment.amount);
-    const amountRupees = amountPaise / 100;
-    if (!Number.isFinite(amountRupees) || amountRupees <= 0) {
-      return Response.json({ error: 'Invalid payment amount' }, { status: 400, headers: corsHeaders });
+    const order = await fetchRazorpayOrder(orderId);
+    const notesExpertUuid = order?.notes?.expert_uuid ?? order?.notes?.expert_id;
+    if (!notesExpertUuid) {
+      return Response.json({ error: 'Order notes missing expert_uuid' }, { status: 400, headers: corsHeaders });
     }
 
     const { data: expert, error: expertError } = await supabase
@@ -73,6 +89,20 @@ Deno.serve(async (req) => {
 
     if (expertError || !expert) {
       return Response.json({ error: 'Expert not found' }, { status: 403, headers: corsHeaders });
+    }
+
+    const expertIdStr = String(expert.id);
+    if (notesExpertUuid !== expertIdStr) {
+      return Response.json(
+        { error: 'Order expert_uuid does not match logged-in expert.' },
+        { status: 403, headers: corsHeaders }
+      );
+    }
+
+    const amountPaise = Number(payment.amount);
+    const amountRupees = amountPaise / 100;
+    if (!Number.isFinite(amountRupees) || amountRupees <= 0) {
+      return Response.json({ error: 'Invalid payment amount' }, { status: 400, headers: corsHeaders });
     }
 
     const { data: existing } = await supabaseAdmin

@@ -6,14 +6,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-/** Create Razorpay order. Returns order object or throws with exact Razorpay error message. */
-async function createRazorpayOrder(amountPaise: number, expertId: number, receipt: string) {
+/** Create Razorpay order. expertUuid is the expert's id (UUID string). Receipt max 40 chars. */
+async function createRazorpayOrder(amountPaise: number, expertUuid: string, receipt: string) {
   const keyId = Deno.env.get('RAZORPAY_KEY_ID');
   const keySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
   if (!keyId || !keySecret) {
     throw new Error('RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be set in Edge Function secrets.');
   }
-  // Basic Auth: base64(key_id:key_secret) — no spaces, exact format Razorpay expects
   const credentials = `${keyId}:${keySecret}`;
   const auth = btoa(credentials);
 
@@ -27,7 +26,7 @@ async function createRazorpayOrder(amountPaise: number, expertId: number, receip
       amount: amountPaise,
       currency: 'INR',
       receipt,
-      notes: { expert_id: String(expertId) },
+      notes: { expert_uuid: expertUuid },
     }),
   });
 
@@ -121,11 +120,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Expert not found for this account.' }, { status: 403, headers: corsHeaders });
     }
 
-    const expertIdRaw = expert.id;
-    const expertIdNum = typeof expertIdRaw === 'number' ? expertIdRaw : parseInt(String(expertIdRaw ?? ''), 10);
-    if (!Number.isFinite(expertIdNum) || expertIdNum < 1) {
+    const expertUuid = expert.id == null ? '' : String(expert.id).trim();
+    if (!expertUuid) {
       return Response.json(
-        { error: 'Invalid expert id from database.', details: `id=${expertIdRaw}` },
+        { error: 'Invalid expert id from database.', details: 'expert.id is empty' },
         { status: 500, headers: corsHeaders }
       );
     }
@@ -149,10 +147,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Invalid amount. Send amount in rupees (e.g. 500, 1000). Min ₹1, max ₹1,00,000.' }, { status: 400, headers: corsHeaders });
     }
 
-    const receipt = `wallet_${expertIdNum}_${Date.now()}`;
+    const receipt = `w_${Date.now()}`;
     let order: { id: string };
     try {
-      order = await createRazorpayOrder(amountPaise, expertIdNum, receipt);
+      order = await createRazorpayOrder(amountPaise, expertUuid, receipt);
     } catch (razorpayErr) {
       const message = razorpayErr instanceof Error ? razorpayErr.message : String(razorpayErr);
       return Response.json(
