@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { useNavigate } from 'react-router-dom';
-import { Wallet, MapPin, Clock, ShieldCheck, LogOut, CheckCircle } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Wallet, MapPin, Clock, ShieldCheck, LogOut, CheckCircle, Plus } from 'lucide-react';
 
 export default function PartnerApp() {
   const navigate = useNavigate();
@@ -83,9 +83,17 @@ export default function PartnerApp() {
                </div>
                <button onClick={handleLogout} className="p-2 bg-white/10 rounded-full hover:bg-red-500/20 hover:text-red-400"><LogOut size={18}/></button>
            </div>
-           <div className="mt-6 bg-gradient-to-br from-teal-500 to-teal-700 p-5 rounded-2xl shadow-lg border border-teal-400/30 flex justify-between items-center">
+           <div className="mt-6 bg-gradient-to-br from-teal-500 to-teal-700 p-5 rounded-2xl shadow-lg border border-teal-400/30 flex justify-between items-center gap-4">
                <div><p className="text-[10px] uppercase font-bold text-teal-100 flex items-center gap-1"><Wallet size={12}/> Prepaid Wallet</p><h2 className="text-3xl font-black mt-1">₹{expert.wallet_balance || 0}</h2></div>
+               <button
+                 type="button"
+                 onClick={() => alert('Recharge: Admin se DeepakHQ → Wallet System me aapka balance add ho sakta hai. Razorpay se direct Add Money jald aayega.')}
+                 className="shrink-0 flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl border border-white/30 transition-all"
+               >
+                 <Plus size={16}/> Add Money
+               </button>
            </div>
+           <p className="text-[10px] text-teal-200/80 mt-2 text-center">Platform fee cash jobs par wallet se cut hota hai. Balance ke liye <Link to="/contact-support" className="underline font-bold">Contact Support</Link>.</p>
        </div>
 
        <div className="p-4 max-w-md mx-auto space-y-6 mt-4">

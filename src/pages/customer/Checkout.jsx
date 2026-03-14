@@ -368,8 +368,8 @@ export default function Checkout() {
     rzp.open();
   };
 
-  // 🚩 Feature Flag: Set to false to disable online payments pending backend integration
-  const isOnlinePaymentEnabled = false;
+  // 🚩 Feature Flag: true = customer can pay online via Razorpay (income source). false = only Pay After Service.
+  const isOnlinePaymentEnabled = true;
 
   const handleBooking = async () => {
     if (!date) {
