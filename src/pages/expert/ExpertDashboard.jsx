@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
-import { Power, MapPin, Navigation, Clock, Loader2, User, CheckCircle, Wrench, Wallet, IndianRupee, LogOut, Volume2, Globe } from 'lucide-react';
+import { Power, MapPin, Navigation, Clock, Loader2, User, CheckCircle, Wrench, Wallet, IndianRupee, LogOut, Volume2, Globe, Plus, X } from 'lucide-react';
 
 // 🇮🇳 18 NATIONAL LANGUAGES DICTIONARY (PAN-INDIA SUPPORT)
 const dict = {
-  hi: { name: "हिंदी (Hindi)", langCode: 'hi-IN', wallet: "वॉलेट बैलेंस", withdraw: "पैसे निकालें", online: "ऑनलाइन", offline: "ऑफ़लाइन", jobs: "असाइनमेंट्स", noJobs: "कोई काम नहीं है।", accept: "काम स्वीकार करें", navigate: "रास्ता देखें", start: "काम शुरू करें", complete: "काम पूरा हुआ 🏆", logout: "लॉग आउट", v_newJob: "नया काम आया है।", v_checkApp: "कृपया ऐप चेक करें।", v_accepted: "काम स्वीकार कर लिया गया है।", v_completed: "काम पूरा हो गया, पैसा वॉलेट में जुड़ गया है।", v_offline: "आप अब ऑफ़लाइन हैं।", v_online: "आप अब ऑनलाइन हैं।", v_withdraw: "रिक्वेस्ट भेज दी गई है।" },
-  en: { name: "English", langCode: 'en-IN', wallet: "Wallet Balance", withdraw: "Withdraw", online: "Online", offline: "Offline", jobs: "Assignments", noJobs: "No active jobs.", accept: "Accept Job", navigate: "Navigate", start: "Start Work", complete: "Mark Completed 🏆", logout: "Log Out", v_newJob: "New job arrived.", v_checkApp: "Please check the app.", v_accepted: "Job accepted.", v_completed: "Job completed, money added.", v_offline: "You are offline.", v_online: "You are online.", v_withdraw: "Request sent." },
+  hi: { name: "हिंदी (Hindi)", langCode: 'hi-IN', wallet: "वॉलेट बैलेंस", withdraw: "पैसे निकालें", addMoney: "पैसे जोड़ें", online: "ऑनलाइन", offline: "ऑफ़लाइन", jobs: "असाइनमेंट्स", noJobs: "कोई काम नहीं है।", accept: "काम स्वीकार करें", navigate: "रास्ता देखें", start: "काम शुरू करें", complete: "काम पूरा हुआ 🏆", logout: "लॉग आउट", v_newJob: "नया काम आया है।", v_checkApp: "कृपया ऐप चेक करें।", v_accepted: "काम स्वीकार कर लिया गया है।", v_completed: "काम पूरा हो गया, पैसा वॉलेट में जुड़ गया है।", v_offline: "आप अब ऑफ़लाइन हैं।", v_online: "आप अब ऑनलाइन हैं।", v_withdraw: "रिक्वेस्ट भेज दी गई है।" },
+  en: { name: "English", langCode: 'en-IN', wallet: "Wallet Balance", withdraw: "Withdraw", addMoney: "Add Money", online: "Online", offline: "Offline", jobs: "Assignments", noJobs: "No active jobs.", accept: "Accept Job", navigate: "Navigate", start: "Start Work", complete: "Mark Completed 🏆", logout: "Log Out", v_newJob: "New job arrived.", v_checkApp: "Please check the app.", v_accepted: "Job accepted.", v_completed: "Job completed, money added.", v_offline: "You are offline.", v_online: "You are online.", v_withdraw: "Request sent." },
   mr: { name: "मराठी (Marathi)", langCode: 'mr-IN', wallet: "पाकीट शिल्लक", withdraw: "पैसे काढा", online: "ऑनलाइन", offline: "ऑफलाइन", jobs: "काम (Jobs)", noJobs: "कोणतेही काम नाही.", accept: "काम स्वीकारा", navigate: "रस्ता पहा", start: "काम सुरू करा", complete: "काम पूर्ण झाले 🏆", logout: "बाहेर पडा", v_newJob: "नवीन काम आले आहे.", v_checkApp: "कृपया ॲप तपासा.", v_accepted: "काम स्वीकारले आहे.", v_completed: "काम पूर्ण झाले, पैसे जमा झाले.", v_offline: "तुम्ही ऑफलाइन आहात.", v_online: "तुम्ही ऑनलाइन आहात.", v_withdraw: "विनंती पाठवली आहे." },
   gu: { name: "ગુજરાતી (Gujarati)", langCode: 'gu-IN', wallet: "વોલેટ બેલેન્સ", withdraw: "ઉપાડ", online: "ઓનલાઇન", offline: "ઓફલાઇન", jobs: "કામ (Jobs)", noJobs: "કોઈ કામ નથી.", accept: "કામ સ્વીકારો", navigate: "રસ્તો જુઓ", start: "કામ શરૂ કરો", complete: "કામ પૂર્ણ 🏆", logout: "લોગ આઉટ", v_newJob: "નવું કામ આવ્યું છે.", v_checkApp: "કૃપા કરીને એપ ચેક કરો.", v_accepted: "કામ સ્વીકાર્યું છે.", v_completed: "કામ પૂરું થયું, પૈસા ઉમેરાઈ ગયા.", v_offline: "તમે ઓફલાઇન છો.", v_online: "તમે ઓનલાઇન છો.", v_withdraw: "વિનંતી મોકલવામાં આવી છે." },
   bn: { name: "বাংলা (Bengali)", langCode: 'bn-IN', wallet: "ওয়ালেট ব্যালেন্স", withdraw: "টাকা তুলুন", online: "অনলাইন", offline: "অফলাইন", jobs: "কাজ", noJobs: "কোনো কাজ নেই।", accept: "কাজ গ্রহণ করুন", navigate: "রাস্তা দেখুন", start: "কাজ শুরু করুন", complete: "কাজ সম্পন্ন 🏆", logout: "লগ আউট", v_newJob: "নতুন কাজ এসেছে।", v_checkApp: "অ্যাপ চেক করুন।", v_accepted: "কাজ গ্রহণ করা হয়েছে।", v_completed: "কাজ শেষ, টাকা যোগ হয়েছে।", v_offline: "আপনি অফলাইনে আছেন।", v_online: "আপনি অনলাইনে আছেন।", v_withdraw: "অনুরোধ পাঠানো হয়েছে।" },
@@ -25,13 +25,31 @@ const dict = {
   kok: { name: "कोंकणी (Konkani)", langCode: 'mr-IN', wallet: "वालेट बॅलन्स", withdraw: "पैसे काडात", online: "ऑनलायन", offline: "ऑफलायन", jobs: "काम", noJobs: "कांयच काम ना.", accept: "काम घेयात", navigate: "वाट पळयात", start: "काम सुरू करात", complete: "काम जाले 🏆", logout: "लॉग आउट", v_newJob: "नवे काम आयला.", v_checkApp: "अॅप पळयात.", v_accepted: "काम घेतला.", v_completed: "काम जाले, पैसे जमा जाले.", v_offline: "तुमी ऑफलायन आसात.", v_online: "तुमी ऑनलायन आसात.", v_withdraw: "विनंती धाडल्या." }
 };
 
+const loadRazorpayScript = () =>
+  new Promise((resolve) => {
+    if (typeof document === 'undefined') { resolve(false); return; }
+    const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    if (existing) { resolve(true); return; }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+
 export default function ExpertDashboard() {
   const navigate = useNavigate();
   const [expert, setExpert] = useState(null);
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [locationLoading, setLocationLoading] = useState(false);
-  const [processingId, setProcessingId] = useState(null); 
+  const [processingId, setProcessingId] = useState(null);
+  const [showRecharge, setShowRecharge] = useState(false);
+  const [rechargeAmount, setRechargeAmount] = useState(null);
+  const [customAmount, setCustomAmount] = useState('');
+  const [rechargeLoading, setRechargeLoading] = useState(false);
+  const [rechargeError, setRechargeError] = useState('');
   
   // 🌍 Language State (Local Storage)
   const [lang, setLang] = useState(localStorage.getItem('kshatr_lang') || 'hi');
@@ -206,6 +224,69 @@ export default function ExpertDashboard() {
       navigate('/expert/login'); 
   };
 
+  const PRESET_AMOUNTS = [500, 1000, 2000];
+  const getRechargeAmountRupees = () => {
+    if (rechargeAmount !== null) return rechargeAmount;
+    const n = Number(customAmount);
+    return Number.isFinite(n) && n >= 1 && n <= 100000 ? n : null;
+  };
+  const handleProceedToPay = async () => {
+    const amountRupees = getRechargeAmountRupees();
+    if (amountRupees === null || amountRupees < 1) {
+      setRechargeError('Please select or enter a valid amount (₹1 – ₹1,00,000).');
+      return;
+    }
+    setRechargeError('');
+    setRechargeLoading(true);
+    try {
+      const { data: orderData, error: orderError } = await supabase.functions.invoke('create-wallet-order', { body: { amount: amountRupees } });
+      if (orderError) throw orderError;
+      const body = orderData?.data ?? orderData ?? {};
+      const { order_id, amount_paise, currency, key_id } = body;
+      if (!order_id || !amount_paise) throw new Error(body?.error || 'Could not create payment order.');
+      const sdkLoaded = await loadRazorpayScript();
+      if (!sdkLoaded || !window.Razorpay) throw new Error('Unable to load Razorpay.');
+      const options = {
+        key: key_id || import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: amount_paise,
+        currency: currency || 'INR',
+        order_id,
+        name: 'Kshatr Partner Wallet',
+        description: 'Wallet Recharge',
+        handler: async function (response) {
+          try {
+            const { data: confirmData, error: confirmError } = await supabase.functions.invoke('confirm-wallet-recharge', {
+              body: { order_id: response.razorpay_order_id, razorpay_payment_id: response.razorpay_payment_id },
+            });
+            const result = confirmData?.data ?? confirmData;
+            if (confirmError || result?.error) {
+              alert('Recharge failed: ' + (result?.error || confirmError?.message || 'Unknown error'));
+              return;
+            }
+            setExpert((e) => (e ? { ...e, wallet_balance: result?.new_balance ?? e.wallet_balance } : e));
+            setShowRecharge(false);
+            setRechargeAmount(null);
+            setCustomAmount('');
+            alert('Wallet recharged! New balance: ₹' + (result?.new_balance ?? 0));
+          } catch (e) {
+            alert('Recharge confirmation failed: ' + (e?.message || e));
+          } finally {
+            setRechargeLoading(false);
+          }
+        },
+        prefill: { name: expert?.name || expert?.full_name || 'Expert', email: (await supabase.auth.getUser()).data?.user?.email || '' },
+        theme: { color: '#0f766e' },
+      };
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', () => { setRechargeLoading(false); setRechargeError('Payment failed. Try again.'); });
+      rzp.open();
+    } catch (err) {
+      setRechargeError(err?.message || 'Something went wrong.');
+    } finally {
+      setRechargeLoading(false);
+    }
+  };
+
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-900"><Loader2 className="animate-spin text-teal-500" size={40}/></div>;
 
   const expertName = expert?.name || expert?.full_name || 'Expert';
@@ -246,46 +327,94 @@ export default function ExpertDashboard() {
                   </div>
               </div>
 
-              <div className="text-right bg-slate-950 p-3 rounded-2xl border border-slate-800">
+              <div className="text-right bg-slate-950 p-3 rounded-2xl border border-slate-800 min-w-[140px]">
                   <p className="text-[9px] text-slate-500 uppercase font-black">{t.wallet}</p>
-                  <p className="text-2xl font-black text-green-400 mb-2">₹{expert?.wallet_balance?.toFixed(2) || 0}</p>
-                  
-                  <button 
-                    onClick={async () => {
+                  <p className="text-2xl font-black text-green-400 mb-3">₹{expert?.wallet_balance?.toFixed(2) || 0}</p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => { setShowRecharge(true); setRechargeError(''); setRechargeAmount(null); setCustomAmount(''); }}
+                      className="flex-1 flex items-center justify-center gap-1 bg-green-500 hover:bg-green-400 text-slate-900 font-black py-1.5 rounded-lg text-[10px] uppercase tracking-widest transition-all"
+                    >
+                      <Plus size={10}/> {t.addMoney || 'Add Money'}
+                    </button>
+                    <button 
+                      onClick={async () => {
                         const upiId = prompt("UPI ID / Bank Details:");
                         if (!upiId) return;
-                        
                         const amountStr = prompt(`${t.withdraw} (Max: ₹${expert.wallet_balance}):`, expert.wallet_balance);
                         if (!amountStr) return;
-                        
                         const amount = parseFloat(amountStr);
                         if (isNaN(amount) || amount <= 0) return alert("Invalid amount!");
-                        
                         try {
-                            const { error } = await supabase.rpc('request_wallet_withdrawal', {
-                                p_user_id: expert.user_id,
-                                p_user_type: 'expert',
-                                p_user_name: expertName,
-                                p_amount: amount,
-                                p_payment_method: 'UPI/Bank',
-                                p_payment_details: upiId
-                            });
-                            
-                            if (error) throw error;
-                            speakVoice(t.v_withdraw);
-                            alert("✅ Request Sent!");
-                            checkExpertLogin(); 
-                        } catch(err) { 
-                            alert("Failed: " + err.message); 
-                        }
-                    }}
-                    disabled={!expert?.wallet_balance || expert.wallet_balance <= 0}
-                    className="w-full bg-teal-600 hover:bg-teal-500 disabled:bg-slate-800 text-white py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
-                  >
-                    <IndianRupee size={10} className="inline"/> {t.withdraw}
-                  </button>
+                          const { error } = await supabase.rpc('request_wallet_withdrawal', {
+                            p_user_id: expert.user_id,
+                            p_user_type: 'expert',
+                            p_user_name: expertName,
+                            p_amount: amount,
+                            p_payment_method: 'UPI/Bank',
+                            p_payment_details: upiId
+                          });
+                          if (error) throw error;
+                          speakVoice(t.v_withdraw);
+                          alert("✅ Request Sent!");
+                          checkExpertLogin(); 
+                        } catch(err) { alert("Failed: " + err.message); }
+                      }}
+                      disabled={!expert?.wallet_balance || expert.wallet_balance <= 0}
+                      className="flex-1 flex items-center justify-center gap-1 bg-teal-600 hover:bg-teal-500 disabled:bg-slate-800 text-white py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
+                    >
+                      <IndianRupee size={10} className="inline"/> {t.withdraw}
+                    </button>
+                  </div>
               </div>
           </div>
+
+          {/* Wallet Recharge Modal */}
+          {showRecharge && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => !rechargeLoading && setShowRecharge(false)}>
+              <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-xl max-w-sm w-full p-6 relative" onClick={(e) => e.stopPropagation()}>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-black text-white">Add Money to Wallet</h3>
+                  <button type="button" onClick={() => !rechargeLoading && setShowRecharge(false)} className="p-1 text-slate-400 hover:text-white"><X size={20}/></button>
+                </div>
+                <p className="text-xs text-slate-400 mb-4">Choose amount or enter custom (₹1 – ₹1,00,000). Secure payment via Razorpay.</p>
+                <div className="flex gap-2 mb-4">
+                  {PRESET_AMOUNTS.map((amt) => (
+                    <button
+                      key={amt}
+                      type="button"
+                      onClick={() => { setRechargeAmount(amt); setCustomAmount(''); setRechargeError(''); }}
+                      className={`flex-1 py-3 rounded-xl font-bold text-sm border-2 transition-all ${rechargeAmount === amt ? 'border-green-500 bg-green-500/20 text-green-400' : 'border-slate-700 text-slate-400 hover:border-slate-600'}`}
+                    >
+                      ₹{amt}
+                    </button>
+                  ))}
+                </div>
+                <div className="mb-4">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Custom amount (₹)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={100000}
+                    placeholder="e.g. 5000"
+                    value={rechargeAmount === null ? customAmount : ''}
+                    onChange={(e) => { setRechargeAmount(null); setCustomAmount(e.target.value); setRechargeError(''); }}
+                    className="w-full mt-1 bg-slate-950 border border-slate-700 text-white rounded-xl py-3 px-4 font-medium placeholder-slate-500"
+                  />
+                </div>
+                {rechargeError && <p className="text-xs text-red-400 font-medium mb-3">{rechargeError}</p>}
+                <button
+                  type="button"
+                  disabled={rechargeLoading}
+                  onClick={handleProceedToPay}
+                  className="w-full bg-green-500 hover:bg-green-400 disabled:opacity-50 text-slate-900 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2"
+                >
+                  {rechargeLoading ? <><Loader2 size={18} className="animate-spin"/> Proceeding…</> : 'Proceed to Pay'}
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="bg-slate-950 p-6 rounded-3xl border border-slate-800 flex flex-col items-center text-center">
               <button 

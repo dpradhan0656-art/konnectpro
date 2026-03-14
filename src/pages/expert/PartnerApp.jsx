@@ -99,6 +99,34 @@ export default function PartnerApp() {
       navigate('/expert/login');
   };
 
+  const handleWithdraw = async () => {
+    if (!expert?.wallet_balance || expert.wallet_balance <= 0) return;
+    const upiId = prompt('UPI ID / Bank Details:');
+    if (!upiId) return;
+    const amountStr = prompt(`Withdraw (Max: ₹${expert.wallet_balance}):`, String(expert.wallet_balance));
+    if (!amountStr) return;
+    const amount = parseFloat(amountStr);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      alert('Invalid amount!');
+      return;
+    }
+    try {
+      const { error } = await supabase.rpc('request_wallet_withdrawal', {
+        p_user_id: expert.user_id,
+        p_user_type: 'expert',
+        p_user_name: expert.name,
+        p_amount: amount,
+        p_payment_method: 'UPI/Bank',
+        p_payment_details: upiId,
+      });
+      if (error) throw error;
+      alert('Request sent!');
+      checkExpertProfile();
+    } catch (err) {
+      alert('Failed: ' + (err?.message || err));
+    }
+  };
+
   const PRESET_AMOUNTS = [500, 1000, 2000];
   const getRechargeAmountRupees = () => {
     if (rechargeAmount !== null) return rechargeAmount;
@@ -201,15 +229,27 @@ export default function PartnerApp() {
                </div>
                <button onClick={handleLogout} className="p-2 bg-white/10 rounded-full hover:bg-red-500/20 hover:text-red-400"><LogOut size={18}/></button>
            </div>
-           <div className="mt-6 bg-gradient-to-br from-teal-500 to-teal-700 p-5 rounded-2xl shadow-lg border border-teal-400/30 flex justify-between items-center gap-4">
-               <div><p className="text-[10px] uppercase font-bold text-teal-100 flex items-center gap-1"><Wallet size={12}/> Prepaid Wallet</p><h2 className="text-3xl font-black mt-1">₹{expert.wallet_balance ?? 0}</h2></div>
-               <button
-                 type="button"
-                 onClick={() => { setShowRecharge(true); setRechargeError(''); setRechargeAmount(null); setCustomAmount(''); }}
-                 className="shrink-0 flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl border border-white/30 transition-all"
-               >
-                 <Plus size={16}/> Add Money
-               </button>
+           <div className="mt-6 bg-gradient-to-br from-teal-500 to-teal-700 p-5 rounded-2xl shadow-lg border border-teal-400/30">
+               <div className="flex justify-between items-center gap-4 mb-4">
+                 <div><p className="text-[10px] uppercase font-bold text-teal-100 flex items-center gap-1"><Wallet size={12}/> Prepaid Wallet</p><h2 className="text-3xl font-black mt-1">₹{expert.wallet_balance ?? 0}</h2></div>
+               </div>
+               <div className="flex gap-3">
+                 <button
+                   type="button"
+                   onClick={() => { setShowRecharge(true); setRechargeError(''); setRechargeAmount(null); setCustomAmount(''); }}
+                   className="flex-1 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-400 text-white font-black text-xs uppercase tracking-wider px-4 py-3 rounded-xl shadow-lg border border-green-400/50 transition-all"
+                 >
+                   <Plus size={16}/> Add Money
+                 </button>
+                 <button
+                   type="button"
+                   onClick={handleWithdraw}
+                   disabled={!(expert.wallet_balance > 0)}
+                   className="flex-1 flex items-center justify-center gap-2 bg-white/20 hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs uppercase tracking-wider px-4 py-3 rounded-xl border border-white/30 transition-all"
+                 >
+                   <Wallet size={16}/> Withdraw
+                 </button>
+               </div>
            </div>
            <p className="text-[10px] text-teal-200/80 mt-2 text-center">Platform fee cash jobs par wallet se cut hota hai. Recharge above or <Link to="/contact-support" className="underline font-bold">Contact Support</Link>.</p>
 
