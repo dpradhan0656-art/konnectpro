@@ -11,18 +11,12 @@
 
 ---
 
-### 2. Expert prepaid wallet (aapki income)
+### 2. Expert prepaid wallet (aapki income) – ✅ Razorpay recharge live
 
-- Abhi expert wallet **manual** ya **job complete** se banta hai (admin DeepakHQ → Wallet se credit kar sakta hai).
-- **Aapka idea:** Expert **Razorpay se wallet recharge** kare → wohi paisa aapki income → tabhi unko kaam assign ho.
-
-Iske liye chahiye:
-
-1. **Razorpay Orders API** (backend): Supabase Edge Function jo Razorpay order create kare, amount verify kare, phir expert ke `wallet_balance` me credit kare.
-2. **Partner App** me "Add Money" / "Recharge" button: Razorpay checkout open ho, payment success par backend wallet update kare.
-3. **Optional:** Dispatch par assignment me check: sirf wahi experts dikhein jinke `wallet_balance >= minimum` (e.g. ₹500).
-
-Abhi Partner App me "Recharge Wallet" ka button add kar diya gaya hai; actual Razorpay recharge ke liye Edge Function + Razorpay Order create wala flow implement karna hoga.
+- Expert **Razorpay se wallet recharge** kar sakta hai (Partner App → Add Money → Razorpay).
+- **Flow:** Add Money → preset (₹500 / ₹1000 / ₹2000) ya custom amount → Proceed to Pay → Razorpay checkout → success par `experts.wallet_balance` update + `wallet_transactions` me "Wallet Recharge via Razorpay" entry.
+- Backend: Supabase Edge Functions **create-wallet-order** (Razorpay order create) aur **confirm-wallet-recharge** (payment verify, wallet update). Deploy & secrets: see **docs/EXPERT_WALLET_RECHARGE_RAZORPAY.md**.
+- Optional: Dispatch par assignment me check – sirf wahi experts dikhein jinke `wallet_balance >= minimum` (e.g. ₹500).
 
 ---
 
@@ -32,7 +26,7 @@ Abhi Partner App me "Recharge Wallet" ka button add kar diya gaya hai; actual Ra
 |---------------------|---------------|----------------|
 | Customer online pay | ✅ Enabled    | Checkout par "Pay Online" dikhega, Razorpay test kar sakte ho. |
 | Platform fee (jobs) | ✅ Already in DB | `process_job_payout` me platform_fee cut / retain ho raha hai. |
-| Expert wallet top-up (Razorpay) | 🔲 Pending | Edge Function + Partner App Razorpay flow banana hoga. |
+| Expert wallet top-up (Razorpay) | ✅ Implemented | Partner App → Add Money. Deploy Edge Functions + set RAZORPAY_KEY_SECRET (see EXPERT_WALLET_RECHARGE_RAZORPAY.md). |
 
 ---
 

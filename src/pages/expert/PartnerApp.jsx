@@ -1,7 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useNavigate, Link } from 'react-router-dom';
-import { Wallet, MapPin, Clock, ShieldCheck, LogOut, CheckCircle, Plus } from 'lucide-react';
+import { Wallet, MapPin, Clock, ShieldCheck, LogOut, CheckCircle, Plus, X, Loader2 } from 'lucide-react';
+
+const loadRazorpayScript = () =>
+  new Promise((resolve) => {
+    if (typeof document === 'undefined') {
+      resolve(false);
+      return;
+    }
+    const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    if (existing) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
 
 export default function PartnerApp() {
   const navigate = useNavigate();
@@ -9,6 +28,11 @@ export default function PartnerApp() {
   const [bookings, setBookings] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showRecharge, setShowRecharge] = useState(false);
+  const [rechargeAmount, setRechargeAmount] = useState(null);
+  const [customAmount, setCustomAmount] = useState('');
+  const [rechargeLoading, setRechargeLoading] = useState(false);
+  const [rechargeError, setRechargeError] = useState('');
 
   useEffect(() => { checkExpertProfile(); }, []);
 
@@ -72,7 +96,87 @@ export default function PartnerApp() {
 
   const handleLogout = async () => {
       await supabase.auth.signOut();
-      navigate('/expert/login'); // ✅ Fixed Route
+      navigate('/expert/login');
+  };
+
+  const PRESET_AMOUNTS = [500, 1000, 2000];
+  const getRechargeAmountRupees = () => {
+    if (rechargeAmount !== null) return rechargeAmount;
+    const n = Number(customAmount);
+    return Number.isFinite(n) && n >= 1 && n <= 100000 ? n : null;
+  };
+
+  const handleProceedToPay = async () => {
+    const amountRupees = getRechargeAmountRupees();
+    if (amountRupees === null || amountRupees < 1) {
+      setRechargeError('Please select an amount or enter a valid amount (₹1 – ₹1,00,000).');
+      return;
+    }
+    setRechargeError('');
+    setRechargeLoading(true);
+    try {
+      const { data: orderData, error: orderError } = await supabase.functions.invoke('create-wallet-order', {
+        body: { amount: amountRupees },
+      });
+      if (orderError) throw orderError;
+      const body = orderData?.data ?? orderData ?? {};
+      const { order_id, amount_paise, currency, key_id } = body;
+      if (!order_id || !amount_paise) {
+        throw new Error(body?.error || orderError?.message || 'Could not create payment order.');
+      }
+      const sdkLoaded = await loadRazorpayScript();
+      if (!sdkLoaded || !window.Razorpay) {
+        throw new Error('Unable to load Razorpay. Check your connection.');
+      }
+      const options = {
+        key: key_id || import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: amount_paise,
+        currency: currency || 'INR',
+        order_id,
+        name: 'Kshatr Partner Wallet',
+        description: 'Wallet Recharge',
+        handler: async function (response) {
+          try {
+            const { data: confirmData, error: confirmError } = await supabase.functions.invoke('confirm-wallet-recharge', {
+              body: {
+                order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+              },
+            });
+            const result = confirmData?.data ?? confirmData;
+            if (confirmError || result?.error) {
+              alert('Recharge failed: ' + (result?.error || confirmError?.message || 'Unknown error'));
+              return;
+            }
+            setExpert((e) => (e ? { ...e, wallet_balance: result?.new_balance ?? e.wallet_balance } : e));
+            if (expert?.id) fetchWallet(expert.id);
+            setShowRecharge(false);
+            setRechargeAmount(null);
+            setCustomAmount('');
+            alert('Wallet recharged successfully! New balance: ₹' + (result?.new_balance ?? 0));
+          } catch (e) {
+            alert('Recharge confirmation failed: ' + (e?.message || e));
+          } finally {
+            setRechargeLoading(false);
+          }
+        },
+        prefill: {
+          name: expert?.name || 'Expert',
+          email: (await supabase.auth.getUser()).data?.user?.email || '',
+        },
+        theme: { color: '#0f766e' },
+      };
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', () => {
+        setRechargeLoading(false);
+        setRechargeError('Payment failed. Please try again.');
+      });
+      rzp.open();
+    } catch (err) {
+      setRechargeError(err?.message || 'Something went wrong.');
+    } finally {
+      setRechargeLoading(false);
+    }
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-50">Loading workspace...</div>;
@@ -98,16 +202,62 @@ export default function PartnerApp() {
                <button onClick={handleLogout} className="p-2 bg-white/10 rounded-full hover:bg-red-500/20 hover:text-red-400"><LogOut size={18}/></button>
            </div>
            <div className="mt-6 bg-gradient-to-br from-teal-500 to-teal-700 p-5 rounded-2xl shadow-lg border border-teal-400/30 flex justify-between items-center gap-4">
-               <div><p className="text-[10px] uppercase font-bold text-teal-100 flex items-center gap-1"><Wallet size={12}/> Prepaid Wallet</p><h2 className="text-3xl font-black mt-1">₹{expert.wallet_balance || 0}</h2></div>
+               <div><p className="text-[10px] uppercase font-bold text-teal-100 flex items-center gap-1"><Wallet size={12}/> Prepaid Wallet</p><h2 className="text-3xl font-black mt-1">₹{expert.wallet_balance ?? 0}</h2></div>
                <button
                  type="button"
-                 onClick={() => alert('Recharge: Admin se DeepakHQ → Wallet System me aapka balance add ho sakta hai. Razorpay se direct Add Money jald aayega.')}
+                 onClick={() => { setShowRecharge(true); setRechargeError(''); setRechargeAmount(null); setCustomAmount(''); }}
                  className="shrink-0 flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl border border-white/30 transition-all"
                >
                  <Plus size={16}/> Add Money
                </button>
            </div>
-           <p className="text-[10px] text-teal-200/80 mt-2 text-center">Platform fee cash jobs par wallet se cut hota hai. Balance ke liye <Link to="/contact-support" className="underline font-bold">Contact Support</Link>.</p>
+           <p className="text-[10px] text-teal-200/80 mt-2 text-center">Platform fee cash jobs par wallet se cut hota hai. Recharge above or <Link to="/contact-support" className="underline font-bold">Contact Support</Link>.</p>
+
+           {/* Recharge Wallet Modal */}
+           {showRecharge && (
+             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => !rechargeLoading && setShowRecharge(false)}>
+               <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 relative" onClick={(e) => e.stopPropagation()}>
+                 <div className="flex justify-between items-center mb-4">
+                   <h3 className="text-lg font-black text-slate-900">Add Money to Wallet</h3>
+                   <button type="button" onClick={() => !rechargeLoading && setShowRecharge(false)} className="p-1 text-slate-400 hover:text-slate-600"><X size={20}/></button>
+                 </div>
+                 <p className="text-xs text-slate-500 mb-4">Choose amount or enter custom (₹1 – ₹1,00,000). Secure payment via Razorpay.</p>
+                 <div className="flex gap-2 mb-4">
+                   {PRESET_AMOUNTS.map((amt) => (
+                     <button
+                       key={amt}
+                       type="button"
+                       onClick={() => { setRechargeAmount(amt); setCustomAmount(''); setRechargeError(''); }}
+                       className={`flex-1 py-3 rounded-xl font-bold text-sm border-2 transition-all ${rechargeAmount === amt ? 'border-teal-500 bg-teal-50 text-teal-700' : 'border-slate-200 text-slate-600 hover:border-teal-300'}`}
+                     >
+                       ₹{amt}
+                     </button>
+                   ))}
+                 </div>
+                 <div className="mb-4">
+                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Custom amount (₹)</label>
+                   <input
+                     type="number"
+                     min={1}
+                     max={100000}
+                     placeholder="e.g. 5000"
+                     value={rechargeAmount === null ? customAmount : ''}
+                     onChange={(e) => { setRechargeAmount(null); setCustomAmount(e.target.value); setRechargeError(''); }}
+                     className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 font-medium text-slate-900 placeholder-slate-400"
+                   />
+                 </div>
+                 {rechargeError && <p className="text-xs text-red-600 font-medium mb-3">{rechargeError}</p>}
+                 <button
+                   type="button"
+                   disabled={rechargeLoading}
+                   onClick={handleProceedToPay}
+                   className="w-full bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2"
+                 >
+                   {rechargeLoading ? <><Loader2 size={18} className="animate-spin"/> Proceeding…</> : 'Proceed to Pay'}
+                 </button>
+               </div>
+             </div>
+           )}
        </div>
 
        <div className="p-4 max-w-md mx-auto space-y-6 mt-4">
