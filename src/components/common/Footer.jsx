@@ -95,8 +95,8 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Contact Us — full-width box at bottom on mobile */}
-          <div className="col-span-2 mt-2 md:mt-0 rounded-xl border border-slate-700/80 bg-slate-800/40 p-3 md:p-0 md:bg-transparent md:border-0 md:rounded-none">
+          {/* Contact Us — full-width box at bottom on mobile; single column on desktop so it stays inline */}
+          <div className="col-span-2 md:col-span-1 mt-2 md:mt-0 rounded-xl border border-slate-700/80 bg-slate-800/40 p-3 md:p-0 md:bg-transparent md:border-0 md:rounded-none">
             <h3 className="text-white font-bold uppercase tracking-widest text-[10px] md:text-xs mb-2 md:mb-6">
               Contact Us
             </h3>
