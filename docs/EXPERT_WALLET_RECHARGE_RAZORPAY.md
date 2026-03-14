@@ -26,6 +26,9 @@ Edge Functions need the **Razorpay secret** and Key ID to create orders and veri
 
 3. Save. These are injected as `Deno.env.get('RAZORPAY_KEY_ID')` and `Deno.env.get('RAZORPAY_KEY_SECRET')` in the functions.
 
+**Do I need to add SUPABASE_URL and SUPABASE_ANON_KEY?**  
+**No.** When the function runs in **Supabase Cloud** (deployed via `supabase functions deploy`), the platform automatically injects `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`. You only need to set these manually if you run Edge Functions **locally** (e.g. `supabase functions serve`) and they are not in your local `.env`.
+
 ---
 
 ## 3. Deploy the two Edge Functions
@@ -94,6 +97,11 @@ No new tables or migrations are required; existing RLS is bypassed by the Edge F
 
 ## 7. Troubleshooting
 
+- **401 Unauthorized (OPTIONS 200, POST 401)**  
+  - The function returns 401 when the **Authorization** header is missing or the **token is invalid/expired**.  
+  - The frontend must call the function **while the expert is logged in**; `supabase.functions.invoke()` automatically sends the session’s `Authorization: Bearer <access_token>`.  
+  - Ensure the user has signed in (e.g. Expert Login or Google) before opening the Add Money modal and that the session hasn’t expired. If the error persists, check Edge Function logs for the exact message (`Missing Authorization header` vs `Invalid or expired token` and optional `details`).  
+  - **Do not** add `SUPABASE_URL` / `SUPABASE_ANON_KEY` to Edge Function secrets for Cloud; they are auto-injected. Only set them for local dev if needed.
 - **“Could not create payment order”** – Check Edge Function logs (Supabase Dashboard → Edge Functions → Logs). Ensure `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` are set and are **Live** keys.
 - **“Payment not captured” / “Order ID mismatch”** – Confirm you’re using the same Razorpay account (Live) in both dashboard and secrets; avoid mixing test and live keys.
 - **Recharge succeeds but balance not updating** – Check `confirm-wallet-recharge` logs and that the function can update `experts` and insert into `wallet_transactions` (service role has permission).

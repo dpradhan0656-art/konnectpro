@@ -39,19 +39,52 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return Response.json({ error: 'Missing Authorization header' }, { status: 401, headers: corsHeaders });
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return Response.json(
+        {
+          error: 'Server config missing. SUPABASE_URL and SUPABASE_ANON_KEY must be set (they are auto-injected in Supabase Cloud; for local dev, set them in .env or Dashboard → Edge Functions → Secrets).',
+        },
+        { status: 500, headers: corsHeaders }
+      );
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader || typeof authHeader !== 'string') {
+      return Response.json(
+        {
+          error: 'Missing Authorization header. Ensure you are logged in as an expert and the client sends: Authorization: Bearer <access_token>.',
+        },
+        { status: 401, headers: corsHeaders }
+      );
+    }
+
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    if (!token) {
+      return Response.json(
+        { error: 'Authorization header is empty. Send a valid JWT: Bearer <your_access_token>.' },
+        { status: 401, headers: corsHeaders }
+      );
+    }
+
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
-    if (authError || !user) {
-      return Response.json({ error: 'Invalid or expired token' }, { status: 401, headers: corsHeaders });
+    if (authError) {
+      return Response.json(
+        {
+          error: 'Invalid or expired token. Please sign in again.',
+          details: authError.message,
+        },
+        { status: 401, headers: corsHeaders }
+      );
+    }
+    if (!user) {
+      return Response.json(
+        { error: 'Invalid or expired token. Please sign in again.' },
+        { status: 401, headers: corsHeaders }
+      );
     }
 
     const { data: expert, error: expertError } = await supabase
