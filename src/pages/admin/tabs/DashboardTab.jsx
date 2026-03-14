@@ -2,9 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { Activity, Users, Wallet, Calendar, TrendingUp } from 'lucide-react';
 
+const MONTHLY_BOOKING_TARGET = 50;
+
 export default function DashboardTab() {
   const [stats, setStats] = useState({ orders: 0, revenue: 0, experts: 0 });
   const [recentBookings, setRecentBookings] = useState([]);
+  const [growthTip, setGrowthTip] = useState('');
+  const [growthProgress, setGrowthProgress] = useState(0);
+  const [growthLoading, setGrowthLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -20,6 +25,65 @@ export default function DashboardTab() {
         }
     };
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    const fetchGrowthData = async () => {
+      setGrowthLoading(true);
+      try {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const iso30 = thirtyDaysAgo.toISOString();
+
+        const { data: recentData, error } = await supabase
+          .from('bookings')
+          .select('service_name, city, created_at')
+          .gte('created_at', iso30)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.warn('Dashboard growth data error:', error);
+          setGrowthTip('डैशबोर्ड पर नज़र रखें। नए Experts जोड़ने के लिए \'Expert Control\' टैब का उपयोग करें।');
+          setGrowthProgress(0);
+          return;
+        }
+
+        const list = recentData || [];
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        const bookingsThisMonth = list.filter((b) => {
+          const d = new Date(b.created_at);
+          return d >= startOfMonth && d <= endOfMonth;
+        }).length;
+        const progress = Math.min(100, Math.round((bookingsThisMonth / MONTHLY_BOOKING_TARGET) * 100));
+        setGrowthProgress(progress);
+
+        if (list.length === 0) {
+          setGrowthTip('अभी तक बुकिंग नहीं है। नए Experts और सर्विसेज़ जोड़ने के लिए \'Expert Control\' और \'Rate List\' टैब का उपयोग करें।');
+          return;
+        }
+
+        const keyCount = {};
+        list.forEach((b) => {
+          const city = (b.city || 'Jabalpur').trim() || 'Jabalpur';
+          const service = (b.service_name || 'Service').trim() || 'Service';
+          const key = `${city}|${service}`;
+          keyCount[key] = (keyCount[key] || 0) + 1;
+        });
+        const topKey = Object.entries(keyCount).sort((a, b) => b[1] - a[1])[0]?.[0];
+        const [city, service] = topKey ? topKey.split('|') : ['Jabalpur', 'Service'];
+        const tip = `${city} में ${service} की मांग बढ़ रही है। नए Experts को जोड़ने के लिए 'Expert Control' टैब का उपयोग करें।`;
+        setGrowthTip(tip);
+      } catch (e) {
+        console.warn('Dashboard growth exception:', e);
+        setGrowthTip('डैशबोर्ड पर नज़र रखें। नए Experts जोड़ने के लिए \'Expert Control\' टैब का उपयोग करें।');
+        setGrowthProgress(0);
+      } finally {
+        setGrowthLoading(false);
+      }
+    };
+    fetchGrowthData();
   }, []);
 
   return (
@@ -61,16 +125,25 @@ export default function DashboardTab() {
                 </table>
             </div>
 
-            {/* Quick Actions / Notices */}
+            {/* Quick Actions / Notices — dynamic from last 30 days + monthly target */}
             <div className="bg-gradient-to-br from-teal-900 to-slate-900 p-6 rounded-2xl border border-teal-500/30">
                 <h3 className="font-bold text-white mb-2 flex items-center gap-2"><TrendingUp/> Growth Tip</h3>
-                <p className="text-sm text-teal-100/80 leading-relaxed mb-4">
-                    Jabalpur में AC Repair की मांग बढ़ रही है। नए Experts को जोड़ने के लिए 'Expert Control' टैब का उपयोग करें।
-                </p>
+                {growthLoading ? (
+                  <p className="text-sm text-teal-100/80 leading-relaxed mb-4 animate-pulse">Loading tip...</p>
+                ) : (
+                  <p className="text-sm text-teal-100/80 leading-relaxed mb-4">
+                    {growthTip}
+                  </p>
+                )}
                 <div className="h-1 w-full bg-slate-700 rounded-full overflow-hidden">
-                    <div className="h-full w-3/4 bg-teal-400 rounded-full"></div>
+                    <div
+                      className="h-full bg-teal-400 rounded-full transition-all duration-500 ease-out"
+                      style={{ width: `${Math.min(100, growthProgress)}%` }}
+                    />
                 </div>
-                <p className="text-[10px] text-teal-300 mt-2 text-right">Target: 75% Achieved</p>
+                <p className="text-[10px] text-teal-300 mt-2 text-right">
+                  Target: {growthProgress}% Achieved (monthly goal: {MONTHLY_BOOKING_TARGET} bookings)
+                </p>
             </div>
         </div>
     </div>

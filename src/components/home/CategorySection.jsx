@@ -1,24 +1,27 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
-import SmartIcon from './SmartIcon';
+import { isImageUrl } from '../../lib/serviceIconUtils';
 
-const BG_COLORS = [
-  'bg-gradient-to-br from-blue-50 to-blue-100/50 text-blue-600',
-  'bg-gradient-to-br from-green-50 to-green-100/50 text-green-600',
-  'bg-gradient-to-br from-amber-50 to-amber-100/50 text-amber-600',
-  'bg-gradient-to-br from-purple-50 to-purple-100/50 text-purple-600',
-  'bg-gradient-to-br from-pink-50 to-pink-100/50 text-pink-600',
-  'bg-gradient-to-br from-teal-50 to-teal-100/50 text-teal-600',
+/** Gradient fallbacks when category has no image (distinct from Deals — no top badge) */
+const BG_GRADIENTS = [
+  'from-blue-600/90 to-indigo-800/90',
+  'from-emerald-600/90 to-teal-800/90',
+  'from-amber-600/90 to-orange-700/90',
+  'from-violet-600/90 to-purple-800/90',
+  'from-rose-600/90 to-pink-700/90',
+  'from-cyan-600/90 to-teal-800/90',
 ];
+
+const CATEGORY_IMAGE_FALLBACK = 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80';
 
 export default function CategorySection({ categories, loading }) {
   const navigate = useNavigate();
 
   return (
-    <section className="px-4 sm:px-6 max-w-4xl mx-auto relative z-20 min-w-0 w-full overflow-hidden" aria-labelledby="categories-heading">
-      <div className="flex justify-between items-end mb-4">
-        <h2 id="categories-heading" className="font-black text-slate-900 text-xl tracking-tight">
+    <section className="px-4 sm:px-6 max-w-5xl mx-auto relative z-20 min-w-0 w-full overflow-hidden" aria-labelledby="categories-heading">
+      <div className="flex justify-between items-end mb-5">
+        <h2 id="categories-heading" className="font-black text-slate-900 text-xl sm:text-2xl tracking-tight">
           Explore Categories
         </h2>
         <span className="text-teal-600 text-[11px] font-bold uppercase tracking-widest cursor-pointer flex items-center gap-1 hover:text-teal-700 transition-colors duration-300">
@@ -27,32 +30,58 @@ export default function CategorySection({ categories, loading }) {
       </div>
 
       {loading ? (
-        /* OLD: horizontal scroll skeleton */
-        <div className="grid grid-cols-3 gap-3 sm:gap-4 animate-pulse" role="status" aria-label="Loading categories">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 animate-pulse" role="status" aria-label="Loading categories">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="aspect-[0.95] bg-slate-200 rounded-2xl" />
+            <div key={i} className="aspect-[4/3] sm:aspect-[5/4] bg-slate-200 rounded-2xl sm:rounded-3xl" />
           ))}
         </div>
       ) : categories.length > 0 ? (
-        /* NEW: 3-column grid, rounded card boxes, subtle shadows — premium boxed style */
-        <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4" role="list">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5" role="list">
           {categories.map((cat, i) => {
-            const colorClass = BG_COLORS[i % BG_COLORS.length];
             const slugUrl = cat.slug || cat.name.toLowerCase().replace(/[\s_]+/g, '-');
+            const useImage = isImageUrl(cat?.icon);
+            const imageUrl = useImage ? cat.icon : CATEGORY_IMAGE_FALLBACK;
+            const gradientClass = BG_GRADIENTS[i % BG_GRADIENTS.length];
+
             return (
               <button
                 key={cat.id || i}
                 type="button"
                 onClick={() => navigate(`/category/${slugUrl}`)}
-                className="flex flex-col items-center justify-center gap-2 sm:gap-3 min-h-[100px] sm:min-h-[110px] cursor-pointer group text-left touch-manipulation rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_24px_-8px_rgba(20,184,166,0.35)] hover:border-teal-200/80 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden p-3 sm:p-4"
+                className="relative rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer group text-left touch-manipulation aspect-[4/3] sm:aspect-[5/4] min-h-[140px] sm:min-h-[160px] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_32px_-8px_rgba(0,0,0,0.25)] transition-all duration-500 hover:-translate-y-0.5 border border-slate-200/60"
                 role="listitem"
               >
-                <div className={`w-12 h-12 sm:w-14 sm:h-14 ${colorClass} rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow duration-300 border border-white/80 flex-shrink-0`}>
-                  <SmartIcon iconValue={cat.icon} categoryName={cat.name} />
+                {/* Full-bleed background: image or gradient */}
+                <div className="absolute inset-0 z-0">
+                  {useImage ? (
+                    <img
+                      src={imageUrl}
+                      alt=""
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = CATEGORY_IMAGE_FALLBACK;
+                      }}
+                    />
+                  ) : null}
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-br ${gradientClass} ${useImage ? 'opacity-85 group-hover:opacity-90' : ''}`}
+                    aria-hidden="true"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" aria-hidden="true" />
                 </div>
-                <span className="text-[10px] sm:text-[11px] font-black text-slate-700 text-center leading-tight group-hover:text-teal-600 transition-colors duration-300 line-clamp-2">
-                  {cat.name}
-                </span>
+
+                {/* Glassmorphism bar at bottom — distinct from Deals (no top-left badge) */}
+                <div className="absolute bottom-0 left-0 right-0 z-10 p-3 sm:p-4">
+                  <div className="flex items-center justify-between gap-2 rounded-xl sm:rounded-2xl border border-white/20 bg-white/15 backdrop-blur-md px-4 py-3 shadow-lg">
+                    <span className="font-black text-sm sm:text-base text-white drop-shadow-md line-clamp-1 pr-2">
+                      {cat.name}
+                    </span>
+                    <span className="flex items-center gap-0.5 text-white/95 text-xs font-bold whitespace-nowrap shrink-0">
+                      Explore <ChevronRight size={16} className="text-white" aria-hidden="true" />
+                    </span>
+                  </div>
+                </div>
               </button>
             );
           })}
