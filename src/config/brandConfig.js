@@ -1,7 +1,7 @@
 // Kshatr - Centralized Brand Identity Config
 export const BRAND = {
   name: "Kshatr",
-  legalName: "APNA HUNAR", // For Invoices/Legal (DPDP Act compliance)
+  legalName: "KSHATRYX TECHNOLOGIES", // For Invoices/Legal (DPDP Act compliance)
   tagline: "Expert Connections, Trusted Results",
   
   // ✅ NEW: Admin Controlled Tagline (Default value)

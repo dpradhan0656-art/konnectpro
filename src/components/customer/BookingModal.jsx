@@ -486,6 +486,11 @@ export default function BookingModal({ service, onClose, user }) {
                 )}
               </button>
             </div>
+            {loading && (
+              <p className="mt-4 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400/80">
+                Powered by Kshatryx Technologies
+              </p>
+            )}
           </div>
         )}
       </div>

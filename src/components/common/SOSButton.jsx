@@ -3,7 +3,7 @@ import React from 'react';
 const SOSButton = () => {
   const handleSOS = () => {
     // Future: Connect to Backend API to alert Police/Admin
-    if (confirm("🚨 EMERGENCY ALERT\n\nAre you sure you want to send an SOS signal to Police & Apna Hunar Support?")) {
+    if (confirm("🚨 EMERGENCY ALERT\n\nAre you sure you want to send an SOS signal to Police & Kshatryx Technologies Support?")) {
       alert("SOS Signal Sent! \n\nYour live location has been shared with our Quick Response Team.");
     }
   };

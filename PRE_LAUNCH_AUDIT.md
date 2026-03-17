@@ -1,4 +1,4 @@
-# Pre-Launch Audit – Apna Hunar (Kshatr.com)
+# Pre-Launch Audit – Kshatryx Technologies (Kshatr.com)
 
 **Date:** Pre-production  
 **Scope:** UI stability, viewport, keyboard, safe-area, production build.

@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'pwa-192x192.png', 'pwa-512x512.png'],
       manifest: {
-        name: 'Apna Hunar',
-        short_name: 'Apna Hunar',
+        name: 'Kshatryx Technologies',
+        short_name: 'Kshatryx',
         description: 'India\'s Most Trusted Home Services App',
         theme_color: '#0d9488',
         background_color: '#f8fafc',

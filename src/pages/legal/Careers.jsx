@@ -11,7 +11,7 @@ export default function Careers() {
            We are Hiring
         </span>
         <h1 className="text-4xl md:text-5xl font-black text-slate-900 mt-4 mb-4">
-           Build the Future with <span className="text-teal-600">Apna Hunar</span>
+           Build the Future with <span className="text-teal-600">Kshatryx Technologies</span>
         </h1>
         <p className="text-slate-500 text-lg max-w-2xl mx-auto">
            Join the team behind <span className="font-bold text-slate-700">Kshatr.com</span>. We are on a mission to organize the unorganized home service sector in India.
@@ -49,7 +49,7 @@ export default function Careers() {
              </a>
              
              <p className="text-[10px] text-slate-500 mt-6 uppercase tracking-widest">
-                A Venture of Apna Hunar Group
+                Powered by Kshatryx Technologies
              </p>
          </div>
       </div>

@@ -54,7 +54,7 @@ export default function Navbar() {
                    KSHATR<span className="text-teal-400">.COM</span>
                  </span>
                  <span className="hidden xs:block text-[8px] text-slate-400 font-bold uppercase tracking-[0.2em] sm:block">
-                   Partner of Apna Hunar
+                   Partner of Kshatryx Technologies
                  </span>
              </div>
           </Link>

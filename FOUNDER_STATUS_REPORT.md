@@ -1,4 +1,4 @@
-# Founder Status Report — Apna Hunar / Kshatr (KonnectPro)
+# Founder Status Report — Kshatryx Technologies / Kshatr (KonnectPro)
 
 *Report date: March 2025 | Tech analysis of full codebase*
 

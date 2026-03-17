@@ -1,4 +1,4 @@
-# Platform Income & Payments (Apna Hunar / Kshatr)
+# Platform Income & Payments (Kshatryx Technologies / Kshatr)
 
 ## Abhi software me income ke sources
 

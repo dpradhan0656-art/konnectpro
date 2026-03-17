@@ -9,7 +9,7 @@ const SECTIONS = [
     // Previous text (kept for audit - No-Delete Rule)
     // content: `${BRAND.legalName} (operating as ${BRAND.name}) is the data controller for the personal data we collect through our platform. We comply with the Digital Personal Data Protection Act, 2023 (DPDP Act) in India and applicable international standards including GDPR where relevant.`,
     content:
-      'APNA HUNAR INDIA (operating via our mobile app and website www.kshatr.com) is the data controller for the personal data we collect through our platform. We comply with the Digital Personal Data Protection Act, 2023 (DPDP Act) in India and applicable international standards including GDPR where relevant.',
+      'KSHATRYX TECHNOLOGIES (operating via our mobile app and website www.kshatr.com) is the data controller for the personal data we collect through our platform. We comply with the Digital Personal Data Protection Act, 2023 (DPDP Act) in India and applicable international standards including GDPR where relevant.',
   },
   { title: '2. Information We Collect', content: 'We collect: (a) Account data: name, phone number, email, address when you register or book a service; (b) Payment data: processed securely by Razorpay—we do not store card details; (c) Usage data: device info, IP address, and interaction logs for security and analytics; (d) Expert data: KYC, skills, and service history for partner verification.' },
   { title: '3. Legal Basis & Purpose', content: 'We process your data based on consent, contract performance, and legitimate interests. We use it to: provide and improve our services, process payments, communicate about bookings, ensure platform safety, comply with legal obligations, and send service-related notifications. We do not sell your personal data.' },
@@ -42,7 +42,7 @@ export default function Privacy() {
           </p>
           */}
           <p className="text-slate-700">
-            At <span className="font-bold text-teal-600">APNA HUNAR INDIA</span>, operating via our mobile app and website{' '}
+            At <span className="font-bold text-teal-600">KSHATRYX TECHNOLOGIES</span>, operating via our mobile app and website{' '}
             <span className="font-mono text-teal-700">www.kshatr.com</span>, we take your privacy seriously. This policy explains how we collect, use, and protect your personal data in compliance with the Digital Personal Data Protection Act, 2023 (India) and applicable international standards.
           </p>
 
@@ -64,10 +64,10 @@ export default function Privacy() {
               <p className="text-sm"><strong>Address:</strong> {BRAND.contact.address}</p>
               */}
               <p className="text-sm">
-                <strong>Data Controller:</strong> APNA HUNAR INDIA
+                <strong>Data Controller:</strong> KSHATRYX TECHNOLOGIES
               </p>
               <p className="text-sm">
-                <strong>Company:</strong> APNA HUNAR INDIA
+                <strong>Company:</strong> KSHATRYX TECHNOLOGIES
               </p>
               <p className="text-sm">
                 <strong>Website:</strong> www.kshatr.com

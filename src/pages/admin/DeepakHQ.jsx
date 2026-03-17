@@ -22,8 +22,11 @@ const AreaHeadManager = lazy(() => import('./tabs/AreaHeadManager'));
 const ExpertVerification = lazy(() => import('./tabs/ExpertVerification'));
 
 const TabFallback = () => (
-  <div className="flex items-center justify-center py-24">
+  <div className="flex flex-col items-center justify-center py-24 text-center">
     <div className="w-10 h-10 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+    <p className="mt-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+      Powered by Kshatryx Technologies
+    </p>
   </div>
 ); 
 
@@ -137,8 +140,11 @@ export default function DeepakHQ() {
 
   if (authChecking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-white text-center px-4">
         <div className="animate-spin w-10 h-10 border-2 border-teal-500 border-t-transparent rounded-full" />
+        <p className="mt-5 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+          Powered by Kshatryx Technologies
+        </p>
       </div>
     );
   }
@@ -202,6 +208,9 @@ export default function DeepakHQ() {
             <button onClick={handleLogout} className="flex items-center gap-2 text-red-400 hover:text-red-300 w-full p-3 rounded-xl transition-all font-bold text-sm justify-center border border-red-900/30 hover:bg-red-900/10">
                 <LogOut size={16} /> Logout
             </button>
+            <p className="mt-4 text-center text-[10px] font-bold uppercase tracking-widest text-slate-500">
+              Powered by Kshatryx Technologies
+            </p>
         </div>
       </div>
 

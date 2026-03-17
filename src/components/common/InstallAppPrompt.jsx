@@ -61,7 +61,7 @@ export default function InstallAppPrompt() {
           <Download size={24} className="text-teal-400" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-sm">Install Apna Hunar</p>
+          <p className="font-bold text-sm">Install Kshatryx Technologies</p>
           <p className="text-xs text-slate-400 mt-0.5">
             {isIOS ? 'Tap Share → Add to Home Screen' : 'Add to home screen for a faster experience'}
           </p>

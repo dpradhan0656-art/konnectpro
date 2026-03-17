@@ -80,6 +80,9 @@ export default function CategoryView() {
            <div className="text-center py-20 bg-white rounded-[2rem] shadow-lg border border-slate-100">
              <div className="animate-spin w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full mx-auto mb-4"></div>
              <p className="text-slate-400 font-bold uppercase tracking-widest animate-pulse text-xs">Loading {cleanCategoryName}...</p>
+             <p className="mt-3 text-[10px] font-bold uppercase tracking-widest text-slate-400/80">
+               Powered by Kshatryx Technologies
+             </p>
            </div>
         ) : services.length === 0 ? (
            <div className="text-center py-16 bg-white rounded-[2rem] shadow-lg border border-slate-100 p-8">

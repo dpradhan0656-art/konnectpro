@@ -122,6 +122,9 @@ export default function Bookings() {
             <div className="flex flex-col items-center justify-center min-h-[calc(100vh-120px)] w-full max-w-[100vw] text-center px-4" style={{ minHeight: 'calc(100dvh - 120px)' }}>
                 <Loader2 className="animate-spin w-8 h-8 text-teal-500 mb-4" />
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Loading Your Bookings...</p>
+                <p className="mt-3 text-[10px] font-bold uppercase tracking-widest text-slate-400/80">
+                  Powered by Kshatryx Technologies
+                </p>
             </div>
         ) : errorMsg ? (
             <div className="flex flex-col items-center justify-center min-h-[calc(100vh-120px)] w-full max-w-[100vw] px-4" style={{ minHeight: 'calc(100dvh - 120px)' }}>

@@ -56,7 +56,7 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-[9px] md:text-[10px] text-teal-400 font-bold uppercase tracking-widest mb-2 md:mb-4">
-              Powered by Apna Hunar
+              Powered by Kshatryx Technologies
             </p>
             <p className="text-xs md:text-sm leading-snug md:leading-relaxed opacity-70 mb-4 md:mb-6">
               India's most trusted home service partner. We shield your home with verified experts and transparent pricing.
@@ -75,7 +75,7 @@ export default function Footer() {
             </h3>
             <ul className="space-y-1.5 md:space-y-4 text-xs md:text-sm">
               <li><Link to="/about" className="hover:text-teal-400 transition-colors">About Us</Link></li>
-              <li><Link to="/careers" className="hover:text-teal-400 transition-colors">Careers @ Apna Hunar</Link></li>
+              <li><Link to="/careers" className="hover:text-teal-400 transition-colors">Careers @ Kshatryx Technologies</Link></li>
               <li><Link to="/register-expert" className="hover:text-teal-400 transition-colors font-bold text-teal-200">Join as Partner</Link></li>
               <li><Link to="/expert/login" className="hover:text-teal-400 transition-colors opacity-80 hover:opacity-100 font-bold">Partner Login</Link></li>
             </ul>
@@ -124,7 +124,7 @@ export default function Footer() {
             'border-t border-slate-800 pt-4 pb-1 md:pt-8 md:pb-0 flex flex-col md:flex-row justify-between items-center gap-2 md:gap-4 text-[10px] md:text-xs opacity-50'
           }
         >
-          <p className="text-center md:text-left">© 2026 Apna Hunar. All rights reserved.</p>
+          <p className="text-center md:text-left">© 2026 Kshatryx Technologies. All rights reserved.</p>
           <p className="text-center md:text-right">Made with <span className="text-red-500">❤</span> in Jabalpur.</p>
         </div>
       </div>

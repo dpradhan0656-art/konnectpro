@@ -61,6 +61,9 @@ export default function ServicesSection({ services, cart, onAddToCart }) {
           <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest p-6 border border-dashed border-slate-200 rounded-3xl w-full text-center bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] min-w-0">
             <span className="text-3xl block mb-2">🛠️</span>
             Loading popular services...
+            <p className="mt-3 text-[10px] font-bold uppercase tracking-widest text-slate-400/80">
+              Powered by Kshatryx Technologies
+            </p>
           </div>
         )}
       </div>

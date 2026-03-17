@@ -160,7 +160,7 @@ const ServiceDetails = () => {
         <div className="bg-green-50 p-4 rounded-xl flex items-center gap-3 border border-green-100">
           <ShieldCheck className="text-green-600" size={24} />
           <div>
-            <h4 className="font-bold text-green-800 text-sm">Apna Hunar Safety Guarantee</h4>
+            <h4 className="font-bold text-green-800 text-sm">Kshatryx Technologies Safety Guarantee</h4>
             <p className="text-xs text-green-600">Verified Experts & Insurance Cover upto ₹5000.</p>
           </div>
         </div>

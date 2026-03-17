@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 
 export default function Logo({ size = 40, color = "white" }) {
   // Color logic
@@ -17,7 +17,7 @@ export default function Logo({ size = 40, color = "white" }) {
       {/* ✍️ TEXT MARK */}
       <div className="flex flex-col justify-center">
         <h1 style={{ fontSize: size * 0.5, color: text }} className="font-heading font-extrabold leading-none tracking-tight">
-          ApnaHunar
+          Kshatryx
         </h1>
         <span style={{ fontSize: size * 0.2, color: text }} className="opacity-60 font-medium tracking-widest uppercase">
           Services

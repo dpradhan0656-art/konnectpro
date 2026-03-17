@@ -20,7 +20,7 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
-# Added for Capacitor/Apna Hunar Production Stability
+# Added for Capacitor/Kshatryx Technologies Production Stability
 -keep class com.getcapacitor.** { *; }
 -keep class com.kshatr.app.** { *; }
 -keepattributes *Annotation*

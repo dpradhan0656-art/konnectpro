@@ -1,5 +1,5 @@
 -- =============================================================================
--- RLS (Row Level Security) + app_admin for Apna Hunar / Kshatr
+-- RLS (Row Level Security) + app_admin for Kshatryx Technologies / Kshatr
 -- Run in Supabase SQL Editor. Ensures only authorized access per role.
 -- =============================================================================
 

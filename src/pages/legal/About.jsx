@@ -26,9 +26,9 @@ export default function About() {
             <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex items-start gap-4">
                <ShieldCheck className="text-teal-600 shrink-0 mt-1" size={24}/>
                <div>
-                  <h3 className="font-bold text-slate-900 mb-1">Powered by Apna Hunar</h3>
+                  <h3 className="font-bold text-slate-900 mb-1">Powered by Kshatryx Technologies</h3>
                   <p className="text-sm">
-                     Kshatr is a flagship venture of <strong>Apna Hunar</strong>, an enterprise dedicated to uplifting skilled professionals in India. Our Udyam Registration reflects our commitment to legitimate and transparent business practices.
+                     Kshatr is a flagship venture of <strong>Kshatryx Technologies</strong>, an enterprise dedicated to uplifting skilled professionals in India. Our Udyam Registration reflects our commitment to legitimate and transparent business practices.
                   </p>
                </div>
             </div>

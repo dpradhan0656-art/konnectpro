@@ -126,7 +126,7 @@ export default function RegisterExpert() {
               <div className="bg-slate-900 p-8 rounded-[2rem] border border-teal-500/30 shadow-2xl max-w-md w-full">
                   <CheckCircle size={60} className="text-teal-500 mx-auto mb-4" />
                   <h2 className="text-2xl font-black text-white mb-2">Application Received!</h2>
-                  <p className="text-slate-400 text-sm mb-6">Your expert profile has been created successfully. Apna Hunar admin team is reviewing your application.</p>
+                  <p className="text-slate-400 text-sm mb-6">Your expert profile has been created successfully. Kshatryx Technologies admin team is reviewing your application.</p>
                   <Link to="/expert/login" className="bg-teal-600 text-white px-6 py-3 rounded-xl font-bold inline-block shadow-lg hover:bg-teal-500 transition-all">Go to Login</Link>
               </div>
           </div>
@@ -139,7 +139,7 @@ export default function RegisterExpert() {
         <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
         <div className="relative z-10">
             <div className="text-center mb-8">
-                <p className="text-[10px] text-teal-500 font-bold uppercase tracking-widest mb-1">Join Apna Hunar</p>
+                <p className="text-[10px] text-teal-500 font-bold uppercase tracking-widest mb-1">Join Kshatryx Technologies</p>
                 <h1 className="text-2xl font-black text-white">Expert Registration</h1>
             </div>
 

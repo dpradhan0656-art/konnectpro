@@ -779,6 +779,11 @@ export default function Checkout() {
                {loading ? <Loader2 className="animate-spin" size={18}/> : <ShieldCheck size={18}/>} 
                {loading ? 'Processing...' : (isOnlinePaymentEnabled && paymentMethod === 'online' ? 'Pay & Book Now' : 'Confirm Booking')}
             </button>
+            {loading && (
+              <p className="mt-4 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400/80 relative z-10">
+                Powered by Kshatryx Technologies
+              </p>
+            )}
          </div>
       </div>
     </div>
