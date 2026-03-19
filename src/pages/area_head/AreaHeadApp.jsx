@@ -1,15 +1,69 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
-import { Shield, MapPin, Briefcase, LogOut, Users, Activity, Clock, CheckCircle, Navigation, Phone } from 'lucide-react';
+import { Shield, MapPin, Briefcase, LogOut, Users, Activity, Clock, CheckCircle, Navigation, Phone, RefreshCw } from 'lucide-react';
 
 export default function AreaHeadApp() {
   const navigate = useNavigate();
   const [manager, setManager] = useState(null);
   const [areaBookings, setAreaBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [walletSyncing, setWalletSyncing] = useState(false);
+  const [walletSyncError, setWalletSyncError] = useState('');
+  const [walletTransactions, setWalletTransactions] = useState([]);
 
   useEffect(() => { checkManagerProfile(); }, []);
+
+  // Auto-sync wallet ledger when this page becomes visible/focused.
+  useEffect(() => {
+    if (!manager?.id) return;
+
+    const syncNow = () => refreshWalletLedger(manager.id);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') syncNow();
+    };
+
+    window.addEventListener('focus', syncNow);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('focus', syncNow);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [manager?.id]);
+
+  const refreshWalletLedger = async (headId) => {
+    if (!headId) return;
+    setWalletSyncing(true);
+    setWalletSyncError('');
+    try {
+      // 1) Refresh wallet balance + display fields
+      const { data: headData, error: headError } = await supabase
+        .from('area_heads')
+        .select('id, wallet_balance, employment_type, compensation_value, status, assigned_area, name, user_id')
+        .eq('id', headId)
+        .single();
+
+      if (headError) throw headError;
+      if (headData) setManager((prev) => (prev ? { ...prev, ...headData } : headData));
+
+      // 2) Fetch ledger entries for this area head
+      const { data: txData, error: txError } = await supabase
+        .from('wallet_transactions')
+        .select('amount, description, transaction_type, created_at')
+        .eq('user_id', headId)
+        .eq('user_type', 'area_head')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (txError) throw txError;
+      setWalletTransactions(txData || []);
+    } catch (err) {
+      setWalletSyncError('Unable to sync earnings right now.');
+    } finally {
+      setWalletSyncing(false);
+    }
+  };
 
   const checkManagerProfile = async () => {
     setLoading(true);
@@ -21,6 +75,7 @@ export default function AreaHeadApp() {
     if (managerData) {
         setManager(managerData);
         if(managerData.status === 'active') fetchAreaBookings(managerData.id);
+        if (managerData.status === 'active') refreshWalletLedger(managerData.id);
     }
     setLoading(false);
   };
@@ -57,6 +112,33 @@ export default function AreaHeadApp() {
   // Calculate Stats
   const completedJobs = areaBookings.filter(b => b.status === 'completed').length;
   const activeJobs = areaBookings.filter(b => b.status === 'assigned' || b.status === 'pending' || b.status === 'in_progress').length;
+
+  const parseCityFromDescription = (description) => {
+    if (!description || typeof description !== 'string') return null;
+    // Expected: "... (CityName)" at the end
+    const match = description.match(/\(([^)]+)\)\s*$/);
+    if (!match?.[1]) return null;
+    return match[1].trim();
+  };
+
+  const creditTransactions = (walletTransactions || []).filter((t) => t?.transaction_type === 'credit');
+  const totalEarnings = creditTransactions.reduce((sum, t) => sum + (Number(t?.amount ?? 0) || 0), 0);
+
+  const cityDisplayOrder = ['Jabalpur', 'Bhopal', 'Sagar', 'Jhansi'];
+  const normalizedCityTotals = cityDisplayOrder.reduce((acc, c) => {
+    acc[c] = 0;
+    return acc;
+  }, {});
+
+  creditTransactions.forEach((t) => {
+    const city = parseCityFromDescription(t?.description);
+    if (!city) return;
+    const key = cityDisplayOrder.find((c) => c.toLowerCase() === city.toLowerCase());
+    if (!key) return;
+    normalizedCityTotals[key] += Number(t?.amount ?? 0) || 0;
+  });
+
+  const recentTransactions = (walletTransactions || []).slice(0, 6);
 
   return (
     <div className="min-h-screen bg-slate-950 font-sans pb-24 selection:bg-teal-500/30">
@@ -98,6 +180,112 @@ export default function AreaHeadApp() {
                    </div>
                </div>
            </div>
+       </div>
+
+       {/* 💹 Earnings & Commission Dashboard (UI-only) */}
+       <div className="p-4 max-w-xl mx-auto space-y-6 mt-2">
+         <div className="bg-white/95 border border-slate-200 rounded-xl shadow-sm p-5">
+           <div className="flex items-start justify-between gap-4">
+             <div>
+               <h2 className="text-base font-bold text-slate-900">
+                 Earnings & Commission Dashboard
+               </h2>
+               <p className="text-xs text-slate-600 mt-1 font-semibold">
+                 City-wise ledger from wallet transactions
+               </p>
+             </div>
+             <button
+               type="button"
+               onClick={() => refreshWalletLedger(manager?.id)}
+               disabled={walletSyncing}
+               className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 text-white text-[11px] font-bold disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+             >
+               <RefreshCw size={14} />
+               {walletSyncing ? 'Refreshing...' : 'Refresh Balance'}
+             </button>
+           </div>
+
+           {walletSyncError && (
+             <p className="mt-3 text-xs text-red-600 font-semibold">
+               {walletSyncError}
+             </p>
+           )}
+
+           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+             <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                 Current Wallet Balance
+               </p>
+               <p className="mt-1 text-2xl font-bold text-blue-700">
+                 ₹{Number(manager?.wallet_balance ?? 0).toFixed(0)}
+               </p>
+             </div>
+             <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                 Total Earnings (Credits)
+               </p>
+               <p className="mt-1 text-2xl font-bold text-blue-700">
+                 ₹{totalEarnings.toFixed(0)}
+               </p>
+             </div>
+           </div>
+
+           <div className="mt-4">
+             <h3 className="text-sm font-bold text-slate-900">
+               City-wise Earnings
+             </h3>
+             <div className="mt-3 grid grid-cols-2 gap-3">
+               {cityDisplayOrder.map((city) => (
+                 <div
+                   key={city}
+                   className="bg-white border border-slate-200 rounded-xl p-3 text-center"
+                 >
+                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                     {city}
+                   </p>
+                   <p className="mt-1 text-lg font-bold text-blue-700">
+                     ₹{normalizedCityTotals[city].toFixed(0)}
+                   </p>
+                 </div>
+               ))}
+             </div>
+           </div>
+
+           <div className="mt-4">
+             <h3 className="text-sm font-bold text-slate-900">
+               Recent Transactions
+             </h3>
+
+             {recentTransactions.length === 0 ? (
+               <p className="mt-3 text-xs text-slate-600 font-semibold">
+                 No transactions found yet.
+               </p>
+             ) : (
+               <div className="mt-3 space-y-2">
+                 {recentTransactions.map((tx, idx) => (
+                   <div
+                     key={`${tx?.created_at || idx}-${idx}`}
+                     className="bg-white border border-slate-200 rounded-xl p-3"
+                   >
+                     <div className="flex items-start justify-between gap-3">
+                       <div>
+                         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                           {tx?.created_at ? new Date(tx.created_at).toLocaleDateString() : '—'}
+                         </p>
+                         <p className="mt-1 text-xs text-slate-700 font-semibold leading-relaxed">
+                           {tx?.description || '—'}
+                         </p>
+                       </div>
+                       <p className={`text-sm font-bold ${tx?.transaction_type === 'credit' ? 'text-blue-700' : 'text-slate-700'} shrink-0`}>
+                         ₹{Number(tx?.amount ?? 0).toFixed(0)}
+                       </p>
+                     </div>
+                   </div>
+                 ))}
+               </div>
+             )}
+           </div>
+         </div>
        </div>
 
        <div className="p-4 max-w-xl mx-auto space-y-6 mt-2">
