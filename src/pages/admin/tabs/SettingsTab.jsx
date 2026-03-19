@@ -19,7 +19,7 @@ export default function SettingsTab() {
     site_theme: 'default',
     company_phone: '+91 9589634799', 
     company_email: 'apnahunars@gmail.com',
-    company_address: 'Jabalpur, Madhya Pradesh,\nIndia - 482001'
+    company_address: 'Jabalpur, Madhya Pradesh,\nIndia - 482005'
   });
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
