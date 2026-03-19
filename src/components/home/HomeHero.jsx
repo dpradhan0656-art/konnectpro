@@ -3,7 +3,8 @@ import { Search, Mic, MapPin, X } from 'lucide-react';
 // import { Sparkles } from 'lucide-react'; // AI star icon – removed for clean native-like UI
 
 /** Edit this for hero trust line (e.g. "Trusted by 10,000+ happy homes") */
-export const HERO_TRUST_LINE = 'Trusted by 10,000+ happy homes';
+export const HERO_TRUST_LINE =
+  'Verified Electricians, Plumbers, and Beauticians. Safe, Reliable, and Professional Home Services starting at just ₹99.';
 
 export default function HomeHero({
   locationName,
@@ -67,7 +68,7 @@ export default function HomeHero({
         </div>
 
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 leading-tight mb-2 max-w-lg">
-          {greeting}
+          Certified Experts at Your Doorstep in Bhopal, Jabalpur, Sagar & Jhansi
         </h1>
         <p className="text-slate-600 text-sm font-medium mb-8 sm:mb-10 flex items-center gap-2">
           {HERO_TRUST_LINE}
@@ -80,7 +81,7 @@ export default function HomeHero({
               type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search 'Salon', 'Plumber', 'Cleaning'..."
+              placeholder="Search for 'Plumber', 'AC Repair' or 'Salon'..."
               className="w-full min-w-0 py-3 sm:py-4 pl-12 sm:pl-14 pr-14 sm:pr-16 bg-transparent text-slate-900 font-semibold text-base sm:text-lg outline-none placeholder:text-slate-400"
               aria-label="Search services"
             />
