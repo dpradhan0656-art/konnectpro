@@ -16,8 +16,8 @@ export default function ServicesSection({ services, cart, onAddToCart }) {
   return (
     <section className="px-4 sm:px-6 max-w-4xl mx-auto w-full min-w-0 overflow-hidden" aria-labelledby="services-heading">
       <div className="flex items-center justify-between gap-2 mb-4">
-        <h2 id="services-heading" className="font-black text-slate-900 text-xl tracking-tight flex items-center gap-2">
-          <Tag size={20} className="text-amber-500" aria-hidden="true" />
+        <h2 id="services-heading" className="font-bold text-slate-900 text-xl tracking-tight flex items-center gap-2">
+          <Tag size={20} className="text-blue-700" aria-hidden="true" />
           Bestselling Services
         </h2>
         {services.length > 1 && (
@@ -58,7 +58,7 @@ export default function ServicesSection({ services, cart, onAddToCart }) {
             );
           })
         ) : (
-          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest p-6 border border-dashed border-slate-200 rounded-3xl w-full text-center bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] min-w-0">
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest p-6 border border-dashed border-slate-200 rounded-xl w-full text-center bg-white shadow-sm min-w-0">
             <span className="text-3xl block mb-2">🛠️</span>
             Loading popular services...
             <p className="mt-3 text-[10px] font-bold uppercase tracking-widest text-slate-400/80">

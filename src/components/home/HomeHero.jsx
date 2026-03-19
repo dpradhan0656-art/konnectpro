@@ -30,52 +30,58 @@ export default function HomeHero({
   };
 
   return (
-    <section className="relative pt-6 pb-28 px-4 sm:px-6 w-full max-w-[100vw] overflow-x-hidden overflow-y-visible min-h-0 bg-slate-950 rounded-b-[2.5rem] md:rounded-b-[4rem] shadow-2xl box-border" aria-label="Welcome and search">
-      <div className="absolute inset-0 z-0 opacity-25 pointer-events-none mix-blend-screen" style={{ backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.25) 1.5px, transparent 1.5px)', backgroundSize: '22px 22px' }} />
-      <div className="absolute top-0 right-0 w-80 h-80 bg-teal-500/20 rounded-full blur-[80px] -mr-20 -mt-20 pointer-events-none" aria-hidden="true" />
-      <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/20 rounded-full blur-[80px] -ml-20 -mb-20 pointer-events-none" aria-hidden="true" />
+    <section className="relative pt-6 pb-28 px-4 sm:px-6 w-full max-w-[100vw] overflow-x-hidden overflow-y-visible min-h-0 bg-slate-50 rounded-b-xl md:rounded-b-2xl shadow-sm box-border" aria-label="Welcome and search">
+      <div className="hidden absolute inset-0 z-0 opacity-0 pointer-events-none" aria-hidden="true" />
+      <div className="hidden absolute top-0 right-0 w-80 h-80 bg-blue-500/20 rounded-full blur-[80px] -mr-20 -mt-20 pointer-events-none" aria-hidden="true" />
+      <div className="hidden absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-[80px] -ml-20 -mb-20 pointer-events-none" aria-hidden="true" />
 
       <div className="relative z-10 max-w-4xl mx-auto min-w-0 w-full box-border">
-        <div className="flex items-center gap-3 mb-6 sm:mb-8 bg-white/10 backdrop-blur-md w-fit max-w-full px-4 py-2.5 rounded-full border border-white/10 shadow-inner">
-          <div className={`p-1.5 rounded-full ${cityStatus.active ? 'bg-gradient-to-br from-green-400 to-green-600' : 'bg-red-500'} shadow-[0_0_15px_rgba(74,222,128,0.4)]`}>
-            <MapPin size={14} className="text-white" aria-hidden="true" />
+        <div className="flex items-center gap-3 mb-6 sm:mb-8 bg-white border border-slate-200 w-fit max-w-full px-4 py-2.5 rounded-full shadow-sm">
+          <div
+            className={`p-1.5 rounded-full ${cityStatus.active ? 'bg-blue-700' : 'bg-slate-100'} shadow-sm border ${cityStatus.active ? 'border-blue-700/20' : 'border-slate-200'}`}
+          >
+            <MapPin
+              size={14}
+              className={cityStatus.active ? 'text-white' : 'text-slate-700'}
+              aria-hidden="true"
+            />
           </div>
           <div>
-            <p className="text-[9px] font-black text-teal-300 uppercase tracking-widest leading-none mb-1">{cityStatus.message}</p>
+            <p className="text-[9px] font-bold text-blue-700 uppercase tracking-widest leading-none mb-1">{cityStatus.message}</p>
             {isEditingLoc ? (
               <input
                 autoFocus
                 placeholder="Enter City"
-                className="bg-transparent border-b border-white text-white font-black text-sm w-32 outline-none placeholder:text-slate-400"
+                className="bg-transparent border-b border-slate-300 text-slate-900 font-bold text-sm w-32 outline-none placeholder:text-slate-400"
                 value={locationName === 'Select Location' ? '' : locationName}
                 onChange={(e) => setLocationName(e.target.value)}
                 onBlur={handleLocationBlur}
                 aria-label="Edit your city"
               />
             ) : (
-              <button type="button" onClick={() => setIsEditingLoc(true)} className="text-left text-sm font-black text-white leading-none tracking-wide border-b border-transparent hover:border-white/50 transition-all duration-300">
+              <button type="button" onClick={() => setIsEditingLoc(true)} className="text-left text-sm font-bold text-slate-900 leading-none tracking-wide border-b border-transparent hover:border-slate-400 transition-all duration-300">
                 {locationName}
               </button>
             )}
           </div>
         </div>
 
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-tight mb-2 drop-shadow-lg max-w-lg">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 leading-tight mb-2 max-w-lg">
           {greeting}
         </h1>
-        <p className="text-slate-400 text-sm font-medium mb-8 sm:mb-10 flex items-center gap-2">
+        <p className="text-slate-600 text-sm font-medium mb-8 sm:mb-10 flex items-center gap-2">
           {HERO_TRUST_LINE}
         </p>
 
         <div className="relative z-30 transform translate-y-6 w-full max-w-full">
-          <div className="relative rounded-2xl bg-white border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center p-2 min-h-[52px] w-full box-border">
+          <div className="relative rounded-xl bg-white border border-slate-200 shadow-sm flex items-center p-2 min-h-[52px] w-full box-border">
             <Search className="absolute left-4 sm:left-5 text-slate-400" size={22} aria-hidden="true" />
             <input
               type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search 'Salon', 'Plumber', 'Cleaning'..."
-              className="w-full min-w-0 py-3 sm:py-4 pl-12 sm:pl-14 pr-14 sm:pr-16 bg-transparent text-slate-900 font-bold text-base sm:text-lg outline-none placeholder:text-slate-400"
+              className="w-full min-w-0 py-3 sm:py-4 pl-12 sm:pl-14 pr-14 sm:pr-16 bg-transparent text-slate-900 font-semibold text-base sm:text-lg outline-none placeholder:text-slate-400"
               aria-label="Search services"
             />
             {searchQuery && (
@@ -84,7 +90,7 @@ export default function HomeHero({
               </button>
             )}
             <span className="h-8 w-px bg-slate-200 mx-2 absolute right-12 sm:right-12" aria-hidden="true" />
-            <button type="button" onClick={() => alert('🎤 Voice Search coming soon!')} className="absolute right-2 sm:right-3 p-2.5 min-h-[44px] min-w-[44px] rounded-xl text-teal-600 hover:bg-teal-50 transition-all duration-300 flex items-center justify-center" aria-label="Voice search">
+            <button type="button" onClick={() => alert('🎤 Voice Search coming soon!')} className="absolute right-2 sm:right-3 p-2.5 min-h-[44px] min-w-[44px] rounded-xl text-blue-700 hover:bg-blue-50 transition-all duration-300 flex items-center justify-center" aria-label="Voice search">
               <Mic size={22} />
             </button>
           </div>

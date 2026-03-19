@@ -15,7 +15,7 @@ export default function ServiceCard({ service, isInCart, onAddToCart }) {
 
   return (
     /* OLD: border-slate-100 shadow-[0_8px_30px...] — lighter card */
-    <article className="min-w-[200px] w-[200px] max-w-[200px] flex flex-col bg-white rounded-2xl border-2 border-slate-200/90 shadow-[0_4px_20px_-6px_rgba(0,0,0,0.1)] hover:shadow-[0_12px_32px_-8px_rgba(0,0,0,0.18)] hover:border-teal-200 hover:-translate-y-1 transition-all duration-300 group overflow-hidden active:scale-[0.99]">
+    <article className="min-w-[200px] w-[200px] max-w-[200px] flex flex-col bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-200 hover:-translate-y-1 transition-all duration-300 group overflow-hidden active:scale-[0.99]">
       {/* Image block – more prominent, interactive */}
       <div className="relative w-full aspect-[4/3] bg-slate-100 shrink-0 flex items-center justify-center overflow-hidden">
         {useImageUrl ? (
@@ -36,10 +36,10 @@ export default function ServiceCard({ service, isInCart, onAddToCart }) {
       <div className="p-4 flex flex-col flex-1 min-w-0">
         <div className="flex justify-between items-start gap-2 mb-2">
           <span className="text-[11px] font-bold text-slate-400 line-through shrink-0">₹{wasPrice}</span>
-          <span className="text-slate-900 text-lg font-black shrink-0">₹{displayPrice}</span>
+          <span className="text-slate-900 text-lg font-bold shrink-0">₹{displayPrice}</span>
         </div>
         {/* OLD: text-sm — NEW: more prominent title */}
-        <h3 className="font-black text-slate-800 text-base leading-tight mb-1 line-clamp-2 min-h-[40px] group-hover:text-teal-800 transition-colors">
+        <h3 className="font-bold text-slate-800 text-base leading-tight mb-1 line-clamp-2 min-h-[40px] group-hover:text-blue-700 transition-colors">
           {service.name}
         </h3>
         <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest truncate mb-4">
@@ -49,7 +49,7 @@ export default function ServiceCard({ service, isInCart, onAddToCart }) {
           type="button"
           onClick={() => onAddToCart(service)}
           disabled={isInCart}
-          className={`w-full min-h-[44px] py-3 rounded-xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98] mt-auto ${isInCart ? 'bg-green-50 text-green-600 border border-green-200 cursor-default' : 'bg-slate-900 text-white shadow-lg shadow-slate-900/20 hover:bg-teal-600 border border-slate-900 hover:border-teal-600'}`}
+          className={`w-full min-h-[44px] py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98] mt-auto ${isInCart ? 'bg-green-50 text-green-600 border border-green-200 cursor-default' : 'bg-blue-700 text-white shadow-sm hover:bg-blue-600 border border-blue-700 hover:border-blue-600'}`}
         >
           {isInCart ? (
             <>

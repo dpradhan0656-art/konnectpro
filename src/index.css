@@ -93,8 +93,19 @@ body {
 
 /* 🎭 DYNAMIC THEME OVERRIDES (Backup Variables) */
 :root {
-  --theme-primary: #0d9488;
-  /* Default Teal */
-  --theme-bg: #0f172a;
-  /* Default Dark Blue */
+  --theme-primary: #1d4ed8;
+  /* Default Navy (royal blue) */
+  --theme-bg: #ffffff;
+  /* Default Pure White */
+
+  /* Tailwind design-system tokens (used by tailwind.config.js) */
+  --primary-color: #1d4ed8;
+  --secondary-color: #1e3a8a;
+  --accent-color: #2563eb;
+  --bg-color: #f8fafc;
+  --surface-color: #ffffff;
+  --text-color: #0f172a;
+
+  --font-heading: 'Inter', sans-serif;
+  --font-body: 'Inter', sans-serif;
 }

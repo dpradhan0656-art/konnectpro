@@ -5,12 +5,12 @@ import { isImageUrl } from '../../lib/serviceIconUtils';
 
 /** Gradient fallbacks when category has no image (distinct from Deals — no top badge) */
 const BG_GRADIENTS = [
-  'from-blue-600/90 to-indigo-800/90',
-  'from-emerald-600/90 to-teal-800/90',
-  'from-amber-600/90 to-orange-700/90',
-  'from-violet-600/90 to-purple-800/90',
-  'from-rose-600/90 to-pink-700/90',
-  'from-cyan-600/90 to-teal-800/90',
+  'from-blue-700/20 to-indigo-900/10',
+  'from-blue-600/18 to-sky-900/8',
+  'from-indigo-700/18 to-blue-900/10',
+  'from-slate-200/40 to-slate-50/20',
+  'from-blue-600/15 to-emerald-900/8',
+  'from-slate-300/35 to-white/10',
 ];
 
 const CATEGORY_IMAGE_FALLBACK = 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80';
@@ -21,7 +21,7 @@ export default function CategorySection({ categories, loading }) {
   return (
     <section className="px-4 sm:px-6 max-w-5xl mx-auto relative z-20 min-w-0 w-full overflow-hidden" aria-labelledby="categories-heading">
       <div className="flex justify-between items-end mb-5">
-        <h2 id="categories-heading" className="font-black text-slate-900 text-xl sm:text-2xl tracking-tight">
+        <h2 id="categories-heading" className="font-bold text-slate-900 text-xl sm:text-2xl tracking-tight">
           Explore Categories
         </h2>
         <Link to="/" className="text-teal-600 text-[11px] font-bold uppercase tracking-widest cursor-pointer flex items-center gap-1 hover:text-teal-700 transition-colors duration-300">
@@ -32,7 +32,7 @@ export default function CategorySection({ categories, loading }) {
       {loading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 animate-pulse" role="status" aria-label="Loading categories">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="aspect-[4/3] sm:aspect-[5/4] bg-slate-200 rounded-2xl sm:rounded-3xl" />
+            <div key={i} className="aspect-[4/3] sm:aspect-[5/4] bg-slate-100 rounded-xl sm:rounded-xl" />
           ))}
         </div>
       ) : categories.length > 0 ? (
@@ -48,7 +48,7 @@ export default function CategorySection({ categories, loading }) {
                 key={cat.id || i}
                 type="button"
                 onClick={() => navigate(`/category/${slugUrl}`)}
-                className="relative rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer group text-left touch-manipulation aspect-[4/3] sm:aspect-[5/4] min-h-[140px] sm:min-h-[160px] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_32px_-8px_rgba(0,0,0,0.25)] transition-all duration-500 hover:-translate-y-0.5 border border-slate-200/60"
+                className="relative rounded-xl sm:rounded-xl overflow-hidden cursor-pointer group text-left touch-manipulation aspect-[4/3] sm:aspect-[5/4] min-h-[140px] sm:min-h-[160px] shadow-sm hover:shadow-md transition-all duration-500 hover:-translate-y-0.5 border border-slate-200"
                 role="listitem"
               >
                 {/* Full-bleed background: image or gradient */}
@@ -65,20 +65,20 @@ export default function CategorySection({ categories, loading }) {
                     />
                   ) : null}
                   <div
-                    className={`absolute inset-0 bg-gradient-to-br ${gradientClass} ${useImage ? 'opacity-85 group-hover:opacity-90' : ''}`}
+                    className={`absolute inset-0 bg-gradient-to-br ${gradientClass} ${useImage ? 'opacity-70 group-hover:opacity-80' : ''}`}
                     aria-hidden="true"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" aria-hidden="true" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-white/80 via-transparent to-transparent pointer-events-none" aria-hidden="true" />
                 </div>
 
                 {/* Glassmorphism bar at bottom — distinct from Deals (no top-left badge) */}
                 <div className="absolute bottom-0 left-0 right-0 z-10 p-3 sm:p-4">
-                  <div className="flex items-center justify-between gap-2 rounded-xl sm:rounded-2xl border border-white/20 bg-white/15 backdrop-blur-md px-4 py-3 shadow-lg">
-                    <span className="font-black text-sm sm:text-base text-white drop-shadow-md line-clamp-1 pr-2">
+                  <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm">
+                    <span className="font-bold text-sm sm:text-base text-slate-900 line-clamp-1 pr-2">
                       {cat.name}
                     </span>
-                    <span className="flex items-center gap-0.5 text-white/95 text-xs font-bold whitespace-nowrap shrink-0">
-                      Explore <ChevronRight size={16} className="text-white" aria-hidden="true" />
+                    <span className="flex items-center gap-0.5 text-slate-700 text-xs font-bold whitespace-nowrap shrink-0">
+                      Explore <ChevronRight size={16} className="text-slate-500" aria-hidden="true" />
                     </span>
                   </div>
                 </div>
