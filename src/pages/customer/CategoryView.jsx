@@ -56,7 +56,7 @@ export default function CategoryView() {
   };
 
   return (
-    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-slate-50 pb-32 font-sans selection:bg-teal-100"> 
+    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-slate-50 pt-4 pb-32 font-sans selection:bg-teal-100"> 
       
       {/* HEADER */}
       <div className="bg-slate-900 text-white pt-6 pb-10 px-6 rounded-b-[3rem] shadow-2xl relative overflow-hidden w-full box-border">
@@ -74,7 +74,7 @@ export default function CategoryView() {
       </div>
 
       {/* SERVICE LIST */}
-      <div className="px-4 -mt-8 space-y-5 max-w-2xl mx-auto relative z-20 w-full min-w-0">
+      <div className="px-4 mt-8 space-y-6 max-w-2xl mx-auto relative z-20 w-full min-w-0">
         
         {loading ? (
            <div className="text-center py-20 bg-white rounded-[2rem] shadow-lg border border-slate-100">
