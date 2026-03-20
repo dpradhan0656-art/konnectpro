@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { Shield, MapPin, Briefcase, LogOut, Users, Activity, Clock, CheckCircle, Navigation, Phone, RefreshCw } from 'lucide-react';
+import OnboardExpertForm from '../../components/area_head/OnboardExpertForm';
 
 export default function AreaHeadApp() {
   const navigate = useNavigate();
@@ -180,6 +181,11 @@ export default function AreaHeadApp() {
                    </div>
                </div>
            </div>
+       </div>
+
+       {/* 🧑‍🔧 Area Head only: onboard expert (isolated from public registration) */}
+       <div className="p-4 max-w-xl mx-auto mt-4">
+         <OnboardExpertForm manager={manager} />
        </div>
 
        {/* 💹 Earnings & Commission Dashboard (UI-only) */}

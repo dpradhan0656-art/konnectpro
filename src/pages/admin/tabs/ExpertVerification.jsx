@@ -16,14 +16,36 @@ export default function ExpertVerification() {
   const fetchPendingExperts = async () => {
     setLoading(true);
     // Un experts ko lao jinka status 'pending' hai aur KYC form bhar diya hai
-    const { data, error } = await supabase
-      .from('experts')
-      .select('*')
-      .eq('status', 'pending')
-      .eq('is_kyc_submitted', true)
-      .order('created_at', { ascending: false });
-      
-    if (data) setPendingExperts(data);
+    // Pending: KYC-completed experts OR area-head onboarded referrals (no KYC yet)
+    const [kycRes, onboardRes] = await Promise.all([
+      supabase
+        .from('experts')
+        .select('*')
+        .eq('status', 'pending')
+        .eq('is_kyc_submitted', true)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('experts')
+        .select('*')
+        .eq('status', 'pending')
+        .not('area_head_id', 'is', null)
+        .order('created_at', { ascending: false }),
+    ]);
+
+    const err = kycRes.error || onboardRes.error;
+    if (err) {
+      console.error(err);
+      setPendingExperts([]);
+    } else {
+      const map = new Map();
+      [...(kycRes.data || []), ...(onboardRes.data || [])].forEach((row) => {
+        map.set(row.id, row);
+      });
+      const merged = Array.from(map.values()).sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      );
+      setPendingExperts(merged);
+    }
     setLoading(false);
   };
 

@@ -19,7 +19,10 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!supabaseServiceKey) {
+      return Response.json({ error: 'Server misconfigured: SUPABASE_SERVICE_ROLE_KEY missing' }, { status: 500, headers: corsHeaders });
+    }
 
     const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
     const token = authHeader.replace('Bearer ', '');
@@ -29,7 +32,13 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Invalid or expired token' }, { status: 401, headers: corsHeaders });
     }
 
-    const { data: adminRow } = await supabaseClient.from('app_admin').select('user_id').eq('user_id', user.id).limit(1).single();
+    // Must use service role here: anon client has no JWT on PostgREST, so RLS would hide app_admin rows.
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: adminRow } = await supabaseAdmin
+      .from('app_admin')
+      .select('user_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
     if (!adminRow) {
       return Response.json({ error: 'Not authorized. Admin access required.' }, { status: 403, headers: corsHeaders });
     }
@@ -38,8 +47,6 @@ Deno.serve(async (req) => {
     if (!user_id || !new_password || typeof new_password !== 'string' || new_password.length < 6) {
       return Response.json({ error: 'user_id and new_password (min 6 chars) required' }, { status: 400, headers: corsHeaders });
     }
-
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(user_id, { password: new_password });
 
     if (updateError) {
