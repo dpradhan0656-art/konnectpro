@@ -1,4 +1,5 @@
 import React from 'react';
+import { persistUserCity } from '../../lib/persistUserCity';
 import { Search, Mic, MapPin, X } from 'lucide-react';
 // import { Sparkles } from 'lucide-react'; // AI star icon – removed for clean native-like UI
 
@@ -21,7 +22,7 @@ export default function HomeHero({
   const handleLocationBlur = () => {
     setIsEditingLoc(false);
     if (locationName && locationName.trim() !== '' && locationName !== 'Select Location') {
-      localStorage.setItem('kshatr_user_city', locationName.trim());
+      persistUserCity(locationName.trim());
       setCityStatus({ active: true, message: 'Serving In' });
       setGreeting(`Welcome to ${locationName.trim()}! How can we help you today?`);
     } else {

@@ -1,3 +1,5 @@
+import { USER_CITY_STORAGE_KEY } from './persistUserCity';
+
 /**
  * Multi-city serviceability: service is shown if available in user's city.
  * service_cities: null | [] | ['all'] => all cities; else e.g. ['jabalpur','indore'] (lowercase).
@@ -15,7 +17,7 @@ export function isServiceAvailableInCity(service, userCity) {
 /** Get current user city key from localStorage (normalized for filtering). */
 export function getUserCityKey() {
   try {
-    const raw = localStorage.getItem('kshatr_user_city') || '';
+    const raw = localStorage.getItem(USER_CITY_STORAGE_KEY) || '';
     return raw.trim().toLowerCase();
   } catch {
     return '';

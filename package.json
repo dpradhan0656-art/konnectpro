@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "seed:pricing": "node src/scripts/seedPricing.js",
     "cap:sync": "npm run build && npx cap sync",
     "cap:android": "npx cap open android",
     "cap:run:android": "npx cap run android",

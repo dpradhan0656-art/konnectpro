@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, ShieldCheck, Briefcase } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { supabase } from '../../lib/supabase';
+import CitySelector from './CitySelector';
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -58,6 +59,11 @@ export default function Navbar() {
                  </span>
              </div>
           </Link>
+
+          {/* City (dynamic pricing) — standalone component; state lives in LocationContext */}
+          <div className="flex-1 min-w-0 flex justify-center px-1 sm:px-2">
+            <CitySelector />
+          </div>
 
           {/* RIGHT SIDE BUTTONS */}
           <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-shrink-0">

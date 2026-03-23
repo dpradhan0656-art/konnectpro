@@ -4,6 +4,7 @@ import { BRAND } from '../../config/brandConfig';
 import { useCart } from '../../context/CartContext';
 import { getUserCityKey, filterServicesByCity } from '../../lib/serviceCityUtils';
 import { reportError } from '../../lib/errorHandling';
+import { persistUserCity } from '../../lib/persistUserCity';
 
 import SOSButton from '../../components/common/SOSButton';
 import HomeHero from '../../components/home/HomeHero';
@@ -97,7 +98,7 @@ export default function Home({ session }) {
             const area = data.address?.suburb || data.address?.neighbourhood || city;
 
             setLocationName(area);
-            localStorage.setItem('kshatr_user_city', area);
+            persistUserCity(area);
             setCityStatus({ active: true, message: 'Serving In' });
 
             const lowerCity = city.toLowerCase();

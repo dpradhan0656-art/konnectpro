@@ -3,9 +3,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { supabase } from './lib/supabase';
 
 // Contexts
-import { CartProvider } from './context/CartContext'; 
-import { ConfigProvider } from './context/ConfigContext'; 
-import { ThemeProvider } from './context/ThemeContext'; 
+import { CartProvider } from './context/CartContext';
+import { ConfigProvider } from './context/ConfigContext';
+import { ThemeProvider } from './context/ThemeContext';
+import { LocationProvider } from './context/LocationContext';
 
 // Components
 import Navbar from './components/common/Navbar';
@@ -159,9 +160,11 @@ function App() {
   return (
     <ConfigProvider>
       <ThemeProvider>
-        <CartProvider>
-          <AppRoutes />
-        </CartProvider>
+        <LocationProvider>
+          <CartProvider>
+            <AppRoutes />
+          </CartProvider>
+        </LocationProvider>
       </ThemeProvider>
     </ConfigProvider>
   );
