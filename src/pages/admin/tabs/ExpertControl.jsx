@@ -12,7 +12,10 @@ export default function ExpertControl() {
   const [categories, setCategories] = useState([]); // ✅ Dynamic Categories from DB
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('approved'); 
+  // Active roster only — pending / rejected review lives in KYC Verifications tab
+  // Legacy Duplicate Approval Flow — status filter toggles (pending | approved | rejected)
+  // const [filterStatus, setFilterStatus] = useState('approved');
+  const ROSTER_STATUS = 'approved';
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -24,19 +27,22 @@ export default function ExpertControl() {
   const [pwValue, setPwValue] = useState('');
   const [pwLoading, setPwLoading] = useState(false);
 
-  useEffect(() => { 
-    fetchData(); 
-  }, [filterStatus]);
+  useEffect(() => {
+    fetchData();
+    // Legacy Duplicate Approval Flow — refetch when filterStatus changed
+    // }, [filterStatus]);
+  }, []);
 
   // --- 1. FETCH DATA (Experts + Categories) ---
   const fetchData = async () => {
     setLoading(true);
     
-    // A. Fetch Experts
+    // A. Fetch Experts (approved active roster only)
+    // Legacy Duplicate Approval Flow — .eq('status', filterStatus) when multi-status filters were enabled
     const { data: expData } = await supabase
         .from('experts')
         .select('*')
-        .eq('status', filterStatus)
+        .eq('status', ROSTER_STATUS)
         .order('created_at', { ascending: false });
     if (expData) setExperts(expData);
 
@@ -52,14 +58,17 @@ export default function ExpertControl() {
   };
 
   // --- 2. UPDATE STATUS (Approve/Block) ---
+  // Legacy Duplicate Approval Flow — pending/reject from Expert Army; use KYC Verifications tab instead
+  /*
   const handleStatusUpdate = async (id, newStatus) => {
     if(!window.confirm(`Are you sure you want to ${newStatus === 'approved' ? 'Approve' : 'Block'} this expert?`)) return;
-    await supabase.from('experts').update({ 
-        status: newStatus, 
-        is_verified: newStatus === 'approved' 
+    await supabase.from('experts').update({
+        status: newStatus,
+        is_verified: newStatus === 'approved'
     }).eq('id', id);
     fetchData();
   };
+  */
 
   // --- 3. TOGGLE DUTY (Live/Off-Duty) ---
   const toggleDuty = async (expert) => {
@@ -146,16 +155,22 @@ export default function ExpertControl() {
             </div>
             <div>
                 <h2 className="text-2xl font-black text-white uppercase tracking-tight">Expert Army</h2>
-                <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Managing {experts.length} Force Members</p>
+                <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Active roster · {experts.length} approved</p>
             </div>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-2">
+        <div className="flex flex-wrap justify-center items-center gap-2">
+            {/* Legacy Duplicate Approval Flow — pending / approved / rejected filter chips */}
+            {/*
             {['pending', 'approved', 'rejected'].map(s => (
                 <button key={s} onClick={() => setFilterStatus(s)} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filterStatus === s ? 'bg-teal-600 text-white shadow-lg shadow-teal-900/40' : 'text-slate-500 bg-slate-950 hover:bg-slate-800'}`}>
                     {s}
                 </button>
             ))}
+            */}
+            <span className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-teal-600/20 text-teal-400 border border-teal-700/40">
+              Approved only
+            </span>
             {/*
               Old Inconsistent Form — header “Manual Add” (modal enlisted fewer fields + auto-approved).
               Kept for history; re-enable by changing false → true if you need instant-approved roster adds.
@@ -220,14 +235,17 @@ export default function ExpertControl() {
                     </div>
                 </div>
 
-                {/* 🛠️ ACTIONS */}
+                {/* 🛠️ ACTIONS — active roster (approved) */}
                 <div className="flex gap-2 mt-6">
+                    {/* Legacy Duplicate Approval Flow — Approve / Reject when filterStatus === 'pending' */}
+                    {/*
                     {filterStatus === 'pending' ? (
                         <>
                             <button onClick={() => handleStatusUpdate(exp.id, 'approved')} className="flex-1 bg-teal-600 hover:bg-teal-500 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all">Approve Force</button>
                             <button onClick={() => handleStatusUpdate(exp.id, 'rejected')} className="px-4 bg-slate-800 text-red-400 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-500/10">Reject</button>
                         </>
                     ) : (
+                    */}
                         <>
                             {exp.user_id && (
                                 <button onClick={() => { setPwModal({ name: exp.name, user_id: exp.user_id }); setPwValue(''); }} className="p-3 bg-amber-600/20 text-amber-400 hover:bg-amber-600/30 rounded-xl transition-all" title="Change Password">
@@ -241,7 +259,9 @@ export default function ExpertControl() {
                                 <Trash2 size={16}/>
                             </button>
                         </>
+                    {/*
                     )}
+                    */}
                 </div>
               </div>
             ))}

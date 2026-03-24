@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as WebBrowser from 'expo-web-browser';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { validateExpertAccess } from './src/auth/expertAccess';
+import { LanguageProvider } from './src/context/LanguageContext';
 import { supabase } from './src/lib/supabase';
 import DashboardScreen from './src/screens/DashboardScreen';
 import LoginScreen from './src/screens/LoginScreen';
@@ -85,6 +86,7 @@ export default function App() {
   const showDashboard = Boolean(session && expert);
 
   return (
+    <LanguageProvider>
     <SafeAreaProvider>
       {booting ? (
         <View style={styles.boot}>
@@ -97,6 +99,7 @@ export default function App() {
       )}
       <StatusBar style="light" />
     </SafeAreaProvider>
+    </LanguageProvider>
   );
 }
 

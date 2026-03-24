@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
-// 🚀 NEW: Supabase import for dynamic fetching
+import { ShieldCheck, Facebook, Instagram, Twitter, Mail, Phone, MapPin, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import ExpertRegistrationForm from '../forms/ExpertRegistrationForm';
 
 export default function Footer() {
-  // 🚀 NEW: State to hold dynamic contact info (with your real defaults)
+  const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
+
   const [contactInfo, setContactInfo] = useState({
-    phone: '+91 9589634799', // Aapka naya asli number
+    phone: '+91 9589634799',
     email: 'apnahunars@gmail.com',
     address: 'Jabalpur, Madhya Pradesh,\nIndia - 482005'
   });
 
-  // 🚀 NEW: Fetch settings from Supabase on load
   useEffect(() => {
     const fetchSettings = async () => {
       const { data, error } = await supabase
@@ -24,7 +24,6 @@ export default function Footer() {
       if (data && !error) {
         const info = { ...contactInfo };
         data.forEach(item => {
-          // Agar database me value hai, toh default ko overwrite kar do
           if (item.setting_key === 'company_phone') info.phone = item.setting_value;
           if (item.setting_key === 'company_email') info.email = item.setting_value;
           if (item.setting_key === 'company_address') info.address = item.setting_value;
@@ -36,17 +35,61 @@ export default function Footer() {
     fetchSettings();
   }, []);
 
+  useEffect(() => {
+    if (!isPartnerModalOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isPartnerModalOpen]);
+
+  const partnerModal =
+    typeof document !== 'undefined'
+      ? createPortal(
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="footer-partner-modal-title"
+            onClick={() => setIsPartnerModalOpen(false)}
+          >
+            <div
+              className="relative w-full max-w-lg max-h-[min(90dvh,40rem)] flex flex-col rounded-[1.5rem] border border-slate-700/90 bg-slate-900 shadow-2xl shadow-black/60 overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-800 bg-slate-950/90 px-4 py-3 sm:px-5">
+                <h2
+                  id="footer-partner-modal-title"
+                  className="text-sm sm:text-base font-black text-white tracking-tight pr-2"
+                >
+                  Join as a Partner <span className="text-teal-400">/ Expert</span>
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setIsPartnerModalOpen(false)}
+                  className="shrink-0 rounded-xl p-2 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                  aria-label="Close partner application"
+                >
+                  <X size={22} strokeWidth={2.25} />
+                </button>
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5 [-webkit-overflow-scrolling:touch]">
+                <ExpertRegistrationForm
+                  variant="footer"
+                  className="rounded-none border-0 shadow-none bg-transparent p-0"
+                />
+              </div>
+            </div>
+          </div>,
+          document.body
+        )
+      : null;
+
   return (
-    <footer
-      className={
-        /* OLD: pt-16 pb-24 md:pb-8 — more padding */
-        'bg-slate-900 text-slate-300 py-6 md:py-8 md:pt-12 md:pb-8 border-t border-slate-800 w-full max-w-[100vw] overflow-hidden'
-      }
-    >
+    <footer className="bg-slate-900 text-slate-300 py-6 md:py-8 md:pt-12 md:pb-8 border-t border-slate-800 w-full max-w-[100vw] overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 md:px-6 w-full min-w-0">
-        {/* OLD: single column on mobile — NEW: 2-col sidewise on mobile, 4-col on md; boxed sections */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-10 mb-4 md:mb-10">
-          {/* Brand Section — full width on mobile */}
           <div className="col-span-2 md:col-span-1 mb-2 md:mb-0">
             <Link to="/" className="flex items-center gap-2 mb-0.5 md:mb-1 group">
               <span className="inline-block scale-90 md:scale-100 origin-left">
@@ -91,7 +134,6 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Company — boxed on mobile */}
           <div className="col-span-1 rounded-xl border border-slate-700/80 bg-slate-800/40 p-3 md:p-0 md:bg-transparent md:border-0 md:rounded-none">
             <h3 className="text-white font-bold uppercase tracking-widest text-[10px] md:text-xs mb-2 md:mb-6">
               Company
@@ -104,7 +146,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Legal — boxed on mobile */}
           <div className="col-span-1 rounded-xl border border-slate-700/80 bg-slate-800/40 p-3 md:p-0 md:bg-transparent md:border-0 md:rounded-none">
             <h3 className="text-white font-bold uppercase tracking-widest text-[10px] md:text-xs mb-2 md:mb-6">
               Legal
@@ -118,7 +159,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Contact Us — full-width box at bottom on mobile; single column on desktop so it stays inline */}
           <div className="col-span-2 md:col-span-1 mt-2 md:mt-0 rounded-xl border border-slate-700/80 bg-slate-800/40 p-3 md:p-0 md:bg-transparent md:border-0 md:rounded-none">
             <h3 className="text-white font-bold uppercase tracking-widest text-[10px] md:text-xs mb-2 md:mb-6">
               Contact Us
@@ -140,17 +180,20 @@ export default function Footer() {
           </div>
         </div>
 
-        {/*
-          Old Inconsistent Form: footer had no partner intake — only a “Join as Partner” link to /register-expert.
-          Pros of shared ExpertRegistrationForm: one schema (pending + same columns), fewer divergent bugs.
-          Cons: footer relies on new public RLS policy + migration; slightly heavier bundle on every page with Footer.
-        */}
         <div className="max-w-xl mx-auto mt-6 md:mt-8 border-t border-slate-800 pt-6">
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3 text-center md:text-left">
             Quick partner application
           </p>
-          <ExpertRegistrationForm variant="footer" compact />
-          <p className="text-[10px] text-slate-600 mt-3 text-center">
+          <div className="flex justify-center md:justify-start">
+            <button
+              type="button"
+              onClick={() => setIsPartnerModalOpen(true)}
+              className="w-full sm:w-auto min-h-[48px] px-6 py-3.5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-widest text-white bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-500 hover:to-teal-600 border border-teal-400/30 shadow-lg shadow-teal-900/40 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+            >
+              Join as a Partner / Expert
+            </button>
+          </div>
+          <p className="text-[10px] text-slate-600 mt-4 text-center md:text-left">
             Prefer the full flow?{' '}
             <Link to="/register-expert" className="text-teal-400 font-bold hover:underline">
               Register with account
@@ -158,13 +201,9 @@ export default function Footer() {
           </p>
         </div>
 
-        {/* Bottom Bar — more slender on mobile */}
-        <div
-          className={
-            /* OLD: pt-8 ... gap-4 — thicker bottom bar */
-            'border-t border-slate-800 pt-4 pb-1 md:pt-8 md:pb-0 flex flex-col md:flex-row justify-between items-center gap-2 md:gap-4 text-[10px] md:text-xs opacity-50'
-          }
-        >
+        {isPartnerModalOpen && partnerModal}
+
+        <div className="border-t border-slate-800 pt-4 pb-1 md:pt-8 md:pb-0 flex flex-col md:flex-row justify-between items-center gap-2 md:gap-4 text-[10px] md:text-xs opacity-50">
           <p className="text-center md:text-left">© 2026 Kshatryx Technologies. All rights reserved.</p>
           <p className="text-center md:text-right">Made with <span className="text-red-500">❤</span> in Jabalpur.</p>
         </div>

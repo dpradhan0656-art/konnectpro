@@ -5,7 +5,7 @@ import { canAccessDeepakHQ } from '../../lib/adminAccess';
 import {
   Shield, Menu, X, LogOut, LayoutGrid, Users, Briefcase, Settings,
   Megaphone, Navigation, CreditCard, UserCheck, Grid, DollarSign, FileCheck,
-  Database,
+  Database, Activity,
 } from 'lucide-react';
 
 // Lazy-load tabs so DeepakHQ opens fast and tabs load on demand
@@ -23,6 +23,7 @@ const RevenueTab = lazy(() => import('./tabs/RevenueTab'));
 const AreaHeadManager = lazy(() => import('./tabs/AreaHeadManager'));
 const ExpertVerification = lazy(() => import('./tabs/ExpertVerification'));
 const DeveloperToolsTab = lazy(() => import('./tabs/DeveloperToolsTab'));
+const LiveOperations = lazy(() => import('./tabs/LiveOperations'));
 
 const TabFallback = () => (
   <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -184,6 +185,7 @@ export default function DeepakHQ() {
             <NavBtn icon={<Grid size={18}/>} label="Category Master" active={activeTab === 'categories'} onClick={() => handleTabChange('categories')} badge="1st" /> 
             <NavBtn icon={<Briefcase size={18}/>} label="Rate List & Services" active={activeTab === 'services'} onClick={() => handleTabChange('services')} badge="2nd" />
             <NavBtn icon={<Navigation size={18}/>} label="Dispatch Ops" active={activeTab === 'dispatch'} onClick={() => handleTabChange('dispatch')} />
+            <NavBtn icon={<Activity size={18}/>} label="Live Ops" active={activeTab === 'live_ops'} onClick={() => handleTabChange('live_ops')} />
             
             {/* ✅ NAYA BUTTON JODA (KYC Verification) */}
             <NavBtn icon={<FileCheck size={18}/>} label="KYC Verifications" active={activeTab === 'kyc_verification'} onClick={() => handleTabChange('kyc_verification')} />
@@ -231,6 +233,7 @@ export default function DeepakHQ() {
                     {activeTab === 'categories' && <CategoryManager />}
                     {activeTab === 'services' && <ServiceManager />}
                     {activeTab === 'dispatch' && <DispatchTab />}
+                    {activeTab === 'live_ops' && <LiveOperations />}
                     {activeTab === 'kyc_verification' && <ExpertVerification />}
                     {/* Expert Army: ExpertControl mounts shared ExpertRegistrationForm (pending) + grid — see ExpertControl.jsx */}
                     {activeTab === 'experts' && <ExpertControl />}

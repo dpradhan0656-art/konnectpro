@@ -49,14 +49,19 @@ export default function ExpertVerification() {
     setLoading(false);
   };
 
-  // 2. Expert ko Approve karna (Green Signal)
+  // 2. Expert ko Approve karna (Green Signal) — unified with Expert Army semantics (status + is_verified)
   const handleApprove = async (id, name) => {
     const confirm = window.confirm(`Kya aap ${name} ko Approve karna chahte hain? Unki duty turant chalu ho jayegi.`);
     if (!confirm) return;
 
     setActionLoading(true);
-    const { error } = await supabase.from('experts').update({ status: 'approved' }).eq('id', id);
-    
+    // Legacy Duplicate Approval Flow — only status was updated; is_verified could stay false
+    // const { error } = await supabase.from('experts').update({ status: 'approved' }).eq('id', id);
+    const { error } = await supabase
+      .from('experts')
+      .update({ status: 'approved', is_verified: true })
+      .eq('id', id);
+
     if (!error) {
         alert(`✅ ${name} ka account Approve ho gaya hai!`);
         setSelectedExpert(null);
@@ -119,7 +124,7 @@ export default function ExpertVerification() {
                       <div>
                           <h3 className="text-xl font-black text-white">{expert.name}</h3>
                           <p className="text-xs font-bold text-slate-400 flex gap-2 items-center uppercase tracking-widest mt-1">
-                              <Briefcase size={12} className="text-teal-500"/> {expert.category || 'Expert'}
+                              <Briefcase size={12} className="text-teal-500"/> {expert.service_category || expert.category || 'Expert'}
                           </p>
                       </div>
                   </div>
@@ -160,20 +165,43 @@ export default function ExpertVerification() {
                               <p className="text-lg font-black text-white">{selectedExpert.phone}</p>
                           </div>
 
-                          {/* DUMMY DATA FOR NOW (Since we mocked upload) */}
+                          {/* Legacy Duplicate Approval Flow — hardcoded demo placeholders (pre–real KYC data) */}
+                          {/*
                           <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800">
                               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Aadhar Number</p>
                               <p className="text-lg font-black text-white flex items-center gap-2"><FileText size={16} className="text-teal-500"/> 1234 5678 9012 (Demo)</p>
                           </div>
-
                           <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800">
                               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Experience</p>
                               <p className="text-lg font-black text-white flex items-center gap-2"><Briefcase size={16} className="text-teal-500"/> 5 Years (Demo)</p>
                           </div>
-
                           <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 md:col-span-2">
                               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Address</p>
                               <p className="text-sm font-bold text-white flex items-start gap-2"><MapPin size={16} className="text-teal-500 shrink-0 mt-0.5"/> Jabalpur, Madhya Pradesh (Demo Address)</p>
+                          </div>
+                          */}
+                          <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800">
+                              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Aadhar Number</p>
+                              <p className="text-lg font-black text-white flex items-center gap-2 break-all">
+                                <FileText size={16} className="text-teal-500 shrink-0"/>
+                                {selectedExpert.aadhar_number || 'Not Provided'}
+                              </p>
+                          </div>
+
+                          <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800">
+                              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Experience (years)</p>
+                              <p className="text-lg font-black text-white flex items-center gap-2">
+                                <Briefcase size={16} className="text-teal-500"/>
+                                {selectedExpert.experience_years || '0'}
+                              </p>
+                          </div>
+
+                          <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 md:col-span-2">
+                              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Location</p>
+                              <p className="text-sm font-bold text-white flex items-start gap-2">
+                                <MapPin size={16} className="text-teal-500 shrink-0 mt-0.5"/>
+                                {[selectedExpert.address, selectedExpert.city].filter(Boolean).join(', ') || 'Not Provided'}
+                              </p>
                           </div>
                       </div>
 

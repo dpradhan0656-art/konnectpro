@@ -6,6 +6,7 @@ import { Power, MapPin, Navigation, Clock, Loader2, User, CheckCircle, Wrench, W
 import { buildCustomerLocationMapsUrl } from '../../utils/customerLocationMapsUrl.js';
 
 // 🇮🇳 18 NATIONAL LANGUAGES DICTIONARY (PAN-INDIA SUPPORT)
+// Canonical shared copy for the Expo expert app: expert-expo-app/src/constants/expertVoiceDict.js
 const dict = {
   hi: { name: "हिंदी (Hindi)", langCode: 'hi-IN', wallet: "वॉलेट बैलेंस", withdraw: "पैसे निकालें", addMoney: "पैसे जोड़ें", online: "ऑनलाइन", offline: "ऑफ़लाइन", jobs: "असाइनमेंट्स", noJobs: "कोई काम नहीं है।", accept: "काम स्वीकार करें", navigate: "रास्ता देखें", start: "काम शुरू करें", complete: "काम पूरा हुआ 🏆", logout: "लॉग आउट", v_newJob: "नया काम आया है।", v_checkApp: "कृपया ऐप चेक करें।", v_accepted: "काम स्वीकार कर लिया गया है।", v_completed: "काम पूरा हो गया, पैसा वॉलेट में जुड़ गया है।", v_offline: "आप अब ऑफ़लाइन हैं।", v_online: "आप अब ऑनलाइन हैं।", v_withdraw: "रिक्वेस्ट भेज दी गई है।" },
   en: { name: "English", langCode: 'en-IN', wallet: "Wallet Balance", withdraw: "Withdraw", addMoney: "Add Money", online: "Online", offline: "Offline", jobs: "Assignments", noJobs: "No active jobs.", accept: "Accept Job", navigate: "Navigate", start: "Start Work", complete: "Mark Completed 🏆", logout: "Log Out", v_newJob: "New job arrived.", v_checkApp: "Please check the app.", v_accepted: "Job accepted.", v_completed: "Job completed, money added.", v_offline: "You are offline.", v_online: "You are online.", v_withdraw: "Request sent." },
