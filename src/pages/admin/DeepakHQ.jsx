@@ -1,9 +1,10 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { 
-  Shield, Menu, X, LogOut, LayoutGrid, Users, Briefcase, Settings, 
-  Megaphone, Navigation, CreditCard, UserCheck, Grid, DollarSign, FileCheck 
+import {
+  Shield, Menu, X, LogOut, LayoutGrid, Users, Briefcase, Settings,
+  Megaphone, Navigation, CreditCard, UserCheck, Grid, DollarSign, FileCheck,
+  Database,
 } from 'lucide-react';
 
 // Lazy-load tabs so DeepakHQ opens fast and tabs load on demand
@@ -20,6 +21,7 @@ const MarketingTab = lazy(() => import('./tabs/MarketingTab'));
 const RevenueTab = lazy(() => import('./tabs/RevenueTab'));
 const AreaHeadManager = lazy(() => import('./tabs/AreaHeadManager'));
 const ExpertVerification = lazy(() => import('./tabs/ExpertVerification'));
+const DeveloperToolsTab = lazy(() => import('./tabs/DeveloperToolsTab'));
 
 const TabFallback = () => (
   <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -201,6 +203,8 @@ export default function DeepakHQ() {
             
             <div className="mt-4 border-t border-slate-800 pt-4">
                  <NavBtn icon={<Settings size={18}/>} label="Admin Settings" active={activeTab === 'settings'} onClick={() => handleTabChange('settings')} />
+                 {/* Co-Founder: bulk catalog sync from src/data/servicesData.js — does not remove other tabs */}
+                 <NavBtn icon={<Database size={18}/>} label="Developer Tools" active={activeTab === 'developer_tools'} onClick={() => handleTabChange('developer_tools')} badge="Dev" />
             </div>
         </nav>
         
@@ -240,6 +244,7 @@ export default function DeepakHQ() {
                     {activeTab === 'revenue' && <RevenueTab />}
                     {activeTab === 'offers' && <ManageOffers />}
                     {activeTab === 'settings' && <SettingsTab />}
+                    {activeTab === 'developer_tools' && <DeveloperToolsTab />}
                 </Suspense>
             </div>
         </main>
