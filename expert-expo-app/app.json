@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "expert-expo-app",
-    "slug": "expert-expo-app",
+    "name": "Kshatr Expert",
+    "slug": "kshatr-expert",
     "scheme": "expert-expo-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -16,6 +16,12 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.kshatryx.expertapp",
+      "permissions": [
+        "INTERNET",
+        "VIBRATE",
+        "CAMERA"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",

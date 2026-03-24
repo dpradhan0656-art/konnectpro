@@ -1,33 +1,37 @@
 import React from 'react';
-import { ShieldCheck, CheckCircle, Star } from 'lucide-react';
+import { ShieldCheck, CheckCircle, Clock } from 'lucide-react';
+
+/** Edit these for TrustBanner stats (no Supabase — change here to update) */
+export const TRUST_VERIFIED_LABEL = '100%';
+export const TRUST_FAST_ARRIVAL_LABEL = '45m';
 
 export default function TrustBanner() {
   return (
-    <section className="px-6 max-w-6xl mx-auto w-full min-w-0 overflow-hidden animate-fade-in-up [animation-delay:200ms] [animation-fill-mode:both]" aria-labelledby="trust-heading">
-      <div className="rounded-3xl p-6 md:p-8 text-slate-100 shadow-[0_20px_70px_-25px_rgba(45,212,191,0.4)] relative overflow-hidden border border-white/10 bg-gradient-to-r from-slate-900 to-slate-800">
-        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_15%_20%,rgba(45,212,191,0.16),transparent_35%),radial-gradient(circle_at_90%_90%,rgba(20,184,166,0.12),transparent_35%)]" aria-hidden="true" />
-        <div className="relative z-10">
-          <div className="text-center mb-6">
-            <h2 id="trust-heading" className="text-2xl md:text-3xl font-bold mb-2">
-              Why Homeowners Trust Kshatr
+    <section className="px-6 max-w-4xl mx-auto w-full min-w-0 overflow-hidden" aria-labelledby="trust-heading">
+      <div className="bg-white rounded-xl p-6 md:p-8 text-slate-900 shadow-sm relative overflow-hidden border border-slate-200">
+        <div className="hidden absolute inset-0 opacity-0 pointer-events-none" aria-hidden="true" />
+        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="text-center md:text-left">
+            <div className="inline-flex items-center gap-2 bg-blue-700/10 text-blue-700 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest mb-3 border border-blue-700/15">
+              <ShieldCheck size={12} aria-hidden="true" /> Kshatr Guarantee
+            </div>
+            <h2 id="trust-heading" className="text-2xl font-bold mb-2">
+              Safe. Reliable. Fast.
             </h2>
-            <p className="text-slate-300 text-sm md:text-base">
-              Premium quality assurance with verified experts and transparent service delivery.
+            <p className="text-slate-600 text-sm max-w-sm mx-auto md:mx-0 font-medium leading-relaxed">
+              All experts are background-verified. We guarantee your satisfaction with our 7-day re-work policy.
             </p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
-            <div className="rounded-2xl border border-teal-300/20 bg-white/5 backdrop-blur-md p-4 md:p-5 text-center hover:bg-white/10 transition-colors">
-              <ShieldCheck size={28} className="mx-auto mb-3 text-teal-300" aria-hidden="true" />
-              <div className="text-sm md:text-base font-bold text-slate-100">Verified Kshatr Experts</div>
+          <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+              <CheckCircle size={28} className="mx-auto mb-2 text-blue-700" aria-hidden="true" />
+              <div className="text-xl font-bold text-slate-900">{TRUST_VERIFIED_LABEL}</div>
+              <div className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mt-1">Verified</div>
             </div>
-            <div className="rounded-2xl border border-teal-300/20 bg-white/5 backdrop-blur-md p-4 md:p-5 text-center hover:bg-white/10 transition-colors">
-              <Star size={28} className="mx-auto mb-3 text-amber-300" aria-hidden="true" />
-              <div className="text-sm md:text-base font-bold text-slate-100">Transparent Pricing</div>
-            </div>
-            <div className="rounded-2xl border border-teal-300/20 bg-white/5 backdrop-blur-md p-4 md:p-5 text-center hover:bg-white/10 transition-colors">
-              <CheckCircle size={28} className="mx-auto mb-3 text-emerald-300" aria-hidden="true" />
-              <div className="text-sm md:text-base font-bold text-slate-100">100% Quality Guarantee</div>
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+              <Clock size={28} className="mx-auto mb-2 text-blue-700" aria-hidden="true" />
+              <div className="text-xl font-bold text-slate-900">{TRUST_FAST_ARRIVAL_LABEL}</div>
+              <div className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mt-1">Fast Arrival</div>
             </div>
           </div>
         </div>

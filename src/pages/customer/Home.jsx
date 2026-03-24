@@ -1,11 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { BRAND } from '../../config/brandConfig';
 import { useCart } from '../../context/CartContext';
 import { getUserCityKey, filterServicesByCity } from '../../lib/serviceCityUtils';
 import { reportError } from '../../lib/errorHandling';
 import { persistUserCity } from '../../lib/persistUserCity';
-import { Zap } from 'lucide-react';
 
 import SOSButton from '../../components/common/SOSButton';
 import HomeHero from '../../components/home/HomeHero';
@@ -28,8 +27,6 @@ export default function Home({ session }) {
   const [offers, setOffers] = useState([]);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showStickyCta, setShowStickyCta] = useState(false);
-  const categoriesSectionRef = useRef(null);
 
   const { addToCart, cart } = useCart();
 
@@ -59,22 +56,6 @@ export default function Home({ session }) {
     };
     fetchAllData();
   }, []);
-
-  useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY || 0;
-      const doc = document.documentElement;
-      const nearBottom = y + window.innerHeight >= (doc?.scrollHeight || 0) - 180;
-      setShowStickyCta(y > 180 && !nearBottom);
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  const scrollToCategories = () => {
-    categoriesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
 
   useEffect(() => {
     document.title = `${BRAND.name} | Shield of Trust`;
@@ -140,7 +121,7 @@ export default function Home({ session }) {
   }, []);
 
   return (
-    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 font-sans selection:bg-teal-200/40 relative pb-32">
+    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-[#f8fafc] font-sans selection:bg-blue-200 relative pb-32">
       <SOSButton />
 
       <HomeHero
@@ -157,31 +138,14 @@ export default function Home({ session }) {
       />
 
       {/* Consistent gap between sections — premium boxed layout */}
-      <div className="mt-10 md:mt-14 flex flex-col gap-8 w-full min-w-0 max-w-[100vw]">
-        <div ref={categoriesSectionRef} id="categories-section">
-          <CategorySection categories={filteredCategories} loading={loading} />
-        </div>
+      <div className="mt-14 flex flex-col gap-8 w-full min-w-0 max-w-[100vw]">
+        <CategorySection categories={filteredCategories} loading={loading} />
         <OffersSection offers={offers} />
         <ServicesSection services={filteredServices} cart={cart} onAddToCart={addToCart} />
         <RateCard />
         <div className="mb-10">
           <TrustBanner />
         </div>
-      </div>
-
-      <div
-        className={`fixed left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-[480px] lg:hidden z-50 transition-all duration-300 ${
-          showStickyCta ? 'opacity-100 translate-y-0 bottom-20 sm:bottom-24' : 'opacity-0 translate-y-6 pointer-events-none bottom-16'
-        }`}
-      >
-        <button
-          type="button"
-          onClick={scrollToCategories}
-          className="w-full min-h-[54px] rounded-2xl bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-extrabold tracking-wide shadow-[0_16px_40px_-15px_rgba(20,184,166,0.9)] shadow-teal-500/50 px-5 py-3 flex items-center justify-center gap-2 animate-pulse-slow"
-        >
-          <Zap size={18} aria-hidden="true" />
-          Book a Service Now
-        </button>
       </div>
 
       <BottomNav cartCount={cart.length} />
