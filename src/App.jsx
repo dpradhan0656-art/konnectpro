@@ -131,7 +131,9 @@ const AppRoutes = () => {
           {/* ========================================== */}
           {/* DOOR 2: DEEPAKHQ (SUPER ADMIN) */}
           {/* ========================================== */}
-          <Route path="/deepakhq/*" element={<DeepakHQ />} />         
+          <Route path="/deepakhq/*" element={<DeepakHQ />} />
+          {/* Alias for bookmarks / mental model “/admin/deepakhq” */}
+          <Route path="/admin/deepakhq/*" element={<Navigate to="/deepakhq" replace />} />
           
           {/* ========================================== */}
           {/* DOOR 3: EXPERT (PARTNER) PORTAL */}

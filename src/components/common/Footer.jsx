@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ShieldCheck, Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
 // 🚀 NEW: Supabase import for dynamic fetching
 import { supabase } from '../../lib/supabase';
+import ExpertRegistrationForm from '../forms/ExpertRegistrationForm';
 
 export default function Footer() {
   // 🚀 NEW: State to hold dynamic contact info (with your real defaults)
@@ -137,6 +138,24 @@ export default function Footer() {
               </li>
             </ul>
           </div>
+        </div>
+
+        {/*
+          Old Inconsistent Form: footer had no partner intake — only a “Join as Partner” link to /register-expert.
+          Pros of shared ExpertRegistrationForm: one schema (pending + same columns), fewer divergent bugs.
+          Cons: footer relies on new public RLS policy + migration; slightly heavier bundle on every page with Footer.
+        */}
+        <div className="max-w-xl mx-auto mt-6 md:mt-8 border-t border-slate-800 pt-6">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3 text-center md:text-left">
+            Quick partner application
+          </p>
+          <ExpertRegistrationForm variant="footer" compact />
+          <p className="text-[10px] text-slate-600 mt-3 text-center">
+            Prefer the full flow?{' '}
+            <Link to="/register-expert" className="text-teal-400 font-bold hover:underline">
+              Register with account
+            </Link>
+          </p>
         </div>
 
         {/* Bottom Bar — more slender on mobile */}

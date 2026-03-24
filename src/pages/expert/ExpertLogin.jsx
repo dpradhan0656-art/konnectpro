@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { canAccessDeepakHQ } from '../../lib/adminAccess';
 import { useNavigate, Link } from 'react-router-dom';
 // 🚀 NEW: PhoneIcon ki jagah User icon laga diya taaki Email/Phone dono ke liye sahi lage
 import { Wrench, Lock, User, ArrowRight, Loader2, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
@@ -44,6 +45,13 @@ export default function ExpertLogin() {
   };
 
   const checkExpertStatus = async (userId) => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser && (await canAccessDeepakHQ(authUser))) {
+        navigate('/deepakhq');
+        setLoading(false);
+        return;
+      }
+
       const { data: expertData, error: dbError } = await supabase
         .from('experts')
         .select('status, id')

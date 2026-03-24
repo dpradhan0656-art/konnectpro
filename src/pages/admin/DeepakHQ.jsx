@@ -1,6 +1,7 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import { canAccessDeepakHQ } from '../../lib/adminAccess';
 import {
   Shield, Menu, X, LogOut, LayoutGrid, Users, Briefcase, Settings,
   Megaphone, Navigation, CreditCard, UserCheck, Grid, DollarSign, FileCheck,
@@ -42,20 +43,10 @@ export default function DeepakHQ() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const checkAdminAccess = async (userId) => {
-    try {
-      const { data, error } = await supabase.from('app_admin').select('user_id').eq('user_id', userId).limit(1);
-      if (error) {
-        console.warn('DeepakHQ checkAdminAccess error:', error);
-        return false;
-      }
-      return !!(data && data.length > 0);
-    } catch (e) {
-      console.warn('DeepakHQ checkAdminAccess exception:', e);
-      return false;
-    }
-  };
-
+  /*
+   * Old Inconsistent Form (history): `checkAdminAccess(userId)` only queried `app_admin`.
+   * That locked out co-founders listed in env allowlist or with expert rows but valid admin email.
+   */
   useEffect(() => {
     let mounted = true;
 
@@ -69,9 +60,9 @@ export default function DeepakHQ() {
         if (!session?.user?.id) {
           return;
         }
-        const isAdmin = await checkAdminAccess(session.user.id);
+        const allowed = await canAccessDeepakHQ(session.user);
         if (mounted) {
-          if (isAdmin) setIsAuthenticated(true);
+          if (allowed) setIsAuthenticated(true);
           else await supabase.auth.signOut();
         }
       } catch (e) {
@@ -96,9 +87,14 @@ export default function DeepakHQ() {
         setIsAuthenticated(false);
         return;
       }
-      // Session exists → check admin in background (don't block UI)
-      checkAdminAccess(session.user.id).then((isAdmin) => {
-        if (mounted) setIsAuthenticated(isAdmin);
+      // Session exists → HQ access (app_admin or superadmin email allowlist)
+      canAccessDeepakHQ(session.user).then((allowed) => {
+        if (!mounted) return;
+        if (allowed) setIsAuthenticated(true);
+        else {
+          setIsAuthenticated(false);
+          supabase.auth.signOut();
+        }
       });
     });
 
@@ -117,8 +113,8 @@ export default function DeepakHQ() {
       setLoginError(error.message?.includes('Invalid') ? 'Invalid email or password.' : 'Login failed. Try again.');
       return;
     }
-    const isAdmin = await checkAdminAccess(data.user.id);
-    if (isAdmin) setIsAuthenticated(true);
+    const allowed = await canAccessDeepakHQ(data.user);
+    if (allowed) setIsAuthenticated(true);
     else {
       await supabase.auth.signOut();
       setLoginError('Not authorized. Your account is not an admin.');
@@ -164,7 +160,7 @@ export default function DeepakHQ() {
                     {loginError && <p className="text-red-400 text-sm">{loginError}</p>}
                     <button type="submit" className="w-full bg-teal-600 hover:bg-teal-500 py-3 rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-teal-900/50 transition-all active:scale-95">Enter</button>
                 </form>
-                <p className="text-[10px] text-slate-500 mt-4">Your user must be in app_admin table.</p>
+                <p className="text-[10px] text-slate-500 mt-4">Use an account in app_admin, or set VITE_SUPERADMIN_EMAILS / VITE_SUPERADMIN_EMAIL in .env for bypass.</p>
             </div>
         </div>
     );
@@ -236,6 +232,7 @@ export default function DeepakHQ() {
                     {activeTab === 'services' && <ServiceManager />}
                     {activeTab === 'dispatch' && <DispatchTab />}
                     {activeTab === 'kyc_verification' && <ExpertVerification />}
+                    {/* Expert Army: ExpertControl mounts shared ExpertRegistrationForm (pending) + grid — see ExpertControl.jsx */}
                     {activeTab === 'experts' && <ExpertControl />}
                     {activeTab === 'area_heads' && <AreaHeadManager />}
                     {activeTab === 'customers' && <CustomerCRM />}

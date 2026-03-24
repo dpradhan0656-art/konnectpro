@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { canAccessDeepakHQ } from '../../lib/adminAccess';
 import { useNavigate, Link } from 'react-router-dom';
 import { Wallet, MapPin, Clock, ShieldCheck, LogOut, CheckCircle, Plus, X, Loader2 } from 'lucide-react';
 
@@ -42,6 +43,12 @@ export default function PartnerApp() {
     if (!user) {
       setLoading(false);
       navigate('/expert/login');
+      return;
+    }
+
+    if (await canAccessDeepakHQ(user)) {
+      setLoading(false);
+      navigate('/deepakhq', { replace: true });
       return;
     }
 

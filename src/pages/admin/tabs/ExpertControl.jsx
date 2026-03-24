@@ -5,6 +5,7 @@ import {
   UserCheck, Search, Phone, MapPin, Plus, Edit, Trash2, X,
   Lock, Briefcase, Loader2, ShieldCheck, Power, PowerOff
 } from 'lucide-react';
+import ExpertRegistrationForm from '../../../components/forms/ExpertRegistrationForm';
 
 export default function ExpertControl() {
   const [experts, setExperts] = useState([]);
@@ -127,6 +128,15 @@ export default function ExpertControl() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-20 font-sans">
+
+      {/*
+        Shared pending registration (DeepakHQ → Expert Army tab).
+        Pros: same fields/Rules as footer & area head; single insert path with status=pending.
+        Cons: separate from “Manual Add” modal which still enlists instantly approved experts for ops.
+      */}
+      <div className="max-w-xl">
+        <ExpertRegistrationForm variant="admin" onSuccess={fetchData} />
+      </div>
       
       {/* 🛡️ TOP HEADER PANEL */}
       <div className="flex flex-col md:flex-row justify-between items-center bg-slate-900 p-6 rounded-[2.5rem] border border-slate-800 shadow-xl gap-4">
@@ -146,8 +156,21 @@ export default function ExpertControl() {
                     {s}
                 </button>
             ))}
+            {/*
+              Old Inconsistent Form — header “Manual Add” (modal enlisted fewer fields + auto-approved).
+              Kept for history; re-enable by changing false → true if you need instant-approved roster adds.
+            */}
+            {false && (
             <button onClick={() => { setEditingId(null); setFormData({name:'', phone:'', service_category: categories[0]?.name || '', city:'Jabalpur', password:''}); setIsModalOpen(true); }} className="bg-white text-slate-900 px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-teal-400 transition-colors">
                 <Plus size={14}/> Manual Add
+            </button>
+            )}
+            <button
+              type="button"
+              onClick={() => { setEditingId(null); setFormData({name:'', phone:'', service_category: categories[0]?.name || '', city:'Jabalpur', password:''}); setIsModalOpen(true); }}
+              className="bg-slate-800 text-teal-300 border border-teal-700/50 px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-slate-700 transition-colors"
+            >
+              <Plus size={14}/> Instant add (approved)
             </button>
         </div>
       </div>

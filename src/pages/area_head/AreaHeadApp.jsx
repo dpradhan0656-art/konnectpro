@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { Shield, MapPin, Briefcase, LogOut, Users, Activity, Clock, CheckCircle, Navigation, Phone, RefreshCw } from 'lucide-react';
-import OnboardExpertForm from '../../components/area_head/OnboardExpertForm';
+import ExpertRegistrationForm from '../../components/forms/ExpertRegistrationForm';
 
 export default function AreaHeadApp() {
   const navigate = useNavigate();
@@ -183,9 +183,18 @@ export default function AreaHeadApp() {
            </div>
        </div>
 
-       {/* 🧑‍🔧 Area Head only: onboard expert (isolated from public registration) */}
+       {/* 🧑‍🔧 Area Head only: onboard expert — shared form + area_head_id */}
+       {/*
+         Old Inconsistent Form: <OnboardExpertForm manager={manager} /> — preset categories only, fewer fields.
+         Replaced by ExpertRegistrationForm (single source of truth).
+       */}
        <div className="p-4 max-w-xl mx-auto mt-4">
-         <OnboardExpertForm manager={manager} />
+         <ExpertRegistrationForm
+           variant="areaHead"
+           areaHeadId={manager.id}
+           defaultCity={manager.assigned_area?.trim() || ''}
+           cityReadOnly={Boolean(manager.assigned_area?.trim())}
+         />
        </div>
 
        {/* 💹 Earnings & Commission Dashboard (UI-only) */}

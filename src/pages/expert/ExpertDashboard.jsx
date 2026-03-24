@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
+import { canAccessDeepakHQ } from '../../lib/adminAccess';
 import { useNavigate } from 'react-router-dom';
 import { Power, MapPin, Navigation, Clock, Loader2, User, CheckCircle, Wrench, Wallet, IndianRupee, LogOut, Volume2, Globe, Plus, X } from 'lucide-react';
 import { buildCustomerLocationMapsUrl } from '../../utils/customerLocationMapsUrl.js';
@@ -103,6 +104,12 @@ export default function ExpertDashboard() {
     if (!user) {
       setLoading(false);
       navigate('/expert/login');
+      return;
+    }
+
+    if (await canAccessDeepakHQ(user)) {
+      setLoading(false);
+      navigate('/deepakhq', { replace: true });
       return;
     }
 
