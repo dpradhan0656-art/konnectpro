@@ -20,7 +20,7 @@ export default function DeveloperToolsTab() {
   const handleSync = async () => {
     if (
       !window.confirm(
-        'Run catalog sync from servicesData.js?\n\nThis will upsert categories (by slug/name) and services (by name + category). Existing rows are updated; new ones are inserted.'
+        'Run catalog sync from servicesData.js?\n\nUses Supabase upsert (onConflict: slug for categories; name+category or name for services). Names are trimmed; existing rows update instead of failing on duplicates.'
       )
     ) {
       return;
@@ -45,7 +45,7 @@ export default function DeveloperToolsTab() {
       }
 
       appendLog(
-        `Summary — categories: +${result.categoriesInserted} / ~${result.categoriesUpdated}, services: +${result.servicesInserted} / ~${result.servicesUpdated}`
+        `Summary — categories synced: ${result.categoriesSynced ?? result.categoriesUpdated}, services synced: ${result.servicesSynced ?? result.servicesUpdated}`
       );
     } catch (e) {
       appendLog(`Fatal: ${e?.message || e}`);

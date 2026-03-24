@@ -1,6 +1,11 @@
+import { normalizeCityPricingObject } from './cityPricingJson.js';
+
 /**
  * Smart catalog sync: `servicesData.js` → Supabase `categories` + `services`.
- * Idempotent: categories matched by `slug` then exact `name`; services by (`name` + `category`).
+ * Uses `.upsert()` with `onConflict` so existing rows update instead of raising unique violations.
+ *
+ * Requires UNIQUE constraint targets in Postgres (see comments below). If your DB differs,
+ * adjust CATEGORY_CONFLICT_TARGET / SERVICE_CONFLICT_TARGET or add a matching unique index.
  *
  * @param {import('@supabase/supabase-js').SupabaseClient} supabase
  * @param {object[]} data - `servicesData` array (category blocks with nested `services`)
@@ -10,16 +15,36 @@
 
 /**
  * @typedef {Object} SyncResult
- * @property {number} categoriesInserted
- * @property {number} categoriesUpdated
- * @property {number} servicesInserted
- * @property {number} servicesUpdated
+ * @property {number} categoriesSynced
+ * @property {number} servicesSynced
+ * @property {number} categoriesInserted — legacy; always 0 (upsert does not distinguish)
+ * @property {number} categoriesUpdated — legacy; equals categoriesSynced
+ * @property {number} servicesInserted — legacy; always 0
+ * @property {number} servicesUpdated — legacy; equals servicesSynced
  * @property {string[]} errors
  */
 
-/** Match CategoryManager slug generation */
+/** Supabase upsert conflict target: categories table should have UNIQUE(slug) */
+export const CATEGORY_CONFLICT_TARGET = 'slug';
+
+/**
+ * Primary: UNIQUE(name) — matches common DB constraint (avoids duplicate name violations).
+ * Fallback: UNIQUE(name, category) — use after adding a composite unique index (see migration note).
+ */
+export const SERVICE_CONFLICT_TARGET = 'name';
+export const SERVICE_CONFLICT_FALLBACK = 'name,category';
+
+/** Collapse internal whitespace and trim ends — prevents duplicate-key mismatches */
+export function normalizeLabel(value) {
+  return String(value ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Match CategoryManager slug generation, after whitespace normalization */
 export function slugifyCategoryName(name) {
-  return String(name || '')
+  const n = normalizeLabel(name);
+  return n
     .toLowerCase()
     .replace(/[\s_]+/g, '-')
     .replace(/[^\w-]+/g, '');
@@ -38,6 +63,8 @@ export async function syncServicesFromData(supabase, data, options = {}) {
 
   /** @type {SyncResult} */
   const result = {
+    categoriesSynced: 0,
+    servicesSynced: 0,
     categoriesInserted: 0,
     categoriesUpdated: 0,
     servicesInserted: 0,
@@ -51,91 +78,40 @@ export async function syncServicesFromData(supabase, data, options = {}) {
   }
 
   for (const block of data) {
-    const catName = (block.categoryName || block.name || '').trim();
+    const catName = normalizeLabel(block.categoryName || block.name || '');
     if (!catName) {
       result.errors.push('Skipped a block with no categoryName.');
       continue;
     }
 
-    const slug = (block.slug && String(block.slug).trim()) || slugifyCategoryName(catName);
-    const icon = block.icon != null ? String(block.icon) : '🔧';
+    const slugRaw = block.slug != null ? normalizeLabel(block.slug) : '';
+    const slug = slugRaw || slugifyCategoryName(catName);
+    const icon = block.icon != null ? String(block.icon).trim() : '🔧';
 
     try {
-      let categoryId = null;
+      /*
+       * Categories: single upsert on slug (replaces prior select → update/insert branches).
+       */
+      const categoryRow = {
+        name: catName,
+        slug,
+        icon,
+        is_active: true,
+      };
 
-      const { data: bySlug, error: errSlug } = await supabase
+      const { error: catUpsertErr } = await supabase
         .from('categories')
-        .select('id, name, slug')
-        .eq('slug', slug)
-        .maybeSingle();
+        .upsert([categoryRow], { onConflict: CATEGORY_CONFLICT_TARGET })
+        .select('id');
 
-      if (errSlug) throw errSlug;
-
-      if (bySlug?.id) {
-        const { error: upErr } = await supabase
-          .from('categories')
-          .update({
-            name: catName,
-            icon,
-            slug,
-            is_active: true,
-          })
-          .eq('id', bySlug.id);
-        if (upErr) throw upErr;
-        categoryId = bySlug.id;
-        result.categoriesUpdated += 1;
-        onProgress(`Category updated (slug): ${catName}`);
-      } else {
-        const { data: byName, error: errName } = await supabase
-          .from('categories')
-          .select('id, name, slug')
-          .eq('name', catName)
-          .maybeSingle();
-
-        if (errName) throw errName;
-
-        if (byName?.id) {
-          const { error: upErr } = await supabase
-            .from('categories')
-            .update({
-              name: catName,
-              icon,
-              slug,
-              is_active: true,
-            })
-            .eq('id', byName.id);
-          if (upErr) throw upErr;
-          categoryId = byName.id;
-          result.categoriesUpdated += 1;
-          onProgress(`Category updated (name): ${catName}`);
-        } else {
-          const { data: inserted, error: insErr } = await supabase
-            .from('categories')
-            .insert([
-              {
-                name: catName,
-                slug,
-                icon,
-                is_active: true,
-              },
-            ])
-            .select('id')
-            .single();
-          if (insErr) throw insErr;
-          categoryId = inserted?.id;
-          result.categoriesInserted += 1;
-          onProgress(`Category inserted: ${catName}`);
-        }
-      }
-
-      if (!categoryId) {
-        result.errors.push(`Could not resolve category id for: ${catName}`);
-        continue;
-      }
+      if (catUpsertErr) throw catUpsertErr;
+      result.categoriesSynced += 1;
+      result.categoriesUpdated += 1;
+      onProgress(`Category upserted: ${catName} (${slug})`);
 
       const services = Array.isArray(block.services) ? block.services : [];
       for (const svc of services) {
-        const serviceName = (svc.name || '').trim();
+        const serviceName = normalizeLabel(svc.name || '');
         if (!serviceName) {
           result.errors.push(`Skipped service with empty name under "${catName}"`);
           continue;
@@ -147,10 +123,25 @@ export async function syncServicesFromData(supabase, data, options = {}) {
           continue;
         }
 
-        const imageUrl = svc.image_url || svc.imageUrl || '';
-        const note = svc.note != null ? String(svc.note) : '';
+        const imageUrl = normalizeLabel(svc.image_url || svc.imageUrl || '');
+        const note = svc.note != null ? normalizeLabel(String(svc.note)) : '';
 
-        const payload = {
+        /* city_service_pricing: jsonb on services — see migration 20250311120000_services_city_service_pricing_jsonb.sql */
+        const cityServicePricingJson = normalizeCityPricingObject(svc.cityPricing);
+
+        /*
+         * OLD payload (before per-city JSON) — kept for history:
+         * const serviceRow = {
+         *   name: serviceName,
+         *   category: catName,
+         *   base_price: basePrice,
+         *   image_url: imageUrl,
+         *   note,
+         *   service_cities: SERVICE_CITIES_STATEWIDE,
+         *   is_active: true,
+         * };
+         */
+        const serviceRow = {
           name: serviceName,
           category: catName,
           base_price: basePrice,
@@ -158,28 +149,36 @@ export async function syncServicesFromData(supabase, data, options = {}) {
           note,
           service_cities: SERVICE_CITIES_STATEWIDE,
           is_active: true,
+          city_service_pricing: cityServicePricingJson,
         };
 
-        const { data: existing, error: exErr } = await supabase
+        let { error: svcErr } = await supabase
           .from('services')
-          .select('id')
-          .eq('name', serviceName)
-          .eq('category', catName)
-          .maybeSingle();
+          .upsert([serviceRow], { onConflict: SERVICE_CONFLICT_TARGET })
+          .select('id');
 
-        if (exErr) throw exErr;
-
-        if (existing?.id) {
-          const { error: sUp } = await supabase.from('services').update(payload).eq('id', existing.id);
-          if (sUp) throw sUp;
-          result.servicesUpdated += 1;
-          onProgress(`  ↳ Service updated: ${serviceName}`);
-        } else {
-          const { error: sIn } = await supabase.from('services').insert([payload]);
-          if (sIn) throw sIn;
-          result.servicesInserted += 1;
-          onProgress(`  ↳ Service inserted: ${serviceName}`);
+        /*
+         * If DB only has UNIQUE(name) (not composite), primary upsert may fail — try name-only.
+         */
+        let usedFallback = false;
+        if (svcErr && SERVICE_CONFLICT_TARGET !== SERVICE_CONFLICT_FALLBACK) {
+          const fb = await supabase
+            .from('services')
+            .upsert([serviceRow], { onConflict: SERVICE_CONFLICT_FALLBACK })
+            .select('id');
+          svcErr = fb.error;
+          usedFallback = !svcErr;
         }
+
+        if (svcErr) throw svcErr;
+
+        result.servicesSynced += 1;
+        result.servicesUpdated += 1;
+        onProgress(
+          usedFallback
+            ? `  ↳ Service upserted (onConflict: ${SERVICE_CONFLICT_FALLBACK}): ${serviceName}`
+            : `  ↳ Service upserted (onConflict: ${SERVICE_CONFLICT_TARGET}): ${serviceName}`
+        );
       }
     } catch (e) {
       const msg = e?.message || String(e);
