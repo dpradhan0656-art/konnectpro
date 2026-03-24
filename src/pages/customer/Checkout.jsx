@@ -294,6 +294,31 @@ export default function Checkout() {
     const bookingCity = (typeof window !== 'undefined' && localStorage.getItem('kshatr_user_city')) || 'Jabalpur';
     try {
       for (const item of cart) {
+        /*
+         * OLD insert (pre-Phase-1 documentation snapshot — same canonical columns as now:
+         * `address`, `latitude`, `longitude`). Kept commented for history next to the active insert.
+         *
+         * const { error } = await supabase.from('bookings').insert({
+         *   user_id: user.id,
+         *   service_name: item.name,
+         *   total_amount: parseFloat(item.price) || 0,
+         *   booking_date: date,
+         *   address: finalAddress,
+         *   latitude: finalLat,
+         *   longitude: finalLng,
+         *   city: bookingCity,
+         *   status: 'pending',
+         *   payment_mode: mode === 'online' ? 'online_prepaid' : 'cash_after_service',
+         *   payment_method: mode,
+         *   payment_status: paymentStatus,
+         *   razorpay_payment_id: razorpayPaymentId,
+         *   is_remote_booking: isRemoteBooking,
+         *   contact_name: isRemoteBooking ? contactName : null,
+         *   contact_phone: isRemoteBooking ? contactPhone : null,
+         * });
+         * if (error) throw error;
+         */
+
         const { error } = await supabase.from('bookings').insert({
           user_id: user.id,
           service_name: item.name,

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { Power, MapPin, Navigation, Clock, Loader2, User, CheckCircle, Wrench, Wallet, IndianRupee, LogOut, Volume2, Globe, Plus, X } from 'lucide-react';
+import { buildCustomerLocationMapsUrl } from '../../utils/customerLocationMapsUrl.js';
 
 // 🇮🇳 18 NATIONAL LANGUAGES DICTIONARY (PAN-INDIA SUPPORT)
 const dict = {
@@ -222,6 +223,12 @@ export default function ExpertDashboard() {
       if (expert?.is_active) await supabase.from('experts').update({ is_active: false }).eq('id', expert.id);
       await supabase.auth.signOut();
       navigate('/expert/login'); 
+  };
+
+  /** Phase 1: Google Maps — coords → directions; else address → search. */
+  const openCustomerLocationInMaps = (job) => {
+    const url = buildCustomerLocationMapsUrl(job);
+    if (url) window.open(url, '_blank');
   };
 
   const PRESET_AMOUNTS = [500, 1000, 2000];
@@ -470,7 +477,9 @@ export default function ExpertDashboard() {
           <div className="space-y-4">
               {jobs.length === 0 ? (
                   <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl text-center text-slate-500 font-bold">{t.noJobs}</div>
-              ) : jobs.map(job => (
+              ) : jobs.map((job) => {
+                const customerMapsUrl = buildCustomerLocationMapsUrl(job);
+                return (
                   <div key={job.id} className="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-xl border-l-4 border-l-teal-500">
                       <div className="flex justify-between items-start mb-2">
                           <span className="text-[10px] font-black text-teal-400 uppercase">{job.status}</span>
@@ -480,30 +489,66 @@ export default function ExpertDashboard() {
                       <p className="text-sm text-slate-400 flex items-start gap-2 mb-4"><MapPin size={16}/> {job.address}</p>
                       
                       <div className="flex flex-col gap-2">
+                          {/*
+                            OLD: Navigate only when status === 'accepted', and only coords-based URL:
+                            {job.status === 'assigned' && (
+                              <button onClick={() => updateJobStatus(job.id, 'accepted')} ...>{t.accept}</button>
+                            )}
+                            {job.status === 'accepted' && (
+                              <div className="flex gap-2">
+                                <button onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${job.latitude},${job.longitude}`, '_blank')} ...>{t.navigate}</button>
+                                <button onClick={() => updateJobStatus(job.id, 'in_progress')} ...>{t.start}</button>
+                              </div>
+                            )}
+                          */}
                           {job.status === 'assigned' && (
-                              <button onClick={() => updateJobStatus(job.id, 'accepted')} className="w-full bg-teal-500 text-slate-900 py-3 rounded-xl font-black uppercase text-xs">{t.accept}</button>
+                              <div className="flex gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => openCustomerLocationInMaps(job)}
+                                    disabled={!customerMapsUrl}
+                                    className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-xl font-black uppercase text-xs flex justify-center items-center gap-1"
+                                    title={!customerMapsUrl ? 'No address or map location' : undefined}
+                                  >
+                                    <Navigation size={14}/> {t.navigate}
+                                  </button>
+                                  <button type="button" onClick={() => updateJobStatus(job.id, 'accepted')} className="flex-1 bg-teal-500 text-slate-900 py-3 rounded-xl font-black uppercase text-xs">{t.accept}</button>
+                              </div>
                           )}
                           {job.status === 'accepted' && (
                               <div className="flex gap-2">
-                                  {/* 🚀 FINAL FIX: Correct Google Maps Link for Android/iOS Routing */}
-                                  
-                                  {/* 🚀 100% CORRECT GOOGLE MAPS NAVIGATION LINK */}
-                                 {/* 🚀 100% CORRECT GOOGLE MAPS NAVIGATION LINK & START WORK BUTTON */}
-                                 <button onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${job.latitude},${job.longitude}`, '_blank')} className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-black uppercase text-xs flex justify-center items-center gap-1"><Navigation size={14}/> {t.navigate}</button>
-<button onClick={() => updateJobStatus(job.id, 'in_progress')} className="flex-1 bg-yellow-500 text-slate-900 py-3 rounded-xl font-black uppercase text-xs">{t.start}</button>
-
-
-
+                                  <button
+                                    type="button"
+                                    onClick={() => openCustomerLocationInMaps(job)}
+                                    disabled={!customerMapsUrl}
+                                    className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-xl font-black uppercase text-xs flex justify-center items-center gap-1"
+                                    title={!customerMapsUrl ? 'No address or map location' : undefined}
+                                  >
+                                    <Navigation size={14}/> {t.navigate}
+                                  </button>
+                                  <button type="button" onClick={() => updateJobStatus(job.id, 'in_progress')} className="flex-1 bg-yellow-500 text-slate-900 py-3 rounded-xl font-black uppercase text-xs">{t.start}</button>
                               </div>
                           )}
                           {job.status === 'in_progress' && (
-                              <button onClick={() => markJobCompleted(job)} disabled={processingId === job.id} className="w-full bg-green-500 hover:bg-green-400 text-slate-900 py-4 rounded-xl font-black uppercase text-xs">
-                                  {processingId === job.id ? <Loader2 className="animate-spin mx-auto" size={18}/> : t.complete}
-                              </button>
+                              <div className="flex flex-col gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => openCustomerLocationInMaps(job)}
+                                    disabled={!customerMapsUrl}
+                                    className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-xl font-black uppercase text-xs flex justify-center items-center gap-1"
+                                    title={!customerMapsUrl ? 'No address or map location' : undefined}
+                                  >
+                                    <Navigation size={14}/> {t.navigate}
+                                  </button>
+                                  <button type="button" onClick={() => markJobCompleted(job)} disabled={processingId === job.id} className="w-full bg-green-500 hover:bg-green-400 text-slate-900 py-4 rounded-xl font-black uppercase text-xs">
+                                      {processingId === job.id ? <Loader2 className="animate-spin mx-auto" size={18}/> : t.complete}
+                                  </button>
+                              </div>
                           )}
                       </div>
                   </div>
-              ))}
+                );
+              })}
           </div>
       </div>
     </div>

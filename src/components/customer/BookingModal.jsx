@@ -119,7 +119,43 @@ export default function BookingModal({ service, onClose, user }) {
     const companyPart = (service.price * 0.19).toFixed(2);
     const expertPart = (service.price * 0.81).toFixed(2);
 
+    const latParsed =
+      latitude !== '' && latitude != null ? parseFloat(String(latitude).trim()) : NaN;
+    const lngParsed =
+      longitude !== '' && longitude != null ? parseFloat(String(longitude).trim()) : NaN;
+    const latitudeRow = Number.isFinite(latParsed) ? latParsed : null;
+    const longitudeRow = Number.isFinite(lngParsed) ? lngParsed : null;
+
     try {
+      /*
+       * OLD insert payload (pre-Phase-1): used customer_address + gps_coordinates instead of
+       * aligning with Checkout on `address` / `latitude` / `longitude`.
+       *
+       * const { error } = await supabase.from('bookings').insert({
+       *   user_id: user?.id,
+       *   customer_name: user?.user_metadata?.name || 'Guest User',
+       *   service_name: service.name,
+       *   price: service.price,
+       *   status: mode === 'online' ? 'Confirmed' : 'Pending',
+       *   scheduled_date: date,
+       *   scheduled_time: time,
+       *   customer_address: address,
+       *   gps_coordinates: gpsCoords,
+       *   latitude: latitude ? parseFloat(latitude) : null,
+       *   longitude: longitude ? parseFloat(longitude) : null,
+       *   is_remote_booking: isRemoteBooking,
+       *   contact_name: isRemoteBooking ? contactName : null,
+       *   contact_phone: isRemoteBooking ? contactPhone : null,
+       *   payment_mode: mode === 'online' ? 'online' : 'cash',
+       *   payment_method: mode,
+       *   payment_status: payStatus,
+       *   transaction_id: razorpayPaymentId,
+       *   razorpay_payment_id: razorpayPaymentId,
+       *   company_commission: companyPart,
+       *   expert_earnings: expertPart,
+       * });
+       */
+
       const { error } = await supabase.from('bookings').insert({
         user_id: user?.id,
         customer_name: user?.user_metadata?.name || 'Guest User',
@@ -128,10 +164,9 @@ export default function BookingModal({ service, onClose, user }) {
         status: mode === 'online' ? 'Confirmed' : 'Pending',
         scheduled_date: date,
         scheduled_time: time,
-        customer_address: address,
-        gps_coordinates: gpsCoords,
-        latitude: latitude ? parseFloat(latitude) : null,
-        longitude: longitude ? parseFloat(longitude) : null,
+        address,
+        latitude: latitudeRow,
+        longitude: longitudeRow,
         is_remote_booking: isRemoteBooking,
         contact_name: isRemoteBooking ? contactName : null,
         contact_phone: isRemoteBooking ? contactPhone : null,
