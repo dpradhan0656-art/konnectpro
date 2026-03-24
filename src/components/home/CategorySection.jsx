@@ -19,7 +19,7 @@ export default function CategorySection({ categories, loading }) {
   const navigate = useNavigate();
 
   return (
-    <section className="px-4 sm:px-6 max-w-5xl mx-auto relative z-20 min-w-0 w-full overflow-hidden" aria-labelledby="categories-heading">
+    <section className="px-4 sm:px-6 max-w-5xl mx-auto relative z-20 min-w-0 w-full overflow-hidden py-1" aria-labelledby="categories-heading">
       <div className="flex justify-between items-end mb-5">
         <h2 id="categories-heading" className="font-bold text-slate-900 text-xl sm:text-2xl tracking-tight">
           Explore Categories
@@ -29,14 +29,15 @@ export default function CategorySection({ categories, loading }) {
         </Link>
       </div>
 
+      {/* OLD grid gaps: gap-4 sm:gap-5 — widened to gap-5 sm:gap-6 md:gap-7 for clearer card separation */}
       {loading ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 animate-pulse" role="status" aria-label="Loading categories">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6 md:gap-7 animate-pulse" role="status" aria-label="Loading categories">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="aspect-[4/3] sm:aspect-[5/4] bg-slate-100 rounded-xl sm:rounded-xl" />
           ))}
         </div>
       ) : categories.length > 0 ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5" role="list">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6 md:gap-7" role="list">
           {categories.map((cat, i) => {
             const slugUrl = cat.slug || cat.name.toLowerCase().replace(/[\s_]+/g, '-');
             const useImage = isImageUrl(cat?.icon);

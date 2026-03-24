@@ -54,35 +54,53 @@ export default function InstallAppPrompt() {
 
   if (!show) return null;
 
+  /*
+   * OLD layout (single flex row): on Android with Install + text + icon, the last
+   * flex child (X) could be clipped by overflow or squeezed to zero width.
+   * Replaced by: relative card + absolute top-right close (z-index) + safe padding.
+   */
   return (
-    <div className="fixed bottom-20 left-4 right-4 z-40 max-w-md mx-auto animate-in slide-in-from-bottom-4 duration-300">
-      <div className="bg-slate-900 text-white rounded-2xl shadow-2xl border border-slate-700 p-4 flex items-center gap-4">
-        <div className="w-12 h-12 rounded-xl bg-teal-500/20 flex items-center justify-center shrink-0">
-          <Download size={24} className="text-teal-400" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-bold text-sm">Install Kshatryx Technologies</p>
-          <p className="text-xs text-slate-400 mt-0.5">
-            {isIOS ? 'Tap Share → Add to Home Screen' : 'Add to home screen for a faster experience'}
-          </p>
-        </div>
-        {!isIOS && (
-          <button
-            type="button"
-            onClick={handleInstall}
-            className="shrink-0 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs uppercase tracking-wider transition-colors"
-          >
-            Install
-          </button>
-        )}
+    <div
+      className="fixed left-4 right-4 z-[95] max-w-md mx-auto animate-in slide-in-from-bottom-4 duration-300"
+      style={{
+        bottom: 'max(5.5rem, calc(env(safe-area-inset-bottom, 0px) + 4.5rem))',
+      }}
+    >
+      <div className="relative bg-slate-900 text-white rounded-2xl shadow-2xl border border-slate-700 p-4">
+        {/* Close: always on top layer — fixes Android WebView / narrow flex clipping */}
         <button
           type="button"
           onClick={handleDismiss}
-          className="shrink-0 p-2 text-slate-400 hover:text-white rounded-lg transition-colors"
-          aria-label="Dismiss"
+          className="absolute top-3 right-3 z-[110] flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800/95 text-slate-200 ring-1 ring-white/10 hover:bg-slate-700 hover:text-white active:scale-95 shadow-md touch-manipulation"
+          aria-label="Dismiss install prompt"
         >
-          <X size={18} />
+          <X size={20} strokeWidth={2.5} />
         </button>
+
+        {/* pr-12 keeps copy clear of the absolute close on all viewports */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 pr-12">
+          <div className="flex items-start gap-3 sm:items-center min-w-0 flex-1">
+            <div className="w-12 h-12 rounded-xl bg-teal-500/20 flex items-center justify-center shrink-0">
+              <Download size={24} className="text-teal-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-sm">Install Kshatryx Technologies</p>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {isIOS ? 'Tap Share → Add to Home Screen' : 'Add to home screen for a faster experience'}
+              </p>
+            </div>
+          </div>
+
+          {!isIOS && (
+            <button
+              type="button"
+              onClick={handleInstall}
+              className="w-full shrink-0 px-4 py-3 sm:w-auto sm:py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs uppercase tracking-wider transition-colors"
+            >
+              Install
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

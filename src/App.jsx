@@ -11,7 +11,8 @@ import { LocationProvider } from './context/LocationContext';
 // Components
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
-import InstallAppPrompt from './components/common/InstallAppPrompt'; 
+import InstallAppPrompt from './components/common/InstallAppPrompt';
+import PageBackground from './components/common/PageBackground';
 
 // 1. CUSTOMER PAGES
 import Home from './pages/customer/Home';
@@ -79,17 +80,24 @@ const Layout = ({ children }) => {
                        location.pathname === '/login';
 
   return (
-    <div className="flex flex-col min-h-screen max-w-[100vw] overflow-x-hidden bg-slate-50 w-full">
-       {!isHiddenPage && <Navbar />}
-       {/* OLD: main had no bottom safe-area — NEW: prevent content hidden by system nav/gesture bar */}
-       <main
-         className={`flex-1 min-w-0 w-full max-w-[100vw] ${!isHiddenPage ? 'pt-24 md:pt-24' : ''}`}
-         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-       >
+    <div className="relative flex flex-col min-h-screen max-w-[100vw] overflow-x-hidden w-full bg-slate-50">
+      {/* Subtle global pattern (customer shell only) */}
+      <PageBackground />
+      {/*
+        OLD (flat): single wrapper, no z-layer — pattern above sits under content via z-[2]
+      */}
+      <div className="relative z-[2] flex flex-col min-h-screen flex-1 w-full">
+        {!isHiddenPage && <Navbar />}
+        {/* OLD: main had no bottom safe-area — NEW: prevent content hidden by system nav/gesture bar */}
+        <main
+          className={`flex-1 min-w-0 w-full max-w-[100vw] ${!isHiddenPage ? 'pt-24 md:pt-24' : ''}`}
+          style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+        >
           {children}
-       </main>
-       {!isHiddenPage && <Footer />}
-       {!isHiddenPage && <InstallAppPrompt />}
+        </main>
+        {!isHiddenPage && <Footer />}
+        {!isHiddenPage && <InstallAppPrompt />}
+      </div>
     </div>
   );
 };
