@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -13,6 +14,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../lib/supabase';
+import { signInWithGoogle } from '../lib/googleOAuth';
+
+/** Official multicolor “G” (PNG) — Google branding guidelines allow this asset in sign-in buttons. */
+const GOOGLE_G_LOGO_PNG =
+  'https://www.google.com/images/branding/googleg/1x/googleg_standard_color_128dp.png';
 
 const ACCENT = '#0d9488';
 const ACCENT_MUTED = '#134e4a';
@@ -42,6 +48,7 @@ export default function LoginScreen() {
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const sendCode = useCallback(async () => {
     if (mode === 'email') {
@@ -112,13 +119,33 @@ export default function LoginScreen() {
         });
         if (error) throw error;
       }
-      Alert.alert('Signed in', 'Session saved on this device.');
+      /*
+       * OLD trial: local success alert before central expert validation + Dashboard routing.
+       * Alert.alert('Signed in', 'Session saved on this device.');
+       */
     } catch (e) {
       Alert.alert('Verification failed', e?.message ?? String(e));
     } finally {
       setLoading(false);
     }
   }, [email, mode, otp, phone]);
+
+  const onContinueWithGoogle = useCallback(async () => {
+    setGoogleLoading(true);
+    try {
+      const result = await signInWithGoogle(supabase);
+      if (result?.cancelled) return;
+      /*
+       * OLD trial: showed an alert here on success. Session + expert check now run in App.js
+       * (validateExpertAccess); user is routed to DashboardScreen when approved.
+       * Alert.alert('Google', 'Signed in');
+       */
+    } catch (e) {
+      Alert.alert('Google sign-in failed', e?.message ?? String(e));
+    } finally {
+      setGoogleLoading(false);
+    }
+  }, []);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
@@ -138,6 +165,31 @@ export default function LoginScreen() {
             </View>
             <Text style={styles.title}>Kshatr Experts</Text>
             <Text style={styles.subtitle}>Sign in with the email or phone registered on your expert profile.</Text>
+          </View>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.googleBtn,
+              pressed && styles.googleBtnPressed,
+              (loading || googleLoading) && styles.btnDisabled,
+            ]}
+            onPress={onContinueWithGoogle}
+            disabled={loading || googleLoading}
+          >
+            {googleLoading ? (
+              <ActivityIndicator color="#1e293b" />
+            ) : (
+              <>
+                <Image source={{ uri: GOOGLE_G_LOGO_PNG }} style={styles.googleIcon} resizeMode="contain" />
+                <Text style={styles.googleBtnText}>Continue with Google</Text>
+              </>
+            )}
+          </Pressable>
+
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or use email / phone code</Text>
+            <View style={styles.dividerLine} />
           </View>
 
           <View style={styles.card}>
@@ -296,6 +348,50 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     color: TEXT_MUTED,
+  },
+  googleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    marginBottom: 20,
+  },
+  googleBtnPressed: {
+    opacity: 0.92,
+  },
+  googleIcon: {
+    width: 22,
+    height: 22,
+  },
+  googleBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1e293b',
+    letterSpacing: 0.2,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    gap: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#334155',
+  },
+  dividerText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: TEXT_MUTED,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
   },
   card: {
     backgroundColor: CARD,
