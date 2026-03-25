@@ -42,5 +42,9 @@ export function getServiceEmoji(categoryOrName = '') {
 /** Check karta hai value valid image URL hai ya emoji/text */
 export function isImageUrl(value) {
   if (!value || typeof value !== 'string') return false;
-  return value.startsWith('http://') || value.startsWith('https://');
+  return (
+    value.startsWith('http://') ||
+    value.startsWith('https://') ||
+    value.startsWith('/images/')
+  );
 }

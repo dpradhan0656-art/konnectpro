@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { isImageUrl } from '../../lib/serviceIconUtils';
+import { getCategoryFallbackImage } from '../../lib/fallbackImages';
 
 /** Gradient fallbacks when category has no image (distinct from Deals — no top badge) */
 const BG_GRADIENTS = [
@@ -12,8 +13,6 @@ const BG_GRADIENTS = [
   'from-emerald-600/25 to-slate-950/95',
   'from-sky-600/28 to-slate-950/90',
 ];
-
-const CATEGORY_IMAGE_FALLBACK = 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80';
 
 export default function CategorySection({ categories, loading }) {
   const navigate = useNavigate();
@@ -41,7 +40,7 @@ export default function CategorySection({ categories, loading }) {
           {categories.map((cat, i) => {
             const slugUrl = cat.slug || cat.name.toLowerCase().replace(/[\s_]+/g, '-');
             const useImage = isImageUrl(cat?.icon);
-            const imageUrl = useImage ? cat.icon : CATEGORY_IMAGE_FALLBACK;
+            const imageUrl = useImage ? cat.icon : getCategoryFallbackImage(cat?.name);
             const gradientClass = BG_GRADIENTS[i % BG_GRADIENTS.length];
 
             return (
@@ -54,19 +53,17 @@ export default function CategorySection({ categories, loading }) {
               >
                 {/* Full-bleed background: image or gradient */}
                 <div className="absolute inset-0 z-0">
-                  {useImage ? (
-                    <img
-                      src={imageUrl}
-                      alt=""
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = CATEGORY_IMAGE_FALLBACK;
-                      }}
-                    />
-                  ) : null}
+                  <img
+                    src={imageUrl}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = getCategoryFallbackImage(cat?.name);
+                    }}
+                  />
                   <div
-                    className={`absolute inset-0 bg-gradient-to-br ${gradientClass} ${useImage ? 'opacity-70 group-hover:opacity-80' : ''}`}
+                    className={`absolute inset-0 bg-gradient-to-br ${gradientClass} ${useImage ? 'opacity-65 group-hover:opacity-75' : 'opacity-75 group-hover:opacity-85'}`}
                     aria-hidden="true"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent pointer-events-none" aria-hidden="true" />

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Beauty placeholder">
+  <defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="#3b0764"/><stop offset="100%" stop-color="#0f172a"/></linearGradient></defs>
+  <rect width="800" height="500" fill="url(#g)"/>
+  <circle cx="140" cy="420" r="140" fill="#c084fc" opacity="0.2"/>
+  <text x="56" y="255" fill="#f3e8ff" font-size="48" font-family="Inter,Arial,sans-serif" font-weight="700">Beauty & Salon</text>
+  <text x="56" y="300" fill="#d8b4fe" font-size="24" font-family="Inter,Arial,sans-serif">At-home grooming and spa care</text>
+</svg>

@@ -5,8 +5,7 @@ import { useOptionalLocationContext } from '../../context/LocationContext';
 import { fetchDynamicPrice } from '../../controllers/pricingController';
 import { isDynamicPricingEnabled } from '../../config/pricingFeatureFlags';
 import { getUserCityKey } from '../../lib/serviceCityUtils';
-
-const SERVICE_IMAGE_FALLBACK = 'https://images.unsplash.com/photo-1581578731117-e0a820379b73?w=400&q=80';
+import { getServiceFallbackImage } from '../../lib/fallbackImages';
 
 /**
  * Home service card with optional dynamic geo pricing.
@@ -81,7 +80,8 @@ export default function ServiceCard({
   const wasPrice = displayPrice + 100;
   const rawImage = service.image || service.image_url || service.img || '';
   const useImageUrl = isImageUrl(rawImage);
-  const imageSrc = useImageUrl ? rawImage : SERVICE_IMAGE_FALLBACK;
+  const fallbackImage = getServiceFallbackImage(service?.name || service?.category);
+  const imageSrc = useImageUrl ? rawImage : fallbackImage;
   const emojiFallback = !useImageUrl && rawImage ? rawImage : getServiceEmoji(service.category || service.name);
 
   return (
@@ -95,7 +95,7 @@ export default function ServiceCard({
             className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             onError={(e) => {
               e.target.onerror = null;
-              e.target.src = SERVICE_IMAGE_FALLBACK;
+              e.target.src = fallbackImage;
             }}
           />
         ) : (

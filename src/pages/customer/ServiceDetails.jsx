@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import BookingModal from '../../components/customer/BookingModal';
 import SOSButton from '../../components/common/SOSButton';
-import { getServiceEmoji, isImageUrl } from '../../lib/serviceIconUtils';
+import { isImageUrl } from '../../lib/serviceIconUtils';
+import { getServiceFallbackImage } from '../../lib/fallbackImages';
 import { Star, Clock, MapPin, Camera, Play, ShieldCheck, ArrowLeft } from 'lucide-react';
-
-const IMAGE_FALLBACK = 'https://images.unsplash.com/photo-1581578731117-e0a820379b73?w=800&q=80';
 
 const ServiceDetails = () => {
   const { id } = useParams();
@@ -26,6 +25,7 @@ const ServiceDetails = () => {
     image: "https://images.unsplash.com/photo-1581094794329-cd56b5095bb4?auto=format&fit=crop&q=80&w=1000",
     description: "Deep cleaning of filters, cooling coil, and drain tray. Gas charging extra if needed."
   };
+  const displayFallbackImage = getServiceFallbackImage(service.name);
 
   // 6.1 Video Reviews Data
   const videoReviews = [
@@ -60,9 +60,9 @@ const ServiceDetails = () => {
       {/* HEADER IMAGE & NAV */}
       <div className="relative h-64 w-full bg-slate-200 flex items-center justify-center overflow-hidden">
         {isImageUrl(service.image || service.image_url) ? (
-          <img src={service.image || service.image_url} className="w-full h-full object-cover" alt={service.name} onError={(e) => { e.target.onerror = null; e.target.src = IMAGE_FALLBACK; }} />
+          <img src={service.image || service.image_url} className="w-full h-full object-cover" alt={service.name} onError={(e) => { e.target.onerror = null; e.target.src = displayFallbackImage; }} />
         ) : (
-          <span className="text-8xl">{service.image || service.image_url || getServiceEmoji(service.name)}</span>
+          <img src={displayFallbackImage} className="w-full h-full object-cover" alt={service.name} />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-teal-900 to-transparent opacity-80"></div>
         

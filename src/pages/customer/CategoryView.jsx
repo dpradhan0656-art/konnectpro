@@ -6,6 +6,7 @@ import { getUserCityKey, filterServicesByCity } from '../../lib/serviceCityUtils
 import BookingModal from '../../components/customer/BookingModal';
 import { ArrowLeft, Star, Clock, ShoppingBag, Plus, ShieldCheck, Zap, Info } from 'lucide-react';
 import { getServiceEmoji, isImageUrl } from '../../lib/serviceIconUtils';
+import { getServiceFallbackImage } from '../../lib/fallbackImages';
 
 export default function CategoryView() {
   const { category } = useParams();
@@ -17,18 +18,6 @@ export default function CategoryView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const cleanCategoryName = category ? category.replace(/-/g, ' ') : '';
-
-  const getFallbackImage = (cat) => {
-      const lowerCat = (cat || "").toLowerCase();
-      if(lowerCat.includes('ac') || lowerCat.includes('cool')) return "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=500&q=80";
-      if(lowerCat.includes('clean') || lowerCat.includes('wash')) return "https://images.unsplash.com/photo-1581578731117-e0a820379b73?w=500&q=80";
-      if(lowerCat.includes('paint')) return "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=500&q=80";
-      if(lowerCat.includes('plumb') || lowerCat.includes('water') || lowerCat.includes('ro')) return "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=500&q=80";
-      if(lowerCat.includes('electr') || lowerCat.includes('light')) return "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=500&q=80";
-      if(lowerCat.includes('carpen') || lowerCat.includes('wood')) return "https://images.unsplash.com/photo-1622295023576-e41332a813d0?w=500&q=80";
-      if(lowerCat.includes('salon') || lowerCat.includes('hair') || lowerCat.includes('beauty')) return "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500&q=80"; 
-      return "https://images.unsplash.com/photo-1581244277943-fe4a9c777189?w=500&q=80"; 
-  };
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -93,27 +82,22 @@ export default function CategoryView() {
         ) : (
           services.map((service) => {
             const finalPrice = findDisplayPrice(service); 
-            const fallbackImg = getFallbackImage(cleanCategoryName);
+            const fallbackImg = getServiceFallbackImage(service?.name || cleanCategoryName);
             const rawImg = service.image_url || service.image || service.img || '';
             const useImgUrl = isImageUrl(rawImg);
             const imgSrc = useImgUrl ? (rawImg || fallbackImg) : fallbackImg;
-            const emojiFallback = !useImgUrl && rawImg ? rawImg : getServiceEmoji(service.category || service.name);
 
             return (
             <div key={service.id} className="bg-slate-900/50 backdrop-blur-sm p-4 rounded-[2rem] shadow-[0_16px_48px_-12px_rgba(0,0,0,0.45)] border border-white/10 flex gap-4 transition-all hover:border-teal-500/40 hover:shadow-[0_20px_50px_-8px_rgba(20,184,166,0.12)] group ring-1 ring-white/5">
               
               {/* IMAGE SECTION – URL ya emoji */}
               <div className="w-24 h-24 bg-slate-800 rounded-2xl overflow-hidden shrink-0 shadow-inner border border-white/5 relative flex items-center justify-center">
-                 {useImgUrl ? (
-                   <img 
-                     src={imgSrc} 
-                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                     onError={(e) => { e.target.onerror = null; e.target.src = fallbackImg; }} 
-                     alt={service.name}
-                   />
-                 ) : (
-                   <span className="text-4xl">{emojiFallback}</span>
-                 )}
+                 <img 
+                   src={imgSrc} 
+                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                   onError={(e) => { e.target.onerror = null; e.target.src = fallbackImg; }} 
+                   alt={service.name}
+                 />
               </div>
 
               {/* INFO SECTION */}
