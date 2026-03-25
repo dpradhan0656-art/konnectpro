@@ -20,7 +20,8 @@
       "permissions": [
         "INTERNET",
         "VIBRATE",
-        "CAMERA"
+        "CAMERA",
+        "POST_NOTIFICATIONS"
       ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -34,7 +35,20 @@
     },
     "plugins": [
       "expo-web-browser",
-      "expo-font"
-    ]
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#0d9488",
+          "defaultChannel": "default"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
+    }
   }
 }

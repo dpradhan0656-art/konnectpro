@@ -25,6 +25,7 @@ import CompletedJobsList from '../components/dashboard/CompletedJobsList';
 import LanguagePickerModal from '../components/dashboard/LanguagePickerModal';
 import WalletDetailsModal from '../components/dashboard/WalletDetailsModal';
 import { ACCENT, BG, TEXT, TEXT_MUTED } from '../components/dashboard/theme';
+import { registerExpertPushToken } from '../services/pushRegistration';
 
 /**
  * @param {{ expert: { id?: string | number; name?: string | null; email?: string | null } | null }} props
@@ -75,6 +76,19 @@ export default function DashboardScreen({ expert }) {
     }
     prevWorkAlert.current = workAlert;
   }, [workAlert, realtimePayload, activeBookings, t]);
+
+  /** Expo Push token + language for assignment notifications (screen off / app background). */
+  useEffect(() => {
+    if (!expert?.id) return;
+    let cancelled = false;
+    (async () => {
+      await registerExpertPushToken({ expertId: expert.id, langCode: lang });
+      if (cancelled) return;
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [expert?.id, lang]);
 
   const handleSignOut = async () => {
     setSigningOut(true);

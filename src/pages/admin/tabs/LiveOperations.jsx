@@ -3,6 +3,7 @@ import { supabase } from '../../../lib/supabase';
 import { Activity, Loader2, UserCheck, X, AlertCircle, RefreshCw } from 'lucide-react';
 import BookingTimelineModal from '../../../components/admin/BookingTimelineModal';
 import { writeAdminAuditLog } from '../../../utils/adminAuditTrail';
+import { sendExpertAssignmentPush } from '../../../lib/sendExpertAssignmentPush';
 
 function statusBadgeClass(status) {
   const s = String(status || '').toLowerCase();
@@ -204,6 +205,7 @@ export default function LiveOperations() {
         entityId: selectedBooking.id,
         metadata: { expert_id: expertId, city: selectedBooking.city || null },
       });
+      void sendExpertAssignmentPush({ bookingId: selectedBooking.id, expertId });
       setModalOpen(false);
       setSelectedBooking(null);
     } catch (e) {

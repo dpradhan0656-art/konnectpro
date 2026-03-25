@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import BookingTimelineModal from '../../../components/admin/BookingTimelineModal';
 import { writeAdminAuditLog } from '../../../utils/adminAuditTrail';
+import { sendExpertAssignmentPush } from '../../../lib/sendExpertAssignmentPush';
 
 export default function DispatchTab() {
   const [bookings, setBookings] = useState([]);
@@ -80,6 +81,7 @@ export default function DispatchTab() {
             entityId: bookingId,
             metadata: { expert_id: expertId, city: bookingCity || null, area_head_id: areaHeadId },
           });
+          void sendExpertAssignmentPush({ bookingId, expertId });
           fetchData();
       } else {
           alert("Error assigning expert: " + error.message);
