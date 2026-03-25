@@ -43,6 +43,15 @@ export default function DeepakHQ() {
   const [loginError, setLoginError] = useState('');
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [pendingExpertCount, setPendingExpertCount] = useState(0);
+
+  const refreshPendingExpertCount = async () => {
+    const { count, error } = await supabase
+      .from('experts')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'pending');
+    if (!error) setPendingExpertCount(count || 0);
+  };
 
   /*
    * Old Inconsistent Form (history): `checkAdminAccess(userId)` only queried `app_admin`.
@@ -63,7 +72,10 @@ export default function DeepakHQ() {
         }
         const allowed = await canAccessDeepakHQ(session.user);
         if (mounted) {
-          if (allowed) setIsAuthenticated(true);
+          if (allowed) {
+            setIsAuthenticated(true);
+            refreshPendingExpertCount();
+          }
           else await supabase.auth.signOut();
         }
       } catch (e) {
@@ -91,7 +103,10 @@ export default function DeepakHQ() {
       // Session exists → HQ access (app_admin or superadmin email allowlist)
       canAccessDeepakHQ(session.user).then((allowed) => {
         if (!mounted) return;
-        if (allowed) setIsAuthenticated(true);
+        if (allowed) {
+          setIsAuthenticated(true);
+          refreshPendingExpertCount();
+        }
         else {
           setIsAuthenticated(false);
           supabase.auth.signOut();
@@ -105,6 +120,14 @@ export default function DeepakHQ() {
       subscription?.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const id = setInterval(() => {
+      refreshPendingExpertCount();
+    }, 30000);
+    return () => clearInterval(id);
+  }, [isAuthenticated]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -188,7 +211,7 @@ export default function DeepakHQ() {
             <NavBtn icon={<Activity size={18}/>} label="Live Ops" active={activeTab === 'live_ops'} onClick={() => handleTabChange('live_ops')} />
             
             {/* ✅ NAYA BUTTON JODA (KYC Verification) */}
-            <NavBtn icon={<FileCheck size={18}/>} label="KYC Verifications" active={activeTab === 'kyc_verification'} onClick={() => handleTabChange('kyc_verification')} />
+            <NavBtn icon={<FileCheck size={18}/>} label="KYC Verifications" active={activeTab === 'kyc_verification'} onClick={() => handleTabChange('kyc_verification')} badge={pendingExpertCount > 0 ? String(pendingExpertCount) : undefined} />
             
             <NavBtn icon={<UserCheck size={18}/>} label="Expert Army" active={activeTab === 'experts'} onClick={() => handleTabChange('experts')} />
             <NavBtn icon={<Shield size={18}/>} label="Area Commanders" active={activeTab === 'area_heads'} onClick={() => handleTabChange('area_heads')} />
