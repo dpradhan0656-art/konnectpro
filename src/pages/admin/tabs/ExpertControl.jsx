@@ -180,13 +180,15 @@ export default function ExpertControl() {
                 <Plus size={14}/> Manual Add
             </button>
             )}
-            <button
-              type="button"
-              onClick={() => { setEditingId(null); setFormData({name:'', phone:'', service_category: categories[0]?.name || '', city:'Jabalpur', password:''}); setIsModalOpen(true); }}
-              className="bg-slate-800 text-teal-300 border border-teal-700/50 px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-slate-700 transition-colors"
-            >
-              <Plus size={14}/> Instant add (approved)
-            </button>
+            {false && (
+              <button
+                type="button"
+                onClick={() => { setEditingId(null); setFormData({name:'', phone:'', service_category: categories[0]?.name || '', city:'Jabalpur', password:''}); setIsModalOpen(true); }}
+                className="bg-slate-800 text-teal-300 border border-teal-700/50 px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-slate-700 transition-colors"
+              >
+                <Plus size={14}/> Instant add (approved)
+              </button>
+            )}
         </div>
       </div>
 

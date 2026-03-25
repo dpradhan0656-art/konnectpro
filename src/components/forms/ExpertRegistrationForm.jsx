@@ -36,6 +36,8 @@ export default function ExpertRegistrationForm({
   const [city, setCity] = useState(() => defaultCity || (variant === 'footer' ? '' : 'Jabalpur'));
   const [experienceYears, setExperienceYears] = useState('');
   const [aadhar, setAadhar] = useState('');
+  const [password, setPassword] = useState('');
+  const [selfSession, setSelfSession] = useState(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -58,6 +60,26 @@ export default function ExpertRegistrationForm({
     if (defaultCity) setCity(defaultCity);
   }, [defaultCity]);
 
+  useEffect(() => {
+    if (variant !== 'self') return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (cancelled) return;
+      const session = data?.session || null;
+      setSelfSession(session);
+      if (session?.user?.email) {
+        setEmail((prev) => prev || session.user.email);
+      }
+      if (session?.user?.user_metadata?.full_name) {
+        setName((prev) => prev || session.user.user_metadata.full_name);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [variant]);
+
   const isOther = categoryKey === OTHER_VALUE;
   const finalCategory = isOther ? customCategory.trim() : categoryKey;
 
@@ -68,9 +90,21 @@ export default function ExpertRegistrationForm({
     setCustomCategory('');
     setExperienceYears('');
     setAadhar('');
-    setSuccess(false);
+    setPassword('');
     setError('');
   }, []);
+
+  const handleSelfGoogle = async () => {
+    setError('');
+    const { error: oauthErr } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.href,
+        queryParams: { prompt: 'select_account' },
+      },
+    });
+    if (oauthErr) setError(oauthErr.message || 'Google sign-up failed.');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -123,6 +157,31 @@ export default function ExpertRegistrationForm({
       return;
     }
 
+    let selfUserId = null;
+    if (variant === 'self') {
+      if (selfSession?.user?.id) {
+        selfUserId = selfSession.user.id;
+      } else {
+        if (password.length < 6) {
+          setError('Password must be at least 6 characters.');
+          return;
+        }
+        const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
+          email: email.trim().toLowerCase(),
+          password,
+        });
+        if (signUpErr) {
+          setError(signUpErr.message || 'Could not create account.');
+          return;
+        }
+        selfUserId = signUpData?.user?.id || null;
+        if (!selfUserId) {
+          setError('Account created but user id missing. Please retry.');
+          return;
+        }
+      }
+    }
+
     const payload = {
       name: n,
       phone: digits,
@@ -137,6 +196,9 @@ export default function ExpertRegistrationForm({
     if (variant === 'areaHead') {
       payload.user_id = null;
       payload.area_head_id = areaHeadId;
+    } else if (variant === 'self') {
+      payload.user_id = selfUserId;
+      payload.area_head_id = null;
     } else {
       payload.user_id = null;
       payload.area_head_id = null;
@@ -189,6 +251,21 @@ export default function ExpertRegistrationForm({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-3 md:space-y-4">
+          {variant === 'self' && !selfSession?.user?.id && (
+            <>
+              <button
+                type="button"
+                onClick={handleSelfGoogle}
+                className="w-full bg-white hover:bg-slate-100 text-slate-950 py-3 rounded-xl font-black flex justify-center items-center gap-2 transition-all active:scale-95 shadow-xl text-sm"
+              >
+                Sign up with Google
+              </button>
+              <p className="text-[10px] text-slate-500 text-center font-bold uppercase tracking-widest">
+                Or continue with email/password
+              </p>
+            </>
+          )}
+
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
             <input
@@ -235,9 +312,26 @@ export default function ExpertRegistrationForm({
                 setSuccess(false);
                 setEmail(ev.target.value);
               }}
+              readOnly={variant === 'self' && Boolean(selfSession?.user?.email)}
               className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl py-3 pl-10 pr-3 text-sm outline-none focus:border-teal-500/50"
             />
           </div>
+
+          {variant === 'self' && !selfSession?.user?.id && (
+            <input
+              type="password"
+              required
+              minLength={6}
+              autoComplete="new-password"
+              placeholder="Create password (min 6 chars)"
+              value={password}
+              onChange={(ev) => {
+                setSuccess(false);
+                setPassword(ev.target.value);
+              }}
+              className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl py-3 px-3 text-sm outline-none focus:border-teal-500/50"
+            />
+          )}
 
           <div className="relative">
             <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={16} />
