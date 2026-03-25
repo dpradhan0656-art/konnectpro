@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { supabase } from './lib/supabase';
 
@@ -14,15 +14,16 @@ import Footer from './components/common/Footer';
 import InstallAppPrompt from './components/common/InstallAppPrompt';
 import PageBackground from './components/common/PageBackground';
 import OfflineBanner from './components/common/OfflineBanner';
+import CustomerRouteFallback from './components/common/CustomerRouteFallback';
 
-// 1. CUSTOMER PAGES
+// 1. CUSTOMER PAGES — Home stays eager for first paint; heavy routes code-split for speed
 import Home from './pages/customer/Home';
-import Login from './pages/auth/Login'; 
-import Bookings from './pages/customer/Bookings';
-import CategoryView from './pages/customer/CategoryView'; 
-import Cart from './pages/customer/Cart'; 
-import Checkout from './pages/customer/Checkout';
-import Profile from './pages/customer/Profile';
+import Login from './pages/auth/Login';
+const Bookings = lazy(() => import('./pages/customer/Bookings'));
+const CategoryView = lazy(() => import('./pages/customer/CategoryView'));
+const Cart = lazy(() => import('./pages/customer/Cart'));
+const Checkout = lazy(() => import('./pages/customer/Checkout'));
+const Profile = lazy(() => import('./pages/customer/Profile'));
 
 // 2. ADMIN PAGES
 import DeepakHQ from './pages/admin/DeepakHQ'; 
@@ -119,7 +120,8 @@ const AppRoutes = () => {
       <ScrollToTop />
       <AdminServiceWorkerDisable />
       <Layout>
-        <Routes>
+        <Suspense fallback={<CustomerRouteFallback />}>
+          <Routes>
           {/* ========================================== */}
           {/* DOOR 1: CUSTOMER PORTAL */}
           {/* ========================================== */}
@@ -161,7 +163,8 @@ const AppRoutes = () => {
           <Route path="/contact-support" element={<ContactSupport />} />
           
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+          </Routes>
+        </Suspense>
       </Layout>
     </Router>
   );

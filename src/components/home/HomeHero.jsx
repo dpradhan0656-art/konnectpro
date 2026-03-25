@@ -36,9 +36,9 @@ export default function HomeHero({
       <div className="hidden absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-[80px] -ml-20 -mb-20 pointer-events-none" aria-hidden="true" />
 
       <div className="relative z-10 max-w-4xl mx-auto min-w-0 w-full box-border">
-        <div className="flex items-center gap-3 mb-6 sm:mb-8 bg-white border border-slate-200 w-fit max-w-full px-4 py-2.5 rounded-full shadow-sm">
+        <div className="flex items-center gap-3 mb-6 sm:mb-8 bg-white border border-slate-200/90 w-fit max-w-full px-4 py-2.5 rounded-full shadow-sm ring-1 ring-slate-100">
           <div
-            className={`p-1.5 rounded-full ${cityStatus.active ? 'bg-blue-700' : 'bg-slate-100'} shadow-sm border ${cityStatus.active ? 'border-blue-700/20' : 'border-slate-200'}`}
+            className={`p-1.5 rounded-full ${cityStatus.active ? 'bg-teal-600' : 'bg-slate-100'} shadow-sm border ${cityStatus.active ? 'border-teal-600/25' : 'border-slate-200'}`}
           >
             <MapPin
               size={14}
@@ -47,7 +47,7 @@ export default function HomeHero({
             />
           </div>
           <div>
-            <p className="text-[9px] font-bold text-blue-700 uppercase tracking-widest leading-none mb-1">{cityStatus.message}</p>
+            <p className="text-[9px] font-bold text-teal-700 uppercase tracking-widest leading-none mb-1">{cityStatus.message}</p>
             {isEditingLoc ? (
               <input
                 autoFocus

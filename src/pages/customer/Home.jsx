@@ -116,7 +116,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-[#f8fafc] font-sans selection:bg-blue-200 relative pb-32">
+    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-transparent font-sans selection:bg-teal-200/70 relative pb-32">
       <SOSButton />
 
       <HomeHero

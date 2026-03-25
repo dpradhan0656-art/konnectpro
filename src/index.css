@@ -10,7 +10,7 @@ html {
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body), system-ui, -apple-system, 'Segoe UI', sans-serif;
   background-color: #f8fafc;
   color: #0f172a;
   overflow-x: hidden;
@@ -108,4 +108,9 @@ body {
 
   --font-heading: 'Inter', sans-serif;
   --font-body: 'Inter', sans-serif;
+
+  /* Customer shell (aligned with Navbar teal / slate — additive, no admin coupling) */
+  --customer-shell-bg: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 55%, #f8fafc 100%);
+  --customer-accent: #0d9488;
+  --customer-accent-soft: rgba(13, 148, 136, 0.12);
 }
