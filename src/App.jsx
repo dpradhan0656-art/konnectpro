@@ -13,6 +13,7 @@ import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
 import InstallAppPrompt from './components/common/InstallAppPrompt';
 import PageBackground from './components/common/PageBackground';
+import OfflineBanner from './components/common/OfflineBanner';
 
 // 1. CUSTOMER PAGES
 import Home from './pages/customer/Home';
@@ -83,6 +84,8 @@ const Layout = ({ children }) => {
     <div className="relative flex flex-col min-h-screen max-w-[100vw] overflow-x-hidden w-full bg-slate-50">
       {/* Subtle global pattern (customer shell only) */}
       <PageBackground />
+      {/* Additive global network-loss UX (non-blocking) */}
+      <OfflineBanner />
       {/*
         OLD (flat): single wrapper, no z-layer — pattern above sits under content via z-[2]
       */}

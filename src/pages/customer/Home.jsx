@@ -5,6 +5,8 @@ import { useCart } from '../../context/CartContext';
 import { getUserCityKey, filterServicesByCity } from '../../lib/serviceCityUtils';
 import { getStoredUserCity, persistUserCity } from '../../lib/persistUserCity';
 import { reportError } from '../../lib/errorHandling';
+import { runWithRetryTimeout } from '../../utils/apiWrapper';
+import Logger from '../../utils/logger';
 
 import SOSButton from '../../components/common/SOSButton';
 import HomeHero from '../../components/home/HomeHero';
@@ -39,7 +41,20 @@ export default function Home() {
     const fetchAllData = async () => {
       setLoading(true);
       try {
-        const { data: catData } = await supabase.from('categories').select('*').eq('is_active', true).order('created_at', { ascending: true });
+        // POC for standardized retry+timeout wrapper on one safe read-only query.
+        const categoryResult = await runWithRetryTimeout(
+          () => supabase.from('categories').select('*').eq('is_active', true).order('created_at', { ascending: true }),
+          { scope: 'Home:categories', timeoutMs: 8000, retries: 2 }
+        );
+        const { data: catData } = categoryResult;
+        /*
+          Legacy direct call (kept for safe reference, no business logic rewrite):
+          const { data: catData } = await supabase
+            .from('categories')
+            .select('*')
+            .eq('is_active', true)
+            .order('created_at', { ascending: true });
+        */
         if (catData) setCategories(catData);
 
         const { data: offerData } = await supabase.from('spotlight_offers').select('*').eq('is_active', true);
@@ -48,6 +63,7 @@ export default function Home() {
         const { data: serviceData } = await supabase.from('services').select('*').eq('is_active', true).limit(10);
         if (serviceData) setServices(serviceData);
       } catch (err) {
+        Logger.error('Home.fetchAllData', err);
         reportError('Home fetch', err);
       }
       setLoading(false);
