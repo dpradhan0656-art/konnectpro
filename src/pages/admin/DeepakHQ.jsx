@@ -5,7 +5,7 @@ import { canAccessDeepakHQ } from '../../lib/adminAccess';
 import {
   Shield, Menu, X, LogOut, LayoutGrid, Users, Briefcase, Settings,
   Megaphone, Navigation, CreditCard, UserCheck, Grid, DollarSign, FileCheck,
-  Database, Activity,
+  Database, Activity, ClipboardCheck,
 } from 'lucide-react';
 
 // Lazy-load tabs so DeepakHQ opens fast and tabs load on demand
@@ -24,6 +24,7 @@ const AreaHeadManager = lazy(() => import('./tabs/AreaHeadManager'));
 const ExpertVerification = lazy(() => import('./tabs/ExpertVerification'));
 const DeveloperToolsTab = lazy(() => import('./tabs/DeveloperToolsTab'));
 const LiveOperations = lazy(() => import('./tabs/LiveOperations'));
+const ReleaseOpsTab = lazy(() => import('./tabs/ReleaseOpsTab'));
 
 const TabFallback = () => (
   <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -221,6 +222,7 @@ export default function DeepakHQ() {
             <NavBtn icon={<DollarSign size={18}/>} label="Revenue & Stats" active={activeTab === 'revenue'} onClick={() => handleTabChange('revenue')} />
             <NavBtn icon={<CreditCard size={18}/>} label="Wallet System" active={activeTab === 'wallet'} onClick={() => handleTabChange('wallet')} />
             <NavBtn icon={<Megaphone size={18}/>} label="Ads & Ticker" active={activeTab === 'marketing'} onClick={() => handleTabChange('marketing')} />
+            <NavBtn icon={<ClipboardCheck size={18}/>} label="Release Ops" active={activeTab === 'release_ops'} onClick={() => handleTabChange('release_ops')} />
             
             <div className="mt-4 border-t border-slate-800 pt-4">
                  <NavBtn icon={<Settings size={18}/>} label="Admin Settings" active={activeTab === 'settings'} onClick={() => handleTabChange('settings')} />
@@ -264,6 +266,7 @@ export default function DeepakHQ() {
                     {activeTab === 'customers' && <CustomerCRM />}
                     {activeTab === 'wallet' && <WalletManager />}
                     {activeTab === 'marketing' && <MarketingTab />}
+                    {activeTab === 'release_ops' && <ReleaseOpsTab />}
                     {activeTab === 'revenue' && <RevenueTab />}
                     {activeTab === 'offers' && <ManageOffers />}
                     {activeTab === 'settings' && <SettingsTab />}
