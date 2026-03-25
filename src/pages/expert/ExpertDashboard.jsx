@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { canAccessDeepakHQ } from '../../lib/adminAccess';
 import { useNavigate } from 'react-router-dom';
-import { Power, MapPin, Navigation, Clock, Loader2, User, CheckCircle, Wrench, Wallet, IndianRupee, LogOut, Volume2, Globe, Plus, X } from 'lucide-react';
+import { Power, MapPin, Navigation, Clock, Loader2, User, CheckCircle, Wrench, Wallet, IndianRupee, LogOut, Volume2, Globe, Plus, X, Inbox } from 'lucide-react';
 import { buildCustomerLocationMapsUrl } from '../../utils/customerLocationMapsUrl.js';
 
 // 🇮🇳 18 NATIONAL LANGUAGES DICTIONARY (PAN-INDIA SUPPORT)
@@ -379,11 +379,11 @@ export default function ExpertDashboard() {
               <div className="text-right bg-slate-950 p-3 rounded-2xl border border-slate-800 min-w-[140px]">
                   <p className="text-[9px] text-slate-500 uppercase font-black">{t.wallet}</p>
                   <p className="text-2xl font-black text-green-400 mb-3">₹{expert?.wallet_balance?.toFixed(2) || 0}</p>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 w-full">
                     <button
                       type="button"
                       onClick={() => { setShowRecharge(true); setRechargeError(''); setRechargeAmount(null); setCustomAmount(''); }}
-                      className="flex-1 flex items-center justify-center gap-1 bg-green-500 hover:bg-green-400 text-slate-900 font-black py-1.5 rounded-lg text-[10px] uppercase tracking-widest transition-all"
+                      className="flex-1 min-w-0 flex items-center justify-center gap-1 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-400 hover:to-green-400 text-white font-black py-1.5 rounded-full text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-emerald-500/15 whitespace-nowrap"
                     >
                       <Plus size={10}/> {t.addMoney || 'Add Money'}
                     </button>
@@ -411,7 +411,7 @@ export default function ExpertDashboard() {
                         } catch (error) { alert("Failed: " + error.message); }
                       }}
                       disabled={!expert?.wallet_balance || expert.wallet_balance <= 0}
-                      className="flex-1 flex items-center justify-center gap-1 bg-teal-600 hover:bg-teal-500 disabled:bg-slate-800 text-white py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
+                      className="flex-1 min-w-0 flex items-center justify-center gap-1 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 disabled:from-slate-700 disabled:to-slate-800 disabled:text-slate-300 text-white py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-teal-500/15 whitespace-nowrap"
                     >
                       <IndianRupee size={10} className="inline"/> {t.withdraw}
                     </button>
@@ -469,12 +469,14 @@ export default function ExpertDashboard() {
               <button 
                   onClick={toggleDutyStatus} disabled={locationLoading}
                   className={`w-20 h-20 rounded-full flex items-center justify-center mb-4 transition-all border-4 ${
-                      expert?.is_active ? 'bg-green-500/20 text-green-500 border-green-500/50' : 'bg-slate-800 text-slate-500 border-slate-700'
+                      expert?.is_active
+                        ? 'bg-green-500/20 text-green-400 border-green-500/50 animate-pulse shadow-[0_0_22px_rgba(34,197,94,0.35)] ring-2 ring-green-500/20'
+                        : 'bg-slate-800 text-slate-500 border-slate-700'
                   }`}
               >
                   {locationLoading ? <Loader2 size={32} className="animate-spin"/> : <Power size={32} />}
               </button>
-              <h3 className={`text-lg font-black uppercase tracking-widest ${expert?.is_active ? 'text-green-500' : 'text-slate-500'}`}>
+              <h3 className={`text-lg font-black uppercase tracking-widest ${expert?.is_active ? 'text-green-400 drop-shadow-[0_0_12px_rgba(34,197,94,0.25)]' : 'text-slate-500'}`}>
                   {expert?.is_active ? t.online : t.offline}
               </h3>
           </div>
@@ -484,7 +486,10 @@ export default function ExpertDashboard() {
           <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-4">{t.jobs} ({jobs.length})</h3>
           <div className="space-y-4">
               {jobs.length === 0 ? (
-                  <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl text-center text-slate-500 font-bold">{t.noJobs}</div>
+                  <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl text-center text-slate-400 font-bold">
+                    <Inbox size={34} className="mx-auto mb-3 text-teal-400 drop-shadow-[0_0_18px_rgba(45,212,191,0.18)]" aria-hidden="true" />
+                    <div className="text-slate-400">{t.noJobs}</div>
+                  </div>
               ) : jobs.map((job) => {
                 const customerMapsUrl = buildCustomerLocationMapsUrl(job);
                 return (
