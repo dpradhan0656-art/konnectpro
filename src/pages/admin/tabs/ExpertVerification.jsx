@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { Shield, User, FileText, MapPin, Briefcase, CheckCircle, XCircle, Loader2, Eye } from 'lucide-react';
+import { writeAdminAuditLog } from '../../../utils/adminAuditTrail';
 
 export default function ExpertVerification() {
   const [pendingExperts, setPendingExperts] = useState([]);
@@ -46,6 +47,12 @@ export default function ExpertVerification() {
       .eq('id', id);
 
     if (!error) {
+        writeAdminAuditLog({
+          action: 'expert.approved.kyc',
+          entityType: 'expert',
+          entityId: id,
+          metadata: { name },
+        });
         alert(`✅ ${name} ka account Approve ho gaya hai!`);
         setSelectedExpert(null);
         fetchPendingExperts(); // List refresh karo
@@ -65,6 +72,12 @@ export default function ExpertVerification() {
     const { error } = await supabase.from('experts').update({ status: 'rejected', is_kyc_submitted: false }).eq('id', id);
     
     if (!error) {
+        writeAdminAuditLog({
+          action: 'expert.rejected.kyc',
+          entityType: 'expert',
+          entityId: id,
+          metadata: { name },
+        });
         alert(`❌ ${name} ka account Reject kar diya gaya hai.`);
         setSelectedExpert(null);
         fetchPendingExperts();

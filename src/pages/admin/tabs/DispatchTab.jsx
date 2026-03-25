@@ -4,6 +4,8 @@ import {
   Navigation, Clock, MapPin, CheckCircle, XCircle, 
   RefreshCw, IndianRupee, Zap, Phone, AlertCircle, Loader2, MapPinned, Building, ExternalLink
 } from 'lucide-react';
+import BookingTimelineModal from '../../../components/admin/BookingTimelineModal';
+import { writeAdminAuditLog } from '../../../utils/adminAuditTrail';
 
 export default function DispatchTab() {
   const [bookings, setBookings] = useState([]);
@@ -11,6 +13,7 @@ export default function DispatchTab() {
   const [areaHeads, setAreaHeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState(null);
+  const [timelineBookingId, setTimelineBookingId] = useState(null);
 
   const fetchData = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -71,6 +74,12 @@ export default function DispatchTab() {
         .eq('id', bookingId);
       
       if(!error) {
+          writeAdminAuditLog({
+            action: 'booking.assigned.manual_dispatch',
+            entityType: 'booking',
+            entityId: bookingId,
+            metadata: { expert_id: expertId, city: bookingCity || null, area_head_id: areaHeadId },
+          });
           fetchData();
       } else {
           alert("Error assigning expert: " + error.message);
@@ -88,6 +97,12 @@ export default function DispatchTab() {
           });
           
           if (error) throw error;
+          writeAdminAuditLog({
+            action: 'booking.completed.dispatch',
+            entityType: 'booking',
+            entityId: job.id,
+            metadata: { payment_mode: job.payment_mode || null, total_amount: job.total_amount || null },
+          });
           alert("✅ Job Finished! Payment Split Done in Database.");
           fetchData();
       } catch (err) {
@@ -112,6 +127,12 @@ export default function DispatchTab() {
       alert("Cancel failed: No row updated. Ensure you are logged in as admin and RLS allows updates.");
       return;
     }
+    writeAdminAuditLog({
+      action: 'booking.cancelled.dispatch',
+      entityType: 'booking',
+      entityId: job.id,
+      metadata: { previous_status: job.status || null },
+    });
     fetchData();
   };
 
@@ -278,11 +299,23 @@ export default function DispatchTab() {
                                 {cancellingId === job.id ? 'Cancelling...' : 'Cancel Booking'}
                               </button>
                           )}
+                          <button
+                            type="button"
+                            onClick={() => setTimelineBookingId(job.id)}
+                            className="w-full text-slate-400 hover:text-teal-300 py-2 text-[10px] font-black uppercase tracking-widest transition-all"
+                          >
+                            View Timeline
+                          </button>
                       </div>
                   </div>
               </div>
           )})}
       </div>
+      <BookingTimelineModal
+        open={Boolean(timelineBookingId)}
+        bookingId={timelineBookingId}
+        onClose={() => setTimelineBookingId(null)}
+      />
     </div>
   );
 }

@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { Activity, Loader2, UserCheck, X, AlertCircle, RefreshCw } from 'lucide-react';
+import BookingTimelineModal from '../../../components/admin/BookingTimelineModal';
+import { writeAdminAuditLog } from '../../../utils/adminAuditTrail';
 
 function statusBadgeClass(status) {
   const s = String(status || '').toLowerCase();
@@ -113,6 +115,7 @@ export default function LiveOperations() {
   const [experts, setExperts] = useState([]);
   const [expertsLoading, setExpertsLoading] = useState(false);
   const [assigning, setAssigning] = useState(false);
+  const [timelineBookingId, setTimelineBookingId] = useState(null);
 
   const fetchBookings = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -195,6 +198,12 @@ export default function LiveOperations() {
           b.id === selectedBooking.id ? { ...b, expert_id: expertId, status: 'assigned' } : b
         )
       );
+      writeAdminAuditLog({
+        action: 'booking.assigned.live_ops',
+        entityType: 'booking',
+        entityId: selectedBooking.id,
+        metadata: { expert_id: expertId, city: selectedBooking.city || null },
+      });
       setModalOpen(false);
       setSelectedBooking(null);
     } catch (e) {
@@ -277,16 +286,34 @@ export default function LiveOperations() {
 
                 <div className="lg:w-44">
                   {String(booking.status).toLowerCase() === 'pending' ? (
-                    <button
-                      type="button"
-                      onClick={() => openAssignModal(booking)}
-                      className="w-full min-h-[44px] rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-900 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2"
-                    >
-                      <UserCheck size={14} /> Assign Expert
-                    </button>
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => openAssignModal(booking)}
+                        className="w-full min-h-[44px] rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-900 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+                      >
+                        <UserCheck size={14} /> Assign Expert
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTimelineBookingId(booking.id)}
+                        className="w-full min-h-[36px] rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-black text-[10px] uppercase tracking-widest"
+                      >
+                        Timeline
+                      </button>
+                    </div>
                   ) : (
-                    <div className="text-[11px] text-slate-400 text-right">
-                      {booking.expert_id ? `Expert #${String(booking.expert_id).slice(0, 8)}` : 'No expert'}
+                    <div className="space-y-2">
+                      <div className="text-[11px] text-slate-400 text-right">
+                        {booking.expert_id ? `Expert #${String(booking.expert_id).slice(0, 8)}` : 'No expert'}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setTimelineBookingId(booking.id)}
+                        className="w-full min-h-[36px] rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-black text-[10px] uppercase tracking-widest"
+                      >
+                        Timeline
+                      </button>
                     </div>
                   )}
                 </div>
@@ -308,6 +335,11 @@ export default function LiveOperations() {
           setSelectedBooking(null);
         }}
         onAssign={handleAssign}
+      />
+      <BookingTimelineModal
+        open={Boolean(timelineBookingId)}
+        bookingId={timelineBookingId}
+        onClose={() => setTimelineBookingId(null)}
       />
     </div>
   );

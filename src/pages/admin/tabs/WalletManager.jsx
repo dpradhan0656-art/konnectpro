@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from "../../../lib/supabase";
 import { CreditCard, CheckCircle, Clock, Loader2, IndianRupee, History } from 'lucide-react';
+import { writeAdminAuditLog } from '../../../utils/adminAuditTrail';
 
 export default function WalletManager() {
   const [requests, setRequests] = useState([]);
@@ -60,6 +61,17 @@ export default function WalletManager() {
         });
 
         if (error) throw error;
+        writeAdminAuditLog({
+          action: 'withdrawal.approved.wallet_manager',
+          entityType: 'withdrawal_request',
+          entityId: req.id,
+          metadata: {
+            user_type: req.user_type,
+            user_id: req.user_id,
+            amount: req.amount,
+            payment_method: req.payment_method || null,
+          },
+        });
         alert("✅ Payment Approved & Wallet Updated Successfully!");
         fetchAllWalletData();
     } catch (error) {
@@ -89,6 +101,12 @@ export default function WalletManager() {
           });
 
           if (error) throw error;
+          writeAdminAuditLog({
+            action: 'wallet.manual_adjustment',
+            entityType: 'wallet',
+            entityId: `${type}:${id}`,
+            metadata: { user_type: type, amount: amt, action_type: actionType, description: desc || null },
+          });
           alert(`✅ Wallet Updated Successfully!`);
           setAmount(''); setDesc(''); setSelectedUser('');
           fetchAllWalletData();
