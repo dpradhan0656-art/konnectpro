@@ -9,7 +9,7 @@ export default class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error, errorInfo) {
+  componentDidCatch(error) {
     reportError('ErrorBoundary', error, { severity: 'critical' });
   }
 

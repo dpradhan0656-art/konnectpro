@@ -14,8 +14,6 @@ export default function HomeHero({
   setIsEditingLoc,
   cityStatus,
   setCityStatus,
-  setGreeting,
-  greeting,
   searchQuery,
   setSearchQuery,
 }) {
@@ -25,7 +23,6 @@ export default function HomeHero({
       const canonicalCity = persistUserCity(locationName.trim());
       setLocationName(canonicalCity);
       setCityStatus({ active: true, message: 'Serving In' });
-      setGreeting(`Welcome to ${canonicalCity}! How can we help you today?`);
     } else {
       setLocationName('Select Location');
       setCityStatus({ active: false, message: 'Location Required' });

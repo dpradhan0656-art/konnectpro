@@ -15,12 +15,10 @@ import RateCard from '../../components/home/RateCard';
 import TrustBanner from '../../components/home/TrustBanner';
 import BottomNav from '../../components/home/BottomNav';
 
-export default function Home({ session }) {
+export default function Home() {
   const [locationName, setLocationName] = useState('Locating...');
   const [isEditingLoc, setIsEditingLoc] = useState(false);
   const [cityStatus, setCityStatus] = useState({ active: true, message: 'Serving In' });
-
-  const [greeting, setGreeting] = useState('Welcome! How can we help you today?');
   const [searchQuery, setSearchQuery] = useState('');
 
   const [categories, setCategories] = useState([]);
@@ -60,27 +58,12 @@ export default function Home({ session }) {
   useEffect(() => {
     document.title = `${BRAND.name} | Shield of Trust`;
 
-    const cityGreetings = {
-      jabalpur: "Namaste! Aapka swagat hai. Kahiye, aaj hum aapki kya seva kar sakte hain?",
-      indore: "Namaste! Swagat hai aapka. Bataiye, kaise madad karein?",
-      bhopal: "Namaste! Swagat hai aapka. Bataiye, kya seva karein?",
-      delhi: "Namaste ji! Swagat hai. Bataiye, hum aapke liye kya kar sakte hain?",
-      mumbai: "Namaskar! Swagat aahe. Bola, aamhi tumchi kay madat karu shakto?",
-      pune: "Namaskar! Swagat aahe. Bola, kay sewa karu?",
-      bengaluru: "Namaskara! Swagatha. Bataiye, hum aapki kaise madad kar sakte hain?",
-      hyderabad: "Namaskaram! Swagatam. Memu meeku ela sahayapadagalamu?",
-      kolkata: "Nomoshkar! Apnar swagoto. Bolun, amra apnar ki bhabe sahajyo korte pari?",
-    };
-
     const savedCity = getStoredUserCity();
     if (savedCity) {
       setLocationName(savedCity);
-      const lowerCity = savedCity.toLowerCase();
-      setGreeting(cityGreetings[lowerCity] || `Welcome to ${savedCity}! How can we help you today?`);
       setCityStatus({ active: true, message: 'Serving In' });
     } else {
       setLocationName('Detecting Area...');
-      setGreeting('Please allow location access to continue.');
       setCityStatus({ active: false, message: 'Locating' });
     }
 
@@ -100,9 +83,6 @@ export default function Home({ session }) {
             const canonicalCity = persistUserCity(area || city);
             setLocationName(canonicalCity);
             setCityStatus({ active: true, message: 'Serving In' });
-
-            const lowerCity = canonicalCity.toLowerCase();
-            setGreeting(cityGreetings[lowerCity] || `Welcome to ${city}! How can we help you today?`);
           } catch (err) {
             console.error('Location API Failed', err);
           }
@@ -111,7 +91,6 @@ export default function Home({ session }) {
           console.warn('Location Denied:', error);
           if (!savedCity) {
             setLocationName('Select Location');
-            setGreeting('Welcome! Please tap above to enter your city manually.');
             setCityStatus({ active: false, message: 'Location Required' });
           }
         },
@@ -131,8 +110,6 @@ export default function Home({ session }) {
         setIsEditingLoc={setIsEditingLoc}
         cityStatus={cityStatus}
         setCityStatus={setCityStatus}
-        setGreeting={setGreeting}
-        greeting={greeting}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
       />

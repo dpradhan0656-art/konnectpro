@@ -9,7 +9,7 @@ import { initSentry } from './lib/sentry'
 initSentry()
 
 // App loaded successfully — clear chunk-error reload flag so a future chunk/MIME error can trigger one refresh again
-try { sessionStorage.removeItem('kshatr_chunk_error_reload'); } catch (_) {}
+try { sessionStorage.removeItem('kshatr_chunk_error_reload'); } catch { void 0; }
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

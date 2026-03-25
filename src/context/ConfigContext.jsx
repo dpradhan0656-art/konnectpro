@@ -1,4 +1,4 @@
-﻿import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { BRAND } from '../config/brandConfig'; // Fallback ke liye
 
@@ -19,7 +19,7 @@ export const ConfigProvider = ({ children }) => {
 
   const fetchSettings = async () => {
     try {
-      const { data, error } = await supabase.from('admin_settings').select('*');
+      const { data } = await supabase.from('admin_settings').select('*');
       
       if (data) {
         const newSettings = {};

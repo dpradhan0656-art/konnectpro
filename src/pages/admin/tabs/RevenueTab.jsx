@@ -6,16 +6,14 @@ export default function RevenueTab() {
   const [revenue, setRevenue] = useState([]);
   const [stats, setStats] = useState({ totalBusiness: 0, platformEarnings: 0, expertPayouts: 0 });
   const [cityStats, setCityStats] = useState({});
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchRevenue();
   }, []);
 
   const fetchRevenue = async () => {
-      setLoading(true);
       // ✅ Hybrid Query: Bookings + Expert City Data
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('bookings')
         .select('*, experts(city, name)') 
         .eq('status', 'completed')
@@ -42,7 +40,6 @@ export default function RevenueTab() {
           });
           setCityStats(cityMap);
       }
-      setLoading(false);
   };
 
   return (

@@ -59,7 +59,7 @@ export default function AreaHeadApp() {
 
       if (txError) throw txError;
       setWalletTransactions(txData || []);
-    } catch (err) {
+    } catch {
       setWalletSyncError('Unable to sync earnings right now.');
     } finally {
       setWalletSyncing(false);

@@ -16,7 +16,9 @@ export function reportError(message, error, options = {}) {
     if (window.__SENTRY_DSN__) {
       try {
         window.__reportToSentry?.(message, err);
-      } catch (_) {}
+      } catch {
+        void 0;
+      }
     }
 
     // Supabase error_logs (production fallback)
@@ -34,7 +36,7 @@ export function reportError(message, error, options = {}) {
         .then(({ error }) => {
           if (error) console.warn('[reportError] DB log failed:', error.message);
         })
-        .catch(() => {});
+        .catch(() => undefined);
     }
   }
 }

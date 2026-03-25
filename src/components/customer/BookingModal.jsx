@@ -46,7 +46,7 @@ const loadRazorpayScript = () =>
 export default function BookingModal({ service, onClose, user }) {
   const navigate = useNavigate();
 
-  const [step, setStep] = useState(user ? 'booking' : 'login');
+  const [step] = useState(user ? 'booking' : 'login');
   const [loading, setLoading] = useState(false);
 
   const [email, setEmail] = useState('');
@@ -55,7 +55,6 @@ export default function BookingModal({ service, onClose, user }) {
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [address, setAddress] = useState('');
-  const [gpsCoords, setGpsCoords] = useState(null);
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash'); // 'online' | 'cash'
@@ -74,8 +73,6 @@ export default function BookingModal({ service, onClose, user }) {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude: lat, longitude: lng } = position.coords;
-        const coords = `${lat},${lng}`;
-        setGpsCoords(coords);
         setLatitude(lat.toString());
         setLongitude(lng.toString());
 

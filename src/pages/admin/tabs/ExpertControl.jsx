@@ -16,6 +16,7 @@ export default function ExpertControl() {
   // Legacy Duplicate Approval Flow — status filter toggles (pending | approved | rejected)
   // const [filterStatus, setFilterStatus] = useState('approved');
   const ROSTER_STATUS = 'approved';
+  const SHOW_INSTANT_ADD = false;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -175,12 +176,7 @@ export default function ExpertControl() {
               Old Inconsistent Form — header “Manual Add” (modal enlisted fewer fields + auto-approved).
               Kept for history; re-enable by changing false → true if you need instant-approved roster adds.
             */}
-            {false && (
-            <button onClick={() => { setEditingId(null); setFormData({name:'', phone:'', service_category: categories[0]?.name || '', city:'Jabalpur', password:''}); setIsModalOpen(true); }} className="bg-white text-slate-900 px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-teal-400 transition-colors">
-                <Plus size={14}/> Manual Add
-            </button>
-            )}
-            {false && (
+            {SHOW_INSTANT_ADD ? (
               <button
                 type="button"
                 onClick={() => { setEditingId(null); setFormData({name:'', phone:'', service_category: categories[0]?.name || '', city:'Jabalpur', password:''}); setIsModalOpen(true); }}
@@ -188,7 +184,7 @@ export default function ExpertControl() {
               >
                 <Plus size={14}/> Instant add (approved)
               </button>
-            )}
+            ) : null}
         </div>
       </div>
 

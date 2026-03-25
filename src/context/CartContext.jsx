@@ -8,7 +8,7 @@ export const CartProvider = ({ children }) => {
     try {
       const savedCart = localStorage.getItem('konnect_cart');
       return savedCart ? JSON.parse(savedCart) : [];
-    } catch (e) {
+    } catch {
       return [];
     }
   });

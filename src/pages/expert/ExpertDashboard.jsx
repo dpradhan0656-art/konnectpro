@@ -160,7 +160,7 @@ export default function ExpertDashboard() {
       setJobs(jobs.map(job => job.id === jobId ? { ...job, status: newStatus } : job));
       
       if(newStatus === 'accepted') speakVoice(t.v_accepted);
-    } catch (err) {
+    } catch {
       alert("Status update fail ho gaya!");
     } finally {
       setProcessingId(null);
@@ -408,7 +408,7 @@ export default function ExpertDashboard() {
                           speakVoice(t.v_withdraw);
                           alert("✅ Request Sent!");
                           checkExpertLogin(); 
-                        } catch(err) { alert("Failed: " + err.message); }
+                        } catch (error) { alert("Failed: " + error.message); }
                       }}
                       disabled={!expert?.wallet_balance || expert.wallet_balance <= 0}
                       className="flex-1 flex items-center justify-center gap-1 bg-teal-600 hover:bg-teal-500 disabled:bg-slate-800 text-white py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"

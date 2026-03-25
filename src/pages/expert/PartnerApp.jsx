@@ -86,7 +86,7 @@ export default function PartnerApp() {
   const navigate = useNavigate();
   const [expert, setExpert] = useState(null);
   const [bookings, setBookings] = useState([]);
-  const [transactions, setTransactions] = useState([]);
+  const [, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showRecharge, setShowRecharge] = useState(false);
   const [rechargeAmount, setRechargeAmount] = useState(null);
