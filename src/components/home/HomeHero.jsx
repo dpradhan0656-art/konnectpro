@@ -30,67 +30,69 @@ export default function HomeHero({
   };
 
   return (
-    <section className="relative pt-6 pb-28 px-4 sm:px-6 w-full max-w-[100vw] overflow-x-hidden overflow-y-visible min-h-0 bg-slate-50 rounded-b-xl md:rounded-b-2xl shadow-sm box-border" aria-label="Welcome and search">
-      <div className="hidden absolute inset-0 z-0 opacity-0 pointer-events-none" aria-hidden="true" />
-      <div className="hidden absolute top-0 right-0 w-80 h-80 bg-blue-500/20 rounded-full blur-[80px] -mr-20 -mt-20 pointer-events-none" aria-hidden="true" />
-      <div className="hidden absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-[80px] -ml-20 -mb-20 pointer-events-none" aria-hidden="true" />
+    <section className="relative pt-6 pb-28 px-4 sm:px-6 w-full max-w-[100vw] overflow-x-hidden overflow-y-visible min-h-0 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 rounded-b-3xl shadow-[0_24px_80px_-24px_rgba(0,0,0,0.65)] border-b border-white/5 box-border" aria-label="Welcome and search">
+      <div className="absolute inset-0 z-0 opacity-100 pointer-events-none overflow-hidden rounded-b-3xl" aria-hidden="true">
+        <div className="absolute top-0 right-0 w-[min(100vw,28rem)] h-[min(100vw,28rem)] bg-teal-500/20 rounded-full blur-[100px] -mr-24 -mt-24" />
+        <div className="absolute bottom-0 left-0 w-[min(90vw,24rem)] h-[min(90vw,24rem)] bg-blue-600/15 rounded-full blur-[90px] -ml-16 -mb-16" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(120vw,40rem)] h-[min(120vw,40rem)] bg-cyan-500/5 rounded-full blur-[120px]" />
+      </div>
 
       <div className="relative z-10 max-w-4xl mx-auto min-w-0 w-full box-border">
-        <div className="flex items-center gap-3 mb-6 sm:mb-8 bg-white border border-slate-200/90 w-fit max-w-full px-4 py-2.5 rounded-full shadow-sm ring-1 ring-slate-100">
+        <div className="flex items-center gap-3 mb-6 sm:mb-8 bg-white/5 backdrop-blur-xl border border-white/10 w-fit max-w-full px-4 py-2.5 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.25)] ring-1 ring-white/5">
           <div
-            className={`p-1.5 rounded-full ${cityStatus.active ? 'bg-teal-600' : 'bg-slate-100'} shadow-sm border ${cityStatus.active ? 'border-teal-600/25' : 'border-slate-200'}`}
+            className={`p-1.5 rounded-full ${cityStatus.active ? 'bg-gradient-to-br from-teal-400 to-teal-600' : 'bg-slate-800'} shadow-lg border ${cityStatus.active ? 'border-teal-400/30' : 'border-white/10'}`}
           >
             <MapPin
               size={14}
-              className={cityStatus.active ? 'text-white' : 'text-slate-700'}
+              className={cityStatus.active ? 'text-white' : 'text-slate-300'}
               aria-hidden="true"
             />
           </div>
           <div>
-            <p className="text-[9px] font-bold text-teal-700 uppercase tracking-widest leading-none mb-1">{cityStatus.message}</p>
+            <p className="text-[9px] font-bold text-teal-400 uppercase tracking-widest leading-none mb-1">{cityStatus.message}</p>
             {isEditingLoc ? (
               <input
                 autoFocus
                 placeholder="Enter City"
-                className="bg-transparent border-b border-slate-300 text-slate-900 font-bold text-sm w-32 outline-none placeholder:text-slate-400"
+                className="bg-transparent border-b border-white/20 text-white font-bold text-sm w-32 outline-none placeholder:text-slate-500"
                 value={locationName === 'Select Location' ? '' : locationName}
                 onChange={(e) => setLocationName(e.target.value)}
                 onBlur={handleLocationBlur}
                 aria-label="Edit your city"
               />
             ) : (
-              <button type="button" onClick={() => setIsEditingLoc(true)} className="text-left text-sm font-bold text-slate-900 leading-none tracking-wide border-b border-transparent hover:border-slate-400 transition-all duration-300">
+              <button type="button" onClick={() => setIsEditingLoc(true)} className="text-left text-sm font-bold text-white leading-none tracking-wide border-b border-transparent hover:border-teal-400/50 transition-all duration-300">
                 {locationName}
               </button>
             )}
           </div>
         </div>
 
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 leading-tight mb-2 max-w-lg">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white leading-tight mb-2 max-w-lg drop-shadow-sm">
           Certified Experts at Your Doorstep in Bhopal, Jabalpur, Sagar & Jhansi
         </h1>
-        <p className="text-slate-600 text-sm font-medium mb-8 sm:mb-10 flex items-center gap-2">
+        <p className="text-slate-400 text-sm font-medium mb-8 sm:mb-10 flex items-center gap-2 max-w-xl">
           {HERO_TRUST_LINE}
         </p>
 
         <div className="relative z-30 transform translate-y-6 w-full max-w-full">
-          <div className="relative rounded-xl bg-white border border-slate-200 shadow-sm flex items-center p-2 min-h-[52px] w-full box-border">
-            <Search className="absolute left-4 sm:left-5 text-slate-400" size={22} aria-hidden="true" />
+          <div className="relative rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-[0_16px_48px_rgba(0,0,0,0.35)] flex items-center p-2 min-h-[52px] w-full box-border ring-1 ring-white/5">
+            <Search className="absolute left-4 sm:left-5 text-teal-400/80" size={22} aria-hidden="true" />
             <input
               type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search for 'Plumber', 'AC Repair' or 'Salon'..."
-              className="w-full min-w-0 py-3 sm:py-4 pl-12 sm:pl-14 pr-14 sm:pr-16 bg-transparent text-slate-900 font-semibold text-base sm:text-lg outline-none placeholder:text-slate-400"
+              className="w-full min-w-0 py-3 sm:py-4 pl-12 sm:pl-14 pr-14 sm:pr-16 bg-transparent text-white font-semibold text-base sm:text-lg outline-none placeholder:text-slate-500"
               aria-label="Search services"
             />
             {searchQuery && (
-              <button type="button" onClick={() => setSearchQuery('')} className="absolute right-14 sm:right-16 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors duration-300" aria-label="Clear search">
+              <button type="button" onClick={() => setSearchQuery('')} className="absolute right-14 sm:right-16 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-white transition-colors duration-300" aria-label="Clear search">
                 <X size={20} />
               </button>
             )}
-            <span className="h-8 w-px bg-slate-200 mx-2 absolute right-12 sm:right-12" aria-hidden="true" />
-            <button type="button" onClick={() => alert('🎤 Voice Search coming soon!')} className="absolute right-2 sm:right-3 p-2.5 min-h-[44px] min-w-[44px] rounded-xl text-blue-700 hover:bg-blue-50 transition-all duration-300 flex items-center justify-center" aria-label="Voice search">
+            <span className="h-8 w-px bg-white/15 mx-2 absolute right-12 sm:right-12" aria-hidden="true" />
+            <button type="button" onClick={() => alert('🎤 Voice Search coming soon!')} className="absolute right-2 sm:right-3 p-2.5 min-h-[44px] min-w-[44px] rounded-xl text-teal-300 hover:bg-teal-500/15 hover:text-teal-200 transition-all duration-300 flex items-center justify-center border border-transparent hover:border-teal-500/20" aria-label="Voice search">
               <Mic size={22} />
             </button>
           </div>

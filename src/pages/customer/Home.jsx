@@ -116,7 +116,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-transparent font-sans selection:bg-teal-200/70 relative pb-32">
+    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-slate-950 font-sans text-slate-100 selection:bg-teal-500/35 relative pb-32">
       <SOSButton />
 
       <HomeHero
@@ -131,7 +131,7 @@ export default function Home() {
       />
 
       {/* Consistent gap between sections — premium boxed layout */}
-      <div className="mt-14 flex flex-col gap-8 w-full min-w-0 max-w-[100vw]">
+      <div className="mt-10 flex flex-col gap-10 w-full min-w-0 max-w-[100vw] pb-4">
         <CategorySection categories={filteredCategories} loading={loading} />
         <OffersSection offers={offers} />
         <ServicesSection services={filteredServices} cart={cart} onAddToCart={addToCart} />

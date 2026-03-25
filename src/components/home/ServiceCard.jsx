@@ -85,8 +85,8 @@ export default function ServiceCard({
   const emojiFallback = !useImageUrl && rawImage ? rawImage : getServiceEmoji(service.category || service.name);
 
   return (
-    <article className="min-w-[200px] w-[200px] max-w-[200px] flex flex-col bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-200 hover:-translate-y-1 transition-all duration-300 group overflow-hidden active:scale-[0.99]">
-      <div className="relative w-full aspect-[4/3] bg-slate-100 shrink-0 flex items-center justify-center overflow-hidden">
+    <article className="min-w-[200px] w-[200px] max-w-[200px] flex flex-col bg-slate-900/60 backdrop-blur-sm rounded-2xl border border-white/10 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.5)] hover:shadow-[0_16px_48px_-8px_rgba(20,184,166,0.15)] hover:border-teal-500/30 hover:-translate-y-1 transition-all duration-300 group overflow-hidden active:scale-[0.99] ring-1 ring-white/5">
+      <div className="relative w-full aspect-[4/3] bg-slate-800 shrink-0 flex items-center justify-center overflow-hidden">
         {useImageUrl ? (
           <img
             src={imageSrc}
@@ -107,11 +107,11 @@ export default function ServiceCard({
 
       <div className="p-4 flex flex-col flex-1 min-w-0">
         <div className="flex justify-between items-start gap-2 mb-2 min-h-[28px]">
-          <span className="text-[11px] font-bold text-slate-400 line-through shrink-0">₹{wasPrice}</span>
-          <span className="text-slate-900 text-lg font-bold shrink-0 flex items-center gap-1.5" aria-live="polite">
+          <span className="text-[11px] font-bold text-slate-500 line-through shrink-0">₹{wasPrice}</span>
+          <span className="text-white text-lg font-bold shrink-0 flex items-center gap-1.5" aria-live="polite">
             {priceLoading && isDynamicPricingEnabled ? (
               <>
-                <Loader2 className="animate-spin text-blue-600" size={18} aria-hidden="true" />
+                <Loader2 className="animate-spin text-teal-400" size={18} aria-hidden="true" />
                 <span className="sr-only">Loading price</span>
               </>
             ) : (
@@ -119,7 +119,7 @@ export default function ServiceCard({
             )}
           </span>
         </div>
-        <h3 className="font-bold text-slate-800 text-base leading-tight mb-1 line-clamp-2 min-h-[40px] group-hover:text-blue-700 transition-colors">
+        <h3 className="font-bold text-slate-100 text-base leading-tight mb-1 line-clamp-2 min-h-[40px] group-hover:text-teal-300 transition-colors">
           {service.name}
         </h3>
         <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest truncate mb-4">
@@ -137,7 +137,7 @@ export default function ServiceCard({
             });
           }}
           disabled={isInCart}
-          className={`w-full min-h-[44px] py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98] mt-auto ${isInCart ? 'bg-green-50 text-green-600 border border-green-200 cursor-default' : 'bg-blue-700 text-white shadow-sm hover:bg-blue-600 border border-blue-700 hover:border-blue-600'}`}
+          className={`w-full min-h-[44px] py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98] mt-auto ${isInCart ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 cursor-default' : 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg shadow-teal-500/25 hover:from-teal-500 hover:to-cyan-500 border border-teal-500/40'}`}
         >
           {isInCart ? (
             <>
