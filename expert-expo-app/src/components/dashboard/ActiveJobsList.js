@@ -45,8 +45,7 @@ function getNavigationUrl(job) {
   const address =
     job?.service_address ??
     job?.address ??
-    [job?.street, job?.city, job?.state].filter(Boolean).join(', ') ||
-    job?.city;
+    ([job?.street, job?.city, job?.state].filter(Boolean).join(', ') || job?.city);
   if (!address) return null;
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 }

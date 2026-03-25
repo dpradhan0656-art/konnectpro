@@ -43,6 +43,8 @@ const EXPO_UI_EN = {
   chooseLanguage: 'Choose language',
   lowBalanceTitle: 'Low wallet balance',
   lowBalanceSub: 'Add money to stay above ₹{threshold} for uninterrupted lead access.',
+  /** Short trust line under primary wallet CTA */
+  walletRechargeHint: 'Secure Razorpay • Instant credit to wallet',
   emptyActiveTitle: 'No active jobs right now.',
   emptyActiveSub: 'New assignments will appear here.',
   emptyCompletedTitle: 'No completed jobs yet.',

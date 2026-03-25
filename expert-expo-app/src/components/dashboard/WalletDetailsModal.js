@@ -75,6 +75,7 @@ function getTypeLabel(type, t) {
  * onRecharge?: (amount: number) => Promise<{ ok?: boolean } | void> | void;
  * rechargeLoading?: boolean;
  * onRefresh?: () => Promise<unknown> | void;
+ * startRecharge?: boolean;
  * }} props
  */
 export default function WalletDetailsModal({
@@ -88,6 +89,7 @@ export default function WalletDetailsModal({
   onRecharge,
   rechargeLoading,
   onRefresh,
+  startRecharge = false,
 }) {
   const [rechargeOpen, setRechargeOpen] = useState(false);
   const [amountInput, setAmountInput] = useState('');
@@ -97,8 +99,10 @@ export default function WalletDetailsModal({
     if (!visible) {
       setRechargeOpen(false);
       setAmountInput('');
+      return;
     }
-  }, [visible]);
+    setRechargeOpen(Boolean(startRecharge));
+  }, [visible, startRecharge]);
 
   const submitRecharge = async () => {
     const amount = Number(amountInput);

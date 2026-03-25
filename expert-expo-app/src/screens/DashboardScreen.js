@@ -60,6 +60,8 @@ export default function DashboardScreen({ expert }) {
   const [refreshing, setRefreshing] = useState(false);
   const [langModalOpen, setLangModalOpen] = useState(false);
   const [walletModalOpen, setWalletModalOpen] = useState(false);
+  /** When true, wallet modal opens directly on the recharge (Add money) step */
+  const [walletStartRecharge, setWalletStartRecharge] = useState(false);
   const prevWorkAlert = useRef(false);
 
   useEffect(() => {
@@ -104,8 +106,20 @@ export default function DashboardScreen({ expert }) {
   };
 
   const openWalletModal = () => {
+    setWalletStartRecharge(false);
     setWalletModalOpen(true);
     loadWalletTransactions().catch(() => {});
+  };
+
+  const openWalletForRecharge = () => {
+    setWalletStartRecharge(true);
+    setWalletModalOpen(true);
+    loadWalletTransactions().catch(() => {});
+  };
+
+  const closeWalletModal = () => {
+    setWalletModalOpen(false);
+    setWalletStartRecharge(false);
   };
 
   const handleRechargePress = async (amount) => {
@@ -194,8 +208,21 @@ export default function DashboardScreen({ expert }) {
           </View>
         ) : null}
 
-        <LowBalanceBanner visible={isLowBalance} threshold={lowBalanceThreshold} t={t} />
-        <WalletCard balance={walletBalance} loading={loading} t={t} onPress={openWalletModal} />
+        <LowBalanceBanner
+          visible={isLowBalance}
+          threshold={lowBalanceThreshold}
+          t={t}
+          onAddMoney={openWalletForRecharge}
+          rechargeLoading={rechargeLoading}
+        />
+        <WalletCard
+          balance={walletBalance}
+          loading={loading}
+          t={t}
+          onPress={openWalletModal}
+          onAddMoney={openWalletForRecharge}
+          rechargeLoading={rechargeLoading}
+        />
         <EarningsCard totalEarnings={totalEarnings} loading={loading} t={t} />
 
         <Text style={styles.sectionLabel}>{t.jobsSection}</Text>
@@ -259,7 +286,8 @@ export default function DashboardScreen({ expert }) {
       />
       <WalletDetailsModal
         visible={walletModalOpen}
-        onClose={() => setWalletModalOpen(false)}
+        onClose={closeWalletModal}
+        startRecharge={walletStartRecharge}
         t={t}
         balance={walletBalance}
         transactions={walletTransactions}
