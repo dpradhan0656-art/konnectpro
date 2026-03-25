@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Haptics from 'expo-haptics';
 import { supabase } from '../lib/supabase';
-import { createMockRazorpayOrder, openRazorpayCheckout } from '../services/paymentService';
+import {
+  createWalletOrderViaEdge,
+  confirmWalletRechargeViaEdge,
+  openRazorpayCheckout,
+} from '../services/paymentService';
 
 const LOW_BALANCE_INR = 200;
 
@@ -236,9 +240,11 @@ export function useExpertDashboard(expertId, expertProfile) {
     }
   }, []);
 
-  const applyRechargeSuccess = useCallback(async (amountInRupees, paymentInfo) => {
+  const applyRechargeSuccess = useCallback(async (amountInRupees, paymentInfo, options = {}) => {
     const id = expertIdRef.current;
     if (id == null) return;
+
+    const { skipDbWrites = false, skipTxInsert = false } = options;
 
     const nowIso = new Date().toISOString();
     const amount = Number(amountInRupees);
@@ -255,28 +261,32 @@ export function useExpertDashboard(expertId, expertProfile) {
     };
     const nextBalance = Number(walletBalanceRef.current || 0) + amount;
 
-    // Optimistic wallet + ledger update to keep UI instant after payment success.
+    // Optimistic wallet update to keep UI instant after payment success.
     setWalletBalance(nextBalance);
-    setWalletTransactions((prev) => [tx, ...(Array.isArray(prev) ? prev : [])].slice(0, 20));
+    if (!skipTxInsert) {
+      setWalletTransactions((prev) => [tx, ...(Array.isArray(prev) ? prev : [])].slice(0, 20));
+    }
 
-    try {
-      await Promise.all([
-        supabase
-          .from('experts')
-          .update({ wallet_balance: nextBalance })
-          .eq('id', id),
-        supabase.from('wallet_transactions').insert({
-          user_id: id,
-          user_type: 'expert',
-          amount,
-          transaction_type: 'credit',
-          reason: 'wallet_recharge',
-          description: `Wallet Recharge${tx.payment_id ? ` (${tx.payment_id})` : ''}`,
-        }),
-      ]);
-    } catch (e) {
-      setWalletTxError(e?.message || String(e));
-      // Keep optimistic value visible; background refresh can reconcile any mismatch.
+    if (!skipDbWrites) {
+      try {
+        await Promise.all([
+          supabase
+            .from('experts')
+            .update({ wallet_balance: nextBalance })
+            .eq('id', id),
+          supabase.from('wallet_transactions').insert({
+            user_id: id,
+            user_type: 'expert',
+            amount,
+            transaction_type: 'credit',
+            reason: 'wallet_recharge',
+            description: `Wallet Recharge${tx.payment_id ? ` (${tx.payment_id})` : ''}`,
+          }),
+        ]);
+      } catch (e) {
+        setWalletTxError(e?.message || String(e));
+        // Keep optimistic value visible; background refresh can reconcile any mismatch.
+      }
     }
   }, []);
 
@@ -289,13 +299,33 @@ export function useExpertDashboard(expertId, expertProfile) {
 
     setRechargeLoading(true);
     setWalletTxError(null);
+    let checkoutSucceeded = false;
     try {
-      const order = await createMockRazorpayOrder({ amountInRupees: amount, expertId: id });
+      const sessionRes = await supabase.auth.getSession();
+      const session = sessionRes?.data?.session ?? sessionRes?.session ?? null;
+      const accessToken = session?.access_token;
+      const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+
+      if (!accessToken) {
+        return { ok: false, code: 'INIT_FAILED', error: new Error('Session expired. Please login again.') };
+      }
+
+      const attemptId = `wallet_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+      const order = await createWalletOrderViaEdge({
+        amountInRupees: amount,
+        attemptId,
+        accessToken,
+        anonKey,
+        expertId: id,
+      });
+
       const checkout = await openRazorpayCheckout({
-        orderId: order.orderId,
-        amountInPaise: order.amountInPaise,
+        key: order?.key_id,
+        orderId: order?.order_id,
+        amountInPaise: order?.amount_paise,
         expert: expertProfileRef.current || {},
       });
+
       if (!checkout.ok) {
         return {
           ok: false,
@@ -304,14 +334,33 @@ export function useExpertDashboard(expertId, expertProfile) {
         };
       }
 
-      await applyRechargeSuccess(amount, checkout.payment);
+      checkoutSucceeded = true;
+      // Optimistic wallet balance only (no DB writes). Confirm edge will reconcile.
+      await applyRechargeSuccess(amount, checkout.payment, { skipDbWrites: true, skipTxInsert: true });
+
+      const razorpayPaymentId = checkout.payment?.razorpay_payment_id || checkout.payment?.payment_id;
+      const confirmRes = await confirmWalletRechargeViaEdge({
+        orderId: order?.order_id,
+        razorpayPaymentId,
+        accessToken,
+        anonKey,
+      });
+
+      const newBalance = Number(confirmRes?.new_balance ?? 0);
+      setWalletBalance(newBalance);
+      await loadWalletTransactions();
       return { ok: true, amount };
     } catch (e) {
-      return { ok: false, code: 'INIT_FAILED', error: e instanceof Error ? e : new Error(String(e)) };
+      const err = e instanceof Error ? e : new Error(String(e));
+      return {
+        ok: false,
+        code: checkoutSucceeded ? 'PAYMENT_FAILED' : 'INIT_FAILED',
+        error: err,
+      };
     } finally {
       setRechargeLoading(false);
     }
-  }, [applyRechargeSuccess]);
+  }, [applyRechargeSuccess, loadWalletTransactions]);
 
   return {
     walletBalance,

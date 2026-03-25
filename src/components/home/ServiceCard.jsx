@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Plus, CheckCircle, Loader2 } from 'lucide-react';
-import { isImageUrl, getServiceEmoji } from '../../lib/serviceIconUtils';
+import { isImageUrl } from '../../lib/serviceIconUtils';
 import { useOptionalLocationContext } from '../../context/LocationContext';
 import { fetchDynamicPrice } from '../../controllers/pricingController';
 import { isDynamicPricingEnabled } from '../../config/pricingFeatureFlags';
@@ -82,27 +82,20 @@ export default function ServiceCard({
   const useImageUrl = isImageUrl(rawImage);
   const fallbackImage = getServiceFallbackImage(service?.name || service?.category);
   const imageSrc = useImageUrl ? rawImage : fallbackImage;
-  const emojiFallback = !useImageUrl && rawImage ? rawImage : getServiceEmoji(service.category || service.name);
 
   return (
     <article className="min-w-[200px] w-[200px] max-w-[200px] flex flex-col bg-slate-900/60 backdrop-blur-sm rounded-2xl border border-white/10 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.5)] hover:shadow-[0_16px_48px_-8px_rgba(20,184,166,0.15)] hover:border-teal-500/30 hover:-translate-y-1 transition-all duration-300 group overflow-hidden active:scale-[0.99] ring-1 ring-white/5">
       <div className="relative w-full aspect-[4/3] bg-slate-800 shrink-0 flex items-center justify-center overflow-hidden">
-        {useImageUrl ? (
-          <img
-            src={imageSrc}
-            alt={service.name}
-            loading="lazy"
-            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = fallbackImage;
-            }}
-          />
-        ) : (
-          <span className="text-6xl drop-shadow-md" aria-hidden="true">
-            {emojiFallback}
-          </span>
-        )}
+        <img
+          src={imageSrc}
+          alt={service.name}
+          loading="lazy"
+          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = fallbackImage;
+          }}
+        />
       </div>
 
       <div className="p-4 flex flex-col flex-1 min-w-0">
