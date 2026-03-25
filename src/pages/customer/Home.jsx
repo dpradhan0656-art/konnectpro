@@ -3,8 +3,8 @@ import { supabase } from '../../lib/supabase';
 import { BRAND } from '../../config/brandConfig';
 import { useCart } from '../../context/CartContext';
 import { getUserCityKey, filterServicesByCity } from '../../lib/serviceCityUtils';
+import { getStoredUserCity, persistUserCity } from '../../lib/persistUserCity';
 import { reportError } from '../../lib/errorHandling';
-import { persistUserCity } from '../../lib/persistUserCity';
 
 import SOSButton from '../../components/common/SOSButton';
 import HomeHero from '../../components/home/HomeHero';
@@ -72,7 +72,7 @@ export default function Home({ session }) {
       kolkata: "Nomoshkar! Apnar swagoto. Bolun, amra apnar ki bhabe sahajyo korte pari?",
     };
 
-    const savedCity = localStorage.getItem('kshatr_user_city');
+    const savedCity = getStoredUserCity();
     if (savedCity) {
       setLocationName(savedCity);
       const lowerCity = savedCity.toLowerCase();
@@ -97,11 +97,11 @@ export default function Home({ session }) {
             const city = data.address?.city || data.address?.town || data.address?.county || 'Your City';
             const area = data.address?.suburb || data.address?.neighbourhood || city;
 
-            setLocationName(area);
-            persistUserCity(area);
+            const canonicalCity = persistUserCity(area || city);
+            setLocationName(canonicalCity);
             setCityStatus({ active: true, message: 'Serving In' });
 
-            const lowerCity = city.toLowerCase();
+            const lowerCity = canonicalCity.toLowerCase();
             setGreeting(cityGreetings[lowerCity] || `Welcome to ${city}! How can we help you today?`);
           } catch (err) {
             console.error('Location API Failed', err);

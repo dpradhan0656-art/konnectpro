@@ -97,7 +97,8 @@ export function useExpertDashboard(expertId, expertProfile) {
       const { data, error: txErr } = await supabase
         .from('wallet_transactions')
         .select('*')
-        .eq('expert_id', id)
+        .eq('user_id', id)
+        .eq('user_type', 'expert')
         .order('created_at', { ascending: false })
         .limit(20);
       if (txErr) throw txErr;
@@ -244,9 +245,12 @@ export function useExpertDashboard(expertId, expertProfile) {
     const tx = {
       id: `local-${nowIso}`,
       created_at: nowIso,
-      type: 'credit',
+      transaction_type: 'credit',
       amount,
-      reason: 'Wallet Recharge',
+      reason: 'wallet_recharge',
+      description: 'Wallet Recharge',
+      user_id: id,
+      user_type: 'expert',
       payment_id: paymentInfo?.razorpay_payment_id || paymentInfo?.payment_id || null,
     };
     const nextBalance = Number(walletBalanceRef.current || 0) + amount;
@@ -262,10 +266,12 @@ export function useExpertDashboard(expertId, expertProfile) {
           .update({ wallet_balance: nextBalance })
           .eq('id', id),
         supabase.from('wallet_transactions').insert({
-          expert_id: id,
+          user_id: id,
+          user_type: 'expert',
           amount,
-          type: 'credit',
-          reason: 'Wallet Recharge',
+          transaction_type: 'credit',
+          reason: 'wallet_recharge',
+          description: `Wallet Recharge${tx.payment_id ? ` (${tx.payment_id})` : ''}`,
         }),
       ]);
     } catch (e) {

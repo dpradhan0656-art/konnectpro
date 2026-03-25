@@ -2,6 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { supabase } from '../../lib/supabase';
+import {
+  buildCanonicalBookingRow,
+  getStoredBookingCity,
+  insertCanonicalBookings,
+  PAYMENT_METHODS,
+} from '../../services/canonicalBookingService';
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
@@ -291,54 +297,31 @@ export default function Checkout() {
 
   const createBookings = async (mode, paymentStatus, razorpayPaymentId, resolvedAddress) => {
     const { finalAddress, finalLat, finalLng } = resolvedAddress;
-    const bookingCity = (typeof window !== 'undefined' && localStorage.getItem('kshatr_user_city')) || 'Jabalpur';
+    const bookingCity = getStoredBookingCity();
     try {
-      for (const item of cart) {
-        /*
-         * OLD insert (pre-Phase-1 documentation snapshot — same canonical columns as now:
-         * `address`, `latitude`, `longitude`). Kept commented for history next to the active insert.
-         *
-         * const { error } = await supabase.from('bookings').insert({
-         *   user_id: user.id,
-         *   service_name: item.name,
-         *   total_amount: parseFloat(item.price) || 0,
-         *   booking_date: date,
-         *   address: finalAddress,
-         *   latitude: finalLat,
-         *   longitude: finalLng,
-         *   city: bookingCity,
-         *   status: 'pending',
-         *   payment_mode: mode === 'online' ? 'online_prepaid' : 'cash_after_service',
-         *   payment_method: mode,
-         *   payment_status: paymentStatus,
-         *   razorpay_payment_id: razorpayPaymentId,
-         *   is_remote_booking: isRemoteBooking,
-         *   contact_name: isRemoteBooking ? contactName : null,
-         *   contact_phone: isRemoteBooking ? contactPhone : null,
-         * });
-         * if (error) throw error;
-         */
-
-        const { error } = await supabase.from('bookings').insert({
-          user_id: user.id,
-          service_name: item.name,
-          total_amount: parseFloat(item.price) || 0,
-          booking_date: date,
+      const paymentMethod =
+        mode === PAYMENT_METHODS.ONLINE ? PAYMENT_METHODS.ONLINE : PAYMENT_METHODS.CASH;
+      const rows = cart.map((item) =>
+        buildCanonicalBookingRow({
+          userId: user.id,
+          serviceName: item?.name,
+          totalAmount: item?.price,
+          bookingDate: date,
+          scheduledDate: date,
+          scheduledTime: null,
           address: finalAddress,
           latitude: finalLat,
           longitude: finalLng,
           city: bookingCity,
-          status: 'pending',
-          payment_mode: mode === 'online' ? 'online_prepaid' : 'cash_after_service',
-          payment_method: mode,
-          payment_status: paymentStatus,
-          razorpay_payment_id: razorpayPaymentId,
-          is_remote_booking: isRemoteBooking,
-          contact_name: isRemoteBooking ? contactName : null,
-          contact_phone: isRemoteBooking ? contactPhone : null,
-        });
-        if (error) throw error;
-      }
+          paymentMethod,
+          paymentStatus,
+          razorpayPaymentId,
+          isRemoteBooking,
+          contactName,
+          contactPhone,
+        })
+      );
+      await insertCanonicalBookings(supabase, rows);
 
       if (typeof window !== 'undefined') {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -375,22 +358,38 @@ export default function Checkout() {
       name: 'Kshatr Home Services',
       description: 'Home services booking',
       handler: async function (response) {
-        await createBookings('online', 'paid', response.razorpay_payment_id, resolvedAddress);
+        await createBookings(
+          PAYMENT_METHODS.ONLINE,
+          'paid',
+          response.razorpay_payment_id,
+          resolvedAddress
+        );
       },
       prefill: {
         name: user?.user_metadata?.name || 'Customer',
         email: user?.email,
         contact: contactPhone || '',
       },
+      modal: {
+        ondismiss: () => {
+          alert('Payment window closed. No booking created.');
+          setLoading(false);
+        },
+      },
       theme: { color: '#0f766e' },
     };
 
-    const rzp = new window.Razorpay(options);
-    rzp.on('payment.failed', function () {
-      alert('Payment failed. Please try again or choose Cash After Service.');
+    try {
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function () {
+        alert('Payment failed. Please try again or choose Cash After Service.');
+        setLoading(false);
+      });
+      rzp.open();
+    } catch {
+      alert('Unable to open payment window. Please try again.');
       setLoading(false);
-    });
-    rzp.open();
+    }
   };
 
   // 🚩 Feature Flag: true = customer can pay online via Razorpay (income source). false = only Pay After Service.
@@ -416,7 +415,7 @@ export default function Checkout() {
       await handleOnlinePayment(resolvedAddress);
     } else {
       // Direct booking: Pay After Service
-      await createBookings('cash', 'pending', null, resolvedAddress);
+      await createBookings(PAYMENT_METHODS.CASH, 'pending', null, resolvedAddress);
     }
   };
 

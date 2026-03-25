@@ -1,19 +1,17 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { USER_CITY_STORAGE_KEY, persistUserCity } from '../lib/persistUserCity';
+import {
+  DEFAULT_USER_CITY,
+  USER_CITY_STORAGE_KEY,
+  getStoredUserCity,
+  persistUserCity,
+} from '../lib/persistUserCity';
 
-const DEFAULT_CITY = 'Jabalpur';
+const DEFAULT_CITY = DEFAULT_USER_CITY;
 
 const LocationContext = createContext(null);
 
 function readCityFromStorage() {
-  try {
-    if (typeof window === 'undefined') return DEFAULT_CITY;
-    const raw = window.localStorage.getItem(USER_CITY_STORAGE_KEY);
-    const v = raw && String(raw).trim() ? String(raw).trim() : '';
-    return v || DEFAULT_CITY;
-  } catch {
-    return DEFAULT_CITY;
-  }
+  return getStoredUserCity();
 }
 
 /**

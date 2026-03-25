@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import {
+  buildCanonicalBookingRow,
+  getStoredBookingCity,
+  insertCanonicalBookings,
+  PAYMENT_METHODS,
+} from '../../services/canonicalBookingService';
+import {
   X,
   Calendar,
   Clock,
@@ -116,8 +122,7 @@ export default function BookingModal({ service, onClose, user }) {
 
   const saveBooking = async (mode, payStatus, razorpayPaymentId = null) => {
     setLoading(true);
-    const companyPart = (service.price * 0.19).toFixed(2);
-    const expertPart = (service.price * 0.81).toFixed(2);
+    const bookingCity = getStoredBookingCity();
 
     const latParsed =
       latitude !== '' && latitude != null ? parseFloat(String(latitude).trim()) : NaN;
@@ -156,30 +161,27 @@ export default function BookingModal({ service, onClose, user }) {
        * });
        */
 
-      const { error } = await supabase.from('bookings').insert({
-        user_id: user?.id,
-        customer_name: user?.user_metadata?.name || 'Guest User',
-        service_name: service.name,
-        price: service.price,
-        status: mode === 'online' ? 'Confirmed' : 'Pending',
-        scheduled_date: date,
-        scheduled_time: time,
+      const paymentMethod =
+        mode === PAYMENT_METHODS.ONLINE ? PAYMENT_METHODS.ONLINE : PAYMENT_METHODS.CASH;
+      const row = buildCanonicalBookingRow({
+        userId: user?.id,
+        serviceName: service?.name,
+        totalAmount: service?.price,
+        bookingDate: date,
+        scheduledDate: date,
+        scheduledTime: time,
         address,
         latitude: latitudeRow,
         longitude: longitudeRow,
-        is_remote_booking: isRemoteBooking,
-        contact_name: isRemoteBooking ? contactName : null,
-        contact_phone: isRemoteBooking ? contactPhone : null,
-        payment_mode: mode === 'online' ? 'online' : 'cash',
-        payment_method: mode,
-        payment_status: payStatus,
-        transaction_id: razorpayPaymentId,
-        razorpay_payment_id: razorpayPaymentId,
-        company_commission: companyPart,
-        expert_earnings: expertPart,
+        city: bookingCity,
+        paymentMethod,
+        paymentStatus: payStatus,
+        razorpayPaymentId,
+        isRemoteBooking,
+        contactName,
+        contactPhone,
       });
-
-      if (error) throw error;
+      await insertCanonicalBookings(supabase, row);
       alert(`✅ Booking Confirmed via ${mode === 'online' ? 'ONLINE' : 'CASH'}!`);
       onClose();
       navigate('/bookings');
@@ -213,21 +215,30 @@ export default function BookingModal({ service, onClose, user }) {
       name: 'Kshatr Home Services',
       description: `Payment for ${service.name}`,
       handler: async function (response) {
-        await saveBooking('online', 'paid', response.razorpay_payment_id);
+        await saveBooking(PAYMENT_METHODS.ONLINE, 'paid', response.razorpay_payment_id);
       },
       prefill: {
         name: user?.user_metadata?.name || 'Customer',
         email: user?.email,
         contact: contactPhone || '',
       },
+      modal: {
+        ondismiss: () => {
+          alert('Payment window closed. No booking created.');
+        },
+      },
       theme: { color: '#0f766e' },
     };
 
-    const rzp = new window.Razorpay(options);
-    rzp.on('payment.failed', () => {
-      alert('Payment failed. Please try again or choose Cash After Service.');
-    });
-    rzp.open();
+    try {
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', () => {
+        alert('Payment failed. Please try again or choose Cash After Service.');
+      });
+      rzp.open();
+    } catch {
+      alert('Unable to open payment window. Please try again.');
+    }
   };
 
   const handleConfirm = async () => {
@@ -254,7 +265,7 @@ export default function BookingModal({ service, onClose, user }) {
     if (paymentMethod === 'online') {
       await handleOnlinePayment();
     } else {
-      await saveBooking('cash', 'pending', null);
+      await saveBooking(PAYMENT_METHODS.CASH, 'pending', null);
     }
   };
 

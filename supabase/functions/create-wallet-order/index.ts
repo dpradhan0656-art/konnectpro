@@ -6,48 +6,28 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-/** Create Razorpay order. expertUuid is the expert's id (UUID string). Receipt max 40 chars. */
-async function createRazorpayOrder(amountPaise: number, expertUuid: string, receipt: string) {
-  const keyId = Deno.env.get('RAZORPAY_KEY_ID');
-  const keySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
-  if (!keyId || !keySecret) {
-    throw new Error('RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be set in Edge Function secrets.');
-  }
-  const credentials = `${keyId}:${keySecret}`;
-  const auth = btoa(credentials);
-
-  const res = await fetch('https://api.razorpay.com/v1/orders', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Basic ${auth}`,
-    },
-    body: JSON.stringify({
-      amount: amountPaise,
-      currency: 'INR',
-      receipt,
-      notes: { expert_uuid: expertUuid },
-    }),
-  });
-
-  const responseText = await res.text();
-  if (!res.ok) {
-    let exactMessage = responseText;
+async function fetchWithRetry(url: string, init: RequestInit, retries = 2) {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
     try {
-      const parsed = JSON.parse(responseText);
-      if (parsed.error?.description) exactMessage = parsed.error.description;
-      else if (parsed.error?.reason) exactMessage = parsed.error.reason;
-      else if (parsed.error?.message) exactMessage = parsed.error.message;
-      else if (typeof parsed.error === 'string') exactMessage = parsed.error;
-    } catch (_) {}
-    throw new Error(exactMessage || `Razorpay API error: ${res.status}`);
+      const res = await fetch(url, init);
+      if (res.status === 429 || res.status >= 500) {
+        if (attempt < retries) {
+          await new Promise((r) => setTimeout(r, 250 * (attempt + 1)));
+          continue;
+        }
+      }
+      return res;
+    } catch (err) {
+      lastErr = err;
+      if (attempt < retries) {
+        await new Promise((r) => setTimeout(r, 250 * (attempt + 1)));
+        continue;
+      }
+      throw err;
+    }
   }
-
-  try {
-    return JSON.parse(responseText);
-  } catch {
-    throw new Error('Invalid JSON from Razorpay');
-  }
+  throw lastErr instanceof Error ? lastErr : new Error('Network request failed');
 }
 
 Deno.serve(async (req) => {
@@ -139,6 +119,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const amountRupees = Number(body?.amount);
+    const attemptId = String(body?.attempt_id || '').trim().replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 20);
     const amountPaise = Math.round(amountRupees * 100);
     const minPaise = 100;
     const maxPaise = 100000 * 100;
@@ -147,10 +128,52 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Invalid amount. Send amount in rupees (e.g. 500, 1000). Min ₹1, max ₹1,00,000.' }, { status: 400, headers: corsHeaders });
     }
 
-    const receipt = `w_${Date.now()}`;
+    const receipt = attemptId ? `w_${attemptId}` : `w_${Date.now()}`;
     let order: { id: string };
     try {
-      order = await createRazorpayOrder(amountPaise, expertUuid, receipt);
+      order = await (async () => {
+        const keyId = Deno.env.get('RAZORPAY_KEY_ID');
+        const keySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
+        if (!keyId || !keySecret) {
+          throw new Error('RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be set in Edge Function secrets.');
+        }
+        const credentials = `${keyId}:${keySecret}`;
+        const auth = btoa(credentials);
+        const res = await fetchWithRetry(
+          'https://api.razorpay.com/v1/orders',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Basic ${auth}`,
+            },
+            body: JSON.stringify({
+              amount: amountPaise,
+              currency: 'INR',
+              receipt,
+              notes: { expert_uuid: expertUuid, attempt_id: attemptId || undefined },
+            }),
+          },
+          2
+        );
+        const responseText = await res.text();
+        if (!res.ok) {
+          let exactMessage = responseText;
+          try {
+            const parsed = JSON.parse(responseText);
+            if (parsed.error?.description) exactMessage = parsed.error.description;
+            else if (parsed.error?.reason) exactMessage = parsed.error.reason;
+            else if (parsed.error?.message) exactMessage = parsed.error.message;
+            else if (typeof parsed.error === 'string') exactMessage = parsed.error;
+          } catch (_) {}
+          throw new Error(exactMessage || `Razorpay API error: ${res.status}`);
+        }
+        try {
+          return JSON.parse(responseText);
+        } catch {
+          throw new Error('Invalid JSON from Razorpay');
+        }
+      })();
     } catch (razorpayErr) {
       const message = razorpayErr instanceof Error ? razorpayErr.message : String(razorpayErr);
       return Response.json(

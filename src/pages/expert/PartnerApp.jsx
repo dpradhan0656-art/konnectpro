@@ -23,6 +23,65 @@ const loadRazorpayScript = () =>
     document.body.appendChild(script);
   });
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function normalizeErrorMessage(err, fallback) {
+  const message =
+    err?.details ||
+    err?.error ||
+    err?.message ||
+    (typeof err === 'string' ? err : '');
+  return message ? String(message) : fallback;
+}
+
+async function withRetry(task, { retries = 2, delayMs = 500, shouldRetry } = {}) {
+  let lastError;
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      return await task(attempt);
+    } catch (err) {
+      lastError = err;
+      const retryable =
+        typeof shouldRetry === 'function' ? shouldRetry(err, attempt) : true;
+      if (!retryable || attempt === retries) break;
+      await sleep(delayMs * (attempt + 1));
+    }
+  }
+  throw lastError;
+}
+
+async function callEdgeJson({ url, token, anonKey, body, retries = 2 }) {
+  return withRetry(
+    async () => {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          apikey: anonKey,
+        },
+        body: JSON.stringify(body),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const err = new Error(
+          payload?.details || payload?.error || payload?.message || res.statusText || 'Request failed'
+        );
+        err.status = res.status;
+        err.payload = payload;
+        throw err;
+      }
+      return payload;
+    },
+    {
+      retries,
+      delayMs: 700,
+      shouldRetry: (err) =>
+        !err?.status || err.status === 429 || err.status >= 500 || String(err?.message || '').toLowerCase().includes('network'),
+    }
+  );
+}
+
 export default function PartnerApp() {
   const navigate = useNavigate();
   const [expert, setExpert] = useState(null);
@@ -34,6 +93,7 @@ export default function PartnerApp() {
   const [customAmount, setCustomAmount] = useState('');
   const [rechargeLoading, setRechargeLoading] = useState(false);
   const [rechargeError, setRechargeError] = useState('');
+  const [rechargeInfo, setRechargeInfo] = useState('');
 
   useEffect(() => { checkExpertProfile(); }, []);
 
@@ -147,6 +207,7 @@ export default function PartnerApp() {
       setRechargeError('Please select an amount or enter a valid amount (₹1 – ₹1,00,000).');
       return;
     }
+    setRechargeInfo('');
     setRechargeError('');
     setRechargeLoading(true);
     try {
@@ -159,20 +220,15 @@ export default function PartnerApp() {
       }
       const baseUrl = import.meta.env.VITE_SUPABASE_URL;
       const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      const res = await fetch(`${baseUrl}/functions/v1/create-wallet-order`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + session.access_token,
-          'apikey': anonKey,
-        },
-        body: JSON.stringify({ amount: amountRupees }),
+      const attemptId = `wallet_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+      setRechargeInfo('Initializing secure payment...');
+      const body = await callEdgeJson({
+        url: `${baseUrl}/functions/v1/create-wallet-order`,
+        token: session.access_token,
+        anonKey,
+        body: { amount: amountRupees, attempt_id: attemptId },
+        retries: 2,
       });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        const msg = body?.details || body?.error || body?.message || res.statusText || 'Could not create payment order.';
-        throw new Error(msg);
-      }
       const { order_id, amount_paise, currency, key_id } = body;
       if (!order_id || !amount_paise) {
         throw new Error(body?.error || 'Could not create payment order.');
@@ -190,42 +246,46 @@ export default function PartnerApp() {
         description: 'Wallet Recharge',
         handler: async function (response) {
           try {
+            setRechargeInfo('Verifying payment...');
             const { data: refData } = await supabase.auth.refreshSession();
             const confirmSession = refData?.session ?? (await supabase.auth.getSession()).data?.session;
             if (!confirmSession?.access_token) {
-              alert('Session expired. Please sign in again and retry.');
+              setRechargeError('Session expired. Please sign in again and retry.');
               return;
             }
             const baseUrl = import.meta.env.VITE_SUPABASE_URL;
             const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-            const confirmRes = await fetch(`${baseUrl}/functions/v1/confirm-wallet-recharge`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + confirmSession.access_token,
-                'apikey': anonKey,
-              },
-              body: JSON.stringify({
+            const result = await callEdgeJson({
+              url: `${baseUrl}/functions/v1/confirm-wallet-recharge`,
+              token: confirmSession.access_token,
+              anonKey,
+              body: {
                 order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
-              }),
+              },
+              retries: 2,
             });
-            const result = await confirmRes.json().catch(() => ({}));
-            if (!confirmRes.ok || result?.error) {
-              alert('Recharge failed: ' + (result?.details || result?.error || confirmRes.statusText || 'Unknown error'));
-              return;
-            }
             setExpert((e) => (e ? { ...e, wallet_balance: result?.new_balance ?? e.wallet_balance } : e));
             if (expert?.id) fetchWallet(expert.id);
             setShowRecharge(false);
             setRechargeAmount(null);
             setCustomAmount('');
+            setRechargeError('');
+            setRechargeInfo('');
             alert('Wallet recharged successfully! New balance: ₹' + (result?.new_balance ?? 0));
           } catch (e) {
-            alert('Recharge confirmation failed: ' + (e?.message || e));
+            const msg = normalizeErrorMessage(e, 'Recharge confirmation failed. Please try again.');
+            setRechargeError(msg);
           } finally {
             setRechargeLoading(false);
           }
+        },
+        modal: {
+          ondismiss: () => {
+            setRechargeLoading(false);
+            setRechargeInfo('');
+            setRechargeError('Payment window closed. No money was deducted if payment was not completed.');
+          },
         },
         prefill: {
           name: expert?.name || 'Expert',
@@ -236,11 +296,13 @@ export default function PartnerApp() {
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', () => {
         setRechargeLoading(false);
-        setRechargeError('Payment failed. Please try again.');
+        setRechargeInfo('');
+        setRechargeError('Payment failed. If amount was deducted, it will auto-reconcile on retry.');
       });
       rzp.open();
     } catch (err) {
-      setRechargeError(err?.message || 'Something went wrong.');
+      setRechargeInfo('');
+      setRechargeError(normalizeErrorMessage(err, 'Could not start payment. Please try again.'));
     } finally {
       setRechargeLoading(false);
     }
@@ -326,6 +388,7 @@ export default function PartnerApp() {
                    />
                  </div>
                  {rechargeError && <p className="text-xs text-red-600 font-medium mb-3">{rechargeError}</p>}
+                {rechargeInfo && <p className="text-xs text-teal-700 font-medium mb-3">{rechargeInfo}</p>}
                  <button
                    type="button"
                    disabled={rechargeLoading}

@@ -13,11 +13,37 @@ function getRazorpayAuth() {
   return { auth: 'Basic ' + btoa(`${keyId}:${keySecret}`) };
 }
 
+async function fetchWithRetry(url: string, init: RequestInit, retries = 2) {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      const res = await fetch(url, init);
+      if (res.status === 429 || res.status >= 500) {
+        if (attempt < retries) {
+          await new Promise((r) => setTimeout(r, 250 * (attempt + 1)));
+          continue;
+        }
+      }
+      return res;
+    } catch (err) {
+      lastErr = err;
+      if (attempt < retries) {
+        await new Promise((r) => setTimeout(r, 250 * (attempt + 1)));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error('Network request failed');
+}
+
 async function fetchRazorpayPayment(paymentId: string) {
   const { auth } = getRazorpayAuth();
-  const res = await fetch(`https://api.razorpay.com/v1/payments/${paymentId}`, {
-    headers: { 'Authorization': auth },
-  });
+  const res = await fetchWithRetry(
+    `https://api.razorpay.com/v1/payments/${paymentId}`,
+    { headers: { Authorization: auth } },
+    2
+  );
   if (!res.ok) {
     const t = await res.text();
     throw new Error(`Razorpay payment fetch failed: ${res.status} ${t}`);
@@ -27,9 +53,11 @@ async function fetchRazorpayPayment(paymentId: string) {
 
 async function fetchRazorpayOrder(orderId: string): Promise<{ notes?: { expert_uuid?: string; expert_id?: string } }> {
   const { auth } = getRazorpayAuth();
-  const res = await fetch(`https://api.razorpay.com/v1/orders/${orderId}`, {
-    headers: { 'Authorization': auth },
-  });
+  const res = await fetchWithRetry(
+    `https://api.razorpay.com/v1/orders/${orderId}`,
+    { headers: { Authorization: auth } },
+    2
+  );
   if (!res.ok) {
     const t = await res.text();
     throw new Error(`Razorpay order fetch failed: ${res.status} ${t}`);

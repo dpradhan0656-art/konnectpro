@@ -1,4 +1,4 @@
-import { USER_CITY_STORAGE_KEY } from './persistUserCity';
+import { getStoredUserCity, normalizeUserCity } from './persistUserCity';
 
 /**
  * Multi-city serviceability: service is shown if available in user's city.
@@ -9,7 +9,7 @@ export function isServiceAvailableInCity(service, userCity) {
   if (!cities || !Array.isArray(cities) || cities.length === 0) return true;
   if (cities.some((c) => String(c).toLowerCase() === 'all')) return true;
   if (!userCity || typeof userCity !== 'string') return true;
-  const normalized = userCity.trim().toLowerCase();
+  const normalized = normalizeUserCity(userCity).toLowerCase();
   if (!normalized) return true;
   return cities.some((c) => String(c).trim().toLowerCase() === normalized);
 }
@@ -17,8 +17,7 @@ export function isServiceAvailableInCity(service, userCity) {
 /** Get current user city key from localStorage (normalized for filtering). */
 export function getUserCityKey() {
   try {
-    const raw = localStorage.getItem(USER_CITY_STORAGE_KEY) || '';
-    return raw.trim().toLowerCase();
+    return getStoredUserCity().toLowerCase();
   } catch {
     return '';
   }
