@@ -1,5 +1,6 @@
 import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri } from 'expo-auth-session';
+import { Platform } from 'react-native';
 
 /**
  * Google OAuth for Expo → Supabase session.
@@ -35,13 +36,26 @@ export async function signInWithGoogle(supabase) {
    * + WebBrowser.openAuthSessionAsync for the PKCE / implicit redirect back into the app.
    */
 
+  if (Platform.OS === 'android') {
+    await WebBrowser.warmUpAsync().catch(() => {});
+  }
+
   const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
 
   if (result.type !== 'success' || !result.url) {
+    if (Platform.OS === 'android') {
+      await WebBrowser.coolDownAsync().catch(() => {});
+    }
     return { cancelled: true };
   }
 
-  return applyOAuthCallbackUrl(supabase, result.url);
+  try {
+    return await applyOAuthCallbackUrl(supabase, result.url);
+  } finally {
+    if (Platform.OS === 'android') {
+      await WebBrowser.coolDownAsync().catch(() => {});
+    }
+  }
 }
 
 /**

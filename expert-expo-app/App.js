@@ -1,15 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import * as WebBrowser from 'expo-web-browser';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { validateExpertAccess } from './src/auth/expertAccess';
 import { LanguageProvider } from './src/context/LanguageContext';
 import { supabase } from './src/lib/supabase';
 import DashboardScreen from './src/screens/DashboardScreen';
 import LoginScreen from './src/screens/LoginScreen';
-
-WebBrowser.maybeCompleteAuthSession();
 
 export default function App() {
   const [booting, setBooting] = useState(true);

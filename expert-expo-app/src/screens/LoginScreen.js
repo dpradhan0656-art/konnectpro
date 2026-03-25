@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -27,6 +27,9 @@ const CARD = '#1e293b';
 const TEXT = '#f8fafc';
 const TEXT_MUTED = '#94a3b8';
 
+/** If the browser session never reports back (Android Custom Tabs edge case), stop the spinner. */
+const GOOGLE_SIGNIN_TIMEOUT_MS = 120000;
+
 /** Normalize phone toward E.164: trim; if digits only and 10 digits, prefix +91 (India default). */
 function normalizePhoneInput(raw) {
   const t = raw.trim().replace(/\s+/g, '');
@@ -49,6 +52,23 @@ export default function LoginScreen() {
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const googleSpinnerTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    if (!googleLoading) return undefined;
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') {
+        if (googleSpinnerTimeoutRef.current) {
+          clearTimeout(googleSpinnerTimeoutRef.current);
+          googleSpinnerTimeoutRef.current = null;
+        }
+        setGoogleLoading(false);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [googleLoading]);
 
   const sendCode = useCallback(async () => {
     if (mode === 'email') {
@@ -131,7 +151,19 @@ export default function LoginScreen() {
   }, [email, mode, otp, phone]);
 
   const onContinueWithGoogle = useCallback(async () => {
+    if (googleSpinnerTimeoutRef.current) {
+      clearTimeout(googleSpinnerTimeoutRef.current);
+      googleSpinnerTimeoutRef.current = null;
+    }
     setGoogleLoading(true);
+    googleSpinnerTimeoutRef.current = setTimeout(() => {
+      googleSpinnerTimeoutRef.current = null;
+      setGoogleLoading(false);
+      Alert.alert(
+        'Sign-in is slow',
+        'If the Google screen closed but you still see this, close the app completely and open it again — your session may already be saved. You can also tap Continue with Google once more.',
+      );
+    }, GOOGLE_SIGNIN_TIMEOUT_MS);
     try {
       const result = await signInWithGoogle(supabase);
       if (result?.cancelled) return;
@@ -143,6 +175,10 @@ export default function LoginScreen() {
     } catch (e) {
       Alert.alert('Google sign-in failed', e?.message ?? String(e));
     } finally {
+      if (googleSpinnerTimeoutRef.current) {
+        clearTimeout(googleSpinnerTimeoutRef.current);
+        googleSpinnerTimeoutRef.current = null;
+      }
       setGoogleLoading(false);
     }
   }, []);
