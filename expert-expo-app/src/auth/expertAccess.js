@@ -55,7 +55,7 @@ export async function validateExpertAccess(supabase, user) {
         ok: false,
         reason: 'email_exists_unlinked',
         message:
-          'An expert profile exists for this email but is not linked to this sign-in. Use Email/Phone OTP with your registered account, or contact support to link Google.',
+          'An expert profile exists for this email but is not linked to this Google sign-in. Contact support to link your Google account.',
       };
     }
   }

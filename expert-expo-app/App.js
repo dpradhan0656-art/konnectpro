@@ -7,11 +7,13 @@ import { LanguageProvider } from './src/context/LanguageContext';
 import { supabase } from './src/lib/supabase';
 import DashboardScreen from './src/screens/DashboardScreen';
 import LoginScreen from './src/screens/LoginScreen';
+import AccessGateScreen from './src/screens/AccessGateScreen';
 
 export default function App() {
   const [booting, setBooting] = useState(true);
   const [session, setSession] = useState(null);
   const [expert, setExpert] = useState(null);
+  const [accessGate, setAccessGate] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -28,9 +30,18 @@ export default function App() {
           if (result.ok) {
             setSession(initial);
             setExpert(result.expert);
+            setAccessGate(null);
           } else {
-            await supabase.auth.signOut();
-            Alert.alert('Expert access', result.message ?? 'Unable to sign in.');
+            // Keep the session and show an explicit gate for onboarding/approval.
+            setSession(initial);
+            setExpert(null);
+            setAccessGate({
+              title:
+                result.reason === 'not_approved'
+                  ? 'Account Pending Approval'
+                  : 'Complete Expert Registration',
+              message: result.message ?? 'Unable to access expert dashboard.',
+            });
           }
         } catch (e) {
           Alert.alert('Error', e?.message ?? String(e));
@@ -48,6 +59,7 @@ export default function App() {
       if (event === 'SIGNED_OUT') {
         setSession(null);
         setExpert(null);
+        setAccessGate(null);
         return;
       }
       if (nextSession?.user && event === 'SIGNED_IN') {
@@ -56,16 +68,23 @@ export default function App() {
           if (result.ok) {
             setSession(nextSession);
             setExpert(result.expert);
+            setAccessGate(null);
           } else {
-            await supabase.auth.signOut();
-            setSession(null);
+            setSession(nextSession);
             setExpert(null);
-            Alert.alert('Expert access', result.message ?? 'Unable to sign in.');
+            setAccessGate({
+              title:
+                result.reason === 'not_approved'
+                  ? 'Account Pending Approval'
+                  : 'Complete Expert Registration',
+              message: result.message ?? 'Unable to access expert dashboard.',
+            });
           }
         } catch (e) {
           await supabase.auth.signOut();
           setSession(null);
           setExpert(null);
+          setAccessGate(null);
           Alert.alert('Error', e?.message ?? String(e));
         }
       }
@@ -91,6 +110,14 @@ export default function App() {
         </View>
       ) : showDashboard ? (
         <DashboardScreen expert={expert} />
+      ) : accessGate ? (
+        <AccessGateScreen
+          title={accessGate.title}
+          message={accessGate.message}
+          onSignOut={async () => {
+            await supabase.auth.signOut();
+          }}
+        />
       ) : (
         <LoginScreen />
       )}
