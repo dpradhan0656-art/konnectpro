@@ -23,6 +23,7 @@ export default function App() {
         data: { session: initial },
       } = await supabase.auth.getSession();
       if (!mounted) return;
+      
       if (initial?.user) {
         try {
           const result = await validateExpertAccess(supabase, initial.user);
@@ -56,12 +57,14 @@ export default function App() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, nextSession) => {
       if (event === 'INITIAL_SESSION') return;
+      
       if (event === 'SIGNED_OUT') {
         setSession(null);
         setExpert(null);
         setAccessGate(null);
         return;
       }
+      
       if (nextSession?.user && event === 'SIGNED_IN') {
         try {
           const result = await validateExpertAccess(supabase, nextSession.user);
@@ -88,14 +91,20 @@ export default function App() {
           Alert.alert('Error', e?.message ?? String(e));
         }
       }
+      
       if (event === 'TOKEN_REFRESHED' && nextSession) {
         setSession(nextSession);
       }
     });
 
+    // 🔥 THE FIX IS HERE: Safe Cleanup Check 🔥
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      if (subscription && typeof subscription.unsubscribe === 'function') {
+        subscription.unsubscribe();
+      } else if (subscription && typeof subscription.remove === 'function') {
+        subscription.remove();
+      }
     };
   }, []);
 
@@ -103,26 +112,26 @@ export default function App() {
 
   return (
     <LanguageProvider>
-    <SafeAreaProvider>
-      {booting ? (
-        <View style={styles.boot}>
-          <ActivityIndicator size="large" color="#0d9488" />
-        </View>
-      ) : showDashboard ? (
-        <DashboardScreen expert={expert} />
-      ) : accessGate ? (
-        <AccessGateScreen
-          title={accessGate.title}
-          message={accessGate.message}
-          onSignOut={async () => {
-            await supabase.auth.signOut();
-          }}
-        />
-      ) : (
-        <LoginScreen />
-      )}
-      <StatusBar style="light" />
-    </SafeAreaProvider>
+      <SafeAreaProvider>
+        {booting ? (
+          <View style={styles.boot}>
+            <ActivityIndicator size="large" color="#0d9488" />
+          </View>
+        ) : showDashboard ? (
+          <DashboardScreen expert={expert} />
+        ) : accessGate ? (
+          <AccessGateScreen
+            title={accessGate.title}
+            message={accessGate.message}
+            onSignOut={async () => {
+              await supabase.auth.signOut();
+            }}
+          />
+        ) : (
+          <LoginScreen />
+        )}
+        <StatusBar style="light" />
+      </SafeAreaProvider>
     </LanguageProvider>
   );
 }

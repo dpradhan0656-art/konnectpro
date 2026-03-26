@@ -23,25 +23,28 @@ const TEXT_MUTED = '#94a3b8';
 const GOOGLE_SIGNIN_TIMEOUT_MS = 120000;
 
 export default function LoginScreen() {
-  const [googleLoading, setGoogleLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const googleSpinnerTimeoutRef = useRef(null);
 
-  // Ensure spinner doesn't remain stuck if user returns while Supabase auth event is delayed.
+  // Keep UI responsive while `App.js` validates access and routes.
   useEffect(() => {
-    if (!googleLoading) return undefined;
+    if (!isLoading) return undefined;
 
     const { data: subscription } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN') {
-        if (googleSpinnerTimeoutRef.current) {
-          clearTimeout(googleSpinnerTimeoutRef.current);
-          googleSpinnerTimeoutRef.current = null;
-        }
-        setGoogleLoading(false);
+        // Keep loading here. `App.js` will validate access and unmount this screen.
+        // We only stop loading on explicit cancel/error/timeout.
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, [googleLoading]);
+    return () => {
+      if (subscription && typeof subscription.unsubscribe === 'function') {
+        subscription.unsubscribe();
+      } else if (subscription && typeof subscription.remove === 'function') {
+        subscription.remove();
+      }
+    };
+  }, [isLoading]);
 
   const onContinueWithGoogle = useCallback(async () => {
     if (googleSpinnerTimeoutRef.current) {
@@ -49,10 +52,11 @@ export default function LoginScreen() {
       googleSpinnerTimeoutRef.current = null;
     }
 
-    setGoogleLoading(true);
+    setIsLoading(true);
+
     googleSpinnerTimeoutRef.current = setTimeout(() => {
       googleSpinnerTimeoutRef.current = null;
-      setGoogleLoading(false);
+      setIsLoading(false);
       Alert.alert(
         'Sign-in is slow',
         'If the Google screen closed but you still see this, close the app completely and open it again — your session may already be saved.'
@@ -61,15 +65,16 @@ export default function LoginScreen() {
 
     try {
       const result = await signInWithGoogle(supabase);
-      if (result?.cancelled) return;
-    } catch (e) {
-      Alert.alert('Google sign-in failed', e?.message ?? String(e));
-    } finally {
-      if (googleSpinnerTimeoutRef.current) {
-        clearTimeout(googleSpinnerTimeoutRef.current);
-        googleSpinnerTimeoutRef.current = null;
+      if (result?.cancelled) {
+        setIsLoading(false);
+        Alert.alert('Sign-in cancelled', 'You can try again when you’re ready.');
+        return;
       }
-      setGoogleLoading(false);
+
+      // Success: keep loading until `App.js` unmounts this screen after routing.
+    } catch (e) {
+      setIsLoading(false);
+      Alert.alert('Google sign-in failed', e?.message ?? String(e));
     }
   }, []);
 
@@ -95,13 +100,13 @@ export default function LoginScreen() {
               style={({ pressed }) => [
                 styles.googleBtn,
                 pressed && styles.googleBtnPressed,
-                googleLoading && styles.btnDisabled,
+                isLoading && styles.btnDisabled,
               ]}
               onPress={onContinueWithGoogle}
-              disabled={googleLoading}
+              disabled={isLoading}
             >
-              {googleLoading ? (
-                <ActivityIndicator color="#1e293b" />
+              {isLoading ? (
+                <ActivityIndicator color="#fff" />
               ) : (
                 <>
                   <Image source={{ uri: GOOGLE_G_LOGO_PNG }} style={styles.googleIcon} resizeMode="contain" />
@@ -182,12 +187,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    backgroundColor: '#ffffff',
+    backgroundColor: ACCENT,
     borderRadius: 14,
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: ACCENT,
   },
   googleBtnPressed: {
     opacity: 0.92,
@@ -199,7 +204,7 @@ const styles = StyleSheet.create({
   googleBtnText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1e293b',
+    color: '#ffffff',
     letterSpacing: 0.2,
   },
   btnDisabled: {
@@ -213,4 +218,3 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 });
-
