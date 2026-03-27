@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Download, X } from 'lucide-react';
+import { usePwaInstallPrompt } from '../../hooks/usePwaInstallPrompt';
 
 const STORAGE_KEY = 'apnahunar_install_prompt_dismissed';
 
 export default function InstallAppPrompt() {
   const [show, setShow] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isIOS, setIsIOS] = useState(false);
+  const { deferredPrompt, isInstallable, promptInstall } = usePwaInstallPrompt();
 
   useEffect(() => {
     const dismissed = sessionStorage.getItem(STORAGE_KEY);
@@ -25,22 +26,12 @@ export default function InstallAppPrompt() {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
     if (!isMobile) return;
 
-    const handler = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setShow(true);
-    };
-
-    window.addEventListener('beforeinstallprompt', handler);
-    if (isIOSDevice) setShow(true);
-
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
+    if (isIOSDevice || isInstallable) setShow(true);
+  }, [isInstallable]);
 
   const handleInstall = async () => {
     if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
+      const { outcome } = await promptInstall();
       if (outcome === 'accepted') setShow(false);
     }
     setShow(false);

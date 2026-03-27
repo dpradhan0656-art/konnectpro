@@ -82,7 +82,7 @@ const Layout = ({ children }) => {
                        location.pathname === '/login';
 
   return (
-    <div className="relative flex flex-col min-h-screen max-w-[100vw] overflow-x-hidden w-full bg-slate-50">
+    <div className="relative flex flex-col min-h-screen max-w-[100vw] overflow-x-hidden w-full bg-slate-950">
       {/* Subtle global pattern (customer shell only) */}
       <PageBackground />
       {/* Additive global network-loss UX (non-blocking) */}

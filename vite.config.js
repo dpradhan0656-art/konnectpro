@@ -8,21 +8,27 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'pwa-192x192.png', 'pwa-512x512.png'],
+      manifestFilename: 'manifest.json',
+      includeAssets: [
+        'favicon.ico',
+        'icons/icon-192.svg',
+        'icons/icon-512.svg',
+        'icons/apple-touch-icon.svg',
+      ],
       manifest: {
         name: 'Kshatryx Technologies',
         short_name: 'Kshatryx',
         description: 'India\'s Most Trusted Home Services App',
         theme_color: '#0d9488',
-        background_color: '#f8fafc',
+        background_color: '#0f172a',
         display: 'standalone',
         scope: '/',
         start_url: '/',
-        orientation: 'portrait',
+        orientation: 'portrait-primary',
         categories: ['lifestyle', 'utilities'],
         icons: [
-          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
-          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+          { src: 'icons/icon-192.svg', sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
+          { src: 'icons/icon-512.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
         ]
       },
       workbox: {
