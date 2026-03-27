@@ -5,16 +5,31 @@ import * as Notifications from 'expo-notifications';
 
 import { supabase } from '../lib/supabase';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
+function hasNotificationsSupport() {
+  return (
+    !!Notifications &&
+    typeof Notifications.getPermissionsAsync === 'function' &&
+    typeof Notifications.requestPermissionsAsync === 'function'
+  );
+}
+
+try {
+  if (typeof Notifications?.setNotificationHandler === 'function') {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+      }),
+    });
+  }
+} catch (e) {
+  console.warn('[push] Notifications handler unavailable in this runtime:', e?.message || String(e));
+}
 
 async function ensureAndroidChannels() {
   if (Platform.OS !== 'android') return;
+  if (typeof Notifications?.setNotificationChannelAsync !== 'function') return;
   await Notifications.setNotificationChannelAsync('assignments', {
     name: 'Job assignments',
     importance: Notifications.AndroidImportance.MAX,
@@ -40,46 +55,54 @@ export async function registerExpertPushToken({ expertId, langCode }) {
   if (!Device.isDevice) {
     return null;
   }
-
-  const { status: existing } = await Notifications.getPermissionsAsync();
-  let final = existing;
-  if (existing !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    final = status;
-  }
-  if (final !== 'granted') {
+  if (!hasNotificationsSupport()) {
     return null;
   }
 
-  await ensureAndroidChannels();
+  try {
+    const { status: existing } = await Notifications.getPermissionsAsync();
+    let final = existing;
+    if (existing !== 'granted') {
+      const requested = await Notifications.requestPermissionsAsync();
+      final = requested?.status;
+    }
+    if (final !== 'granted') {
+      return null;
+    }
 
-  const projectId =
-    Constants.expoConfig?.extra?.eas?.projectId ||
-    Constants.easConfig?.projectId;
+    await ensureAndroidChannels();
 
-  if (!projectId) {
-    console.warn(
-      '[push] Set EXPO_PUBLIC_EAS_PROJECT_ID or app.json extra.eas.projectId (run `eas init` and copy project id).'
-    );
+    const projectId =
+      Constants.expoConfig?.extra?.eas?.projectId ||
+      Constants.easConfig?.projectId;
+
+    if (!projectId) {
+      console.warn(
+        '[push] Set EXPO_PUBLIC_EAS_PROJECT_ID or app.json extra.eas.projectId (run `eas init` and copy project id).'
+      );
+      return null;
+    }
+
+    const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
+    const token = tokenData?.data;
+    if (!token) return null;
+
+    const updates = {
+      expo_push_token: token,
+      expo_push_token_updated_at: new Date().toISOString(),
+    };
+    if (langCode) {
+      updates.expo_ui_lang = String(langCode).split('-')[0].toLowerCase();
+    }
+
+    const { error } = await supabase.from('experts').update(updates).eq('id', expertId);
+    if (error) {
+      console.warn('[push] Failed to save token:', error.message);
+    }
+
+    return token;
+  } catch (e) {
+    console.warn('[push] Notifications setup skipped:', e?.message || String(e));
     return null;
   }
-
-  const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
-  const token = tokenData.data;
-  if (!token) return null;
-
-  const updates = {
-    expo_push_token: token,
-    expo_push_token_updated_at: new Date().toISOString(),
-  };
-  if (langCode) {
-    updates.expo_ui_lang = String(langCode).split('-')[0].toLowerCase();
-  }
-
-  const { error } = await supabase.from('experts').update(updates).eq('id', expertId);
-  if (error) {
-    console.warn('[push] Failed to save token:', error.message);
-  }
-
-  return token;
 }

@@ -12,6 +12,7 @@ import { Platform } from 'react-native';
  * @returns {Promise<{ cancelled?: boolean, session?: import('@supabase/supabase-js').Session }>}
  */
 export async function signInWithGoogle(supabase) {
+  // Keep callback scoped to Expert app scheme; never use customer/web redirect here.
   const redirectTo = makeRedirectUri({
     scheme: 'expert-expo-app',
     path: 'auth/callback',
@@ -47,6 +48,18 @@ export async function signInWithGoogle(supabase) {
       await WebBrowser.coolDownAsync().catch(() => {});
     }
     return { cancelled: true };
+  }
+
+  const normalizedRedirect = redirectTo.toLowerCase();
+  const normalizedResult = String(result.url).toLowerCase();
+  const isExpectedCallback =
+    normalizedResult.startsWith(normalizedRedirect) ||
+    normalizedResult.includes('auth/callback');
+  if (!isExpectedCallback) {
+    if (Platform.OS === 'android') {
+      await WebBrowser.coolDownAsync().catch(() => {});
+    }
+    throw new Error('OAuth callback did not return to Expert app. Verify Supabase redirect URLs include expert-expo-app://auth/callback.');
   }
 
   try {

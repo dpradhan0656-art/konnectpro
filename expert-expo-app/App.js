@@ -3,13 +3,38 @@ import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { validateExpertAccess } from './src/auth/expertAccess';
+import { buildFallbackExpertFromUser, isForceExpertDashboardMode } from './src/config/expertAuthFlags';
 import { LanguageProvider } from './src/context/LanguageContext';
 import { supabase } from './src/lib/supabase';
 import DashboardScreen from './src/screens/DashboardScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import AccessGateScreen from './src/screens/AccessGateScreen';
 
+function buildForceModeUser() {
+  return {
+    id: 'force-expert-local-user',
+    email: 'expert.local@kshatr.test',
+    user_metadata: {
+      full_name: 'Expert Local Tester',
+    },
+  };
+}
+
+function buildForceModeSession() {
+  const nowIso = new Date().toISOString();
+  return {
+    access_token: 'force-mode',
+    refresh_token: 'force-mode',
+    token_type: 'bearer',
+    expires_in: 60 * 60 * 24,
+    expires_at: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
+    user: buildForceModeUser(),
+    created_at: nowIso,
+  };
+}
+
 export default function App() {
+  const forceExpertMode = isForceExpertDashboardMode();
   const [booting, setBooting] = useState(true);
   const [session, setSession] = useState(null);
   const [expert, setExpert] = useState(null);
@@ -23,9 +48,25 @@ export default function App() {
         data: { session: initial },
       } = await supabase.auth.getSession();
       if (!mounted) return;
+
+      if (forceExpertMode && !initial?.user) {
+        const fakeSession = buildForceModeSession();
+        setSession(fakeSession);
+        setExpert(buildFallbackExpertFromUser(fakeSession.user));
+        setAccessGate(null);
+        setBooting(false);
+        return;
+      }
       
       if (initial?.user) {
         try {
+          if (forceExpertMode) {
+            setSession(initial);
+            setExpert(buildFallbackExpertFromUser(initial.user));
+            setAccessGate(null);
+            setBooting(false);
+            return;
+          }
           const result = await validateExpertAccess(supabase, initial.user);
           if (!mounted) return;
           if (result.ok) {
@@ -59,6 +100,13 @@ export default function App() {
       if (event === 'INITIAL_SESSION') return;
       
       if (event === 'SIGNED_OUT') {
+        if (forceExpertMode) {
+          const fakeSession = buildForceModeSession();
+          setSession(fakeSession);
+          setExpert(buildFallbackExpertFromUser(fakeSession.user));
+          setAccessGate(null);
+          return;
+        }
         setSession(null);
         setExpert(null);
         setAccessGate(null);
@@ -67,6 +115,12 @@ export default function App() {
       
       if (nextSession?.user && event === 'SIGNED_IN') {
         try {
+          if (forceExpertMode) {
+            setSession(nextSession);
+            setExpert(buildFallbackExpertFromUser(nextSession.user));
+            setAccessGate(null);
+            return;
+          }
           const result = await validateExpertAccess(supabase, nextSession.user);
           if (result.ok) {
             setSession(nextSession);
@@ -94,6 +148,10 @@ export default function App() {
       
       if (event === 'TOKEN_REFRESHED' && nextSession) {
         setSession(nextSession);
+        if (forceExpertMode) {
+          setExpert((prev) => prev ?? buildFallbackExpertFromUser(nextSession.user));
+          setAccessGate(null);
+        }
       }
     });
 
@@ -108,7 +166,8 @@ export default function App() {
     };
   }, []);
 
-  const showDashboard = Boolean(session && expert);
+  const resolvedExpert = expert ?? (forceExpertMode && session?.user ? buildFallbackExpertFromUser(session.user) : null);
+  const showDashboard = Boolean(session && (expert || forceExpertMode));
 
   return (
     <LanguageProvider>
@@ -118,7 +177,7 @@ export default function App() {
             <ActivityIndicator size="large" color="#0d9488" />
           </View>
         ) : showDashboard ? (
-          <DashboardScreen expert={expert} />
+          <DashboardScreen expert={resolvedExpert} />
         ) : accessGate ? (
           <AccessGateScreen
             title={accessGate.title}
