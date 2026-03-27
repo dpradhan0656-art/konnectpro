@@ -31,7 +31,7 @@ import { registerExpertPushToken } from '../services/pushRegistration';
  * @param {{ expert: { id?: string | number; name?: string | null; email?: string | null } | null }} props
  */
 export default function DashboardScreen({ expert }) {
-  const { t, lang, setLang } = useLanguage();
+  const { t, lang, setLang, setAutoLanguage, languageMode, autoRegion } = useLanguage();
   const expertId = expert?.id ?? null;
   const {
     walletBalance,
@@ -297,6 +297,9 @@ export default function DashboardScreen({ expert }) {
         currentLang={lang}
         onSelect={(code) => setLang(code)}
         title={t.chooseLanguage}
+        languageMode={languageMode}
+        autoRegion={autoRegion}
+        onUseAuto={setAutoLanguage}
       />
       <WalletDetailsModal
         visible={walletModalOpen}

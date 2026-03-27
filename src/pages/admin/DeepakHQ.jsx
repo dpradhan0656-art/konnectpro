@@ -118,7 +118,11 @@ export default function DeepakHQ() {
     return () => {
       mounted = false;
       clearTimeout(timeoutId);
-      subscription?.unsubscribe();
+      if (subscription && typeof subscription.unsubscribe === 'function') {
+        subscription.unsubscribe();
+      } else if (subscription && typeof subscription.remove === 'function') {
+        subscription.remove();
+      }
     };
   }, []);
 

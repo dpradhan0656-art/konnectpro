@@ -13,7 +13,16 @@ import { ACCENT, BG, BORDER, CARD, TEXT, TEXT_MUTED } from './theme';
 /**
  * @param {{ visible: boolean; onClose: () => void; currentLang: string; onSelect: (code: string) => void; title: string }} props
  */
-export default function LanguagePickerModal({ visible, onClose, currentLang, onSelect, title }) {
+export default function LanguagePickerModal({
+  visible,
+  onClose,
+  currentLang,
+  onSelect,
+  title,
+  languageMode,
+  autoRegion,
+  onUseAuto,
+}) {
   const data = LANGUAGE_ORDER.map((code) => ({
     code,
     label: EXPERT_VOICE_DICT[code]?.name || code,
@@ -24,6 +33,19 @@ export default function LanguagePickerModal({ visible, onClose, currentLang, onS
       <Pressable style={styles.backdrop} onPress={onClose}>
         <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
           <Text style={styles.sheetTitle}>{title}</Text>
+          <View style={styles.modeWrap}>
+            <Text style={styles.modeText}>
+              {languageMode === 'manual'
+                ? 'Manual selection active'
+                : `Auto (GPS)${autoRegion ? `: ${autoRegion}` : ''}`}
+            </Text>
+            <Pressable
+              onPress={onUseAuto}
+              style={({ pressed }) => [styles.autoBtn, pressed && { opacity: 0.88 }]}
+            >
+              <Text style={styles.autoBtnText}>Use GPS language</Text>
+            </Pressable>
+          </View>
           <FlatList
             data={data}
             keyExtractor={(item) => item.code}
@@ -80,6 +102,34 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingHorizontal: 8,
+  },
+  modeWrap: {
+    marginHorizontal: 12,
+    marginBottom: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: BORDER,
+    borderRadius: 12,
+    backgroundColor: CARD,
+    gap: 8,
+  },
+  modeText: {
+    color: TEXT_MUTED,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  autoBtn: {
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: 'rgba(13, 148, 136, 0.45)',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  autoBtnText: {
+    color: ACCENT,
+    fontSize: 12,
+    fontWeight: '700',
   },
   row: {
     flexDirection: 'row',
