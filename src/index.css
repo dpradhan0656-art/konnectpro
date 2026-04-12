@@ -2,12 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 🎨 GLOBAL STYLES – Layout stability, no horizontal wobble (pre-launch verified) */
+/* 🎨 GLOBAL STYLES – Layout stability, no horizontal wobble (pre-launch verified)
+   Android WebView / Capacitor: avoid overflow-x + fixed height on html — breaks vertical scroll.
+   Clip horizontal overflow on body only; let the document grow naturally for window scrolling. */
 html {
-  overflow-x: hidden;
-  touch-action: pan-y;
-  -webkit-overflow-scrolling: touch;
-  height: 100%;
+  min-height: 100%;
   background: #0f172a;
   -webkit-text-size-adjust: 100%;
 }
@@ -17,13 +16,13 @@ body {
   background-color: #0f172a;
   color: #e2e8f0;
   overflow-x: hidden;
-  touch-action: pan-y;
   max-width: 100vw;
   min-height: 100vh;
   min-height: 100dvh;
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   -webkit-tap-highlight-color: transparent;
+  -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
 }
 
