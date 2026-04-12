@@ -3,9 +3,9 @@ import { persistUserCity } from '../../lib/persistUserCity';
 import { Search, Mic, MapPin, X } from 'lucide-react';
 // import { Sparkles } from 'lucide-react'; // AI star icon – removed for clean native-like UI
 
-/** Edit this for hero trust line (e.g. "Trusted by 10,000+ happy homes") */
+/** Sub-headline copy (SEO / reuse) */
 export const HERO_TRUST_LINE =
-  'Verified Electricians, Plumbers, and Beauticians. Safe, Reliable, and Professional Home Services starting at just ₹99.';
+  'Experience seamless and high-quality services. Book top-rated, certified professionals with a single tap.';
 
 export default function HomeHero({
   locationName,
@@ -68,12 +68,27 @@ export default function HomeHero({
           </div>
         </div>
 
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white leading-tight mb-2 max-w-lg drop-shadow-sm">
-          Certified Experts at Your Doorstep in Bhopal, Jabalpur, Sagar & Jhansi
-        </h1>
-        <p className="text-slate-400 text-sm font-medium mb-8 sm:mb-10 flex items-center gap-2 max-w-xl">
-          {HERO_TRUST_LINE}
-        </p>
+        <div className="w-full max-w-3xl mx-auto text-center mb-8 sm:mb-10 rounded-2xl bg-white px-5 py-8 sm:px-10 sm:py-10 shadow-xl shadow-black/20 ring-1 ring-slate-200/90">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-[1.12] tracking-tight">
+            <span className="block">Your Trusted Experts.</span>
+            <span className="block text-blue-600 mt-1 md:mt-2">Right at Your Doorstep.</span>
+          </h1>
+          <p className="mt-5 sm:mt-6 text-base sm:text-lg text-gray-500 font-medium max-w-xl mx-auto leading-relaxed">
+            {HERO_TRUST_LINE}
+          </p>
+          <button
+            type="button"
+            onClick={() =>
+              document.getElementById('services-heading')?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+              })
+            }
+            className="mt-6 sm:mt-8 inline-flex items-center justify-center bg-blue-600 text-white font-semibold text-base rounded-lg px-8 py-3.5 shadow-md shadow-blue-600/35 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/45 transition-all duration-200 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          >
+            Book Your Expert
+          </button>
+        </div>
 
         <div className="relative z-30 transform translate-y-6 w-full max-w-full">
           <div className="relative rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-[0_16px_48px_rgba(0,0,0,0.35)] flex items-center p-2 min-h-[52px] w-full box-border ring-1 ring-white/5">
