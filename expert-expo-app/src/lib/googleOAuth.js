@@ -18,6 +18,16 @@ export const EXPERT_GOOGLE_OAUTH_REDIRECT_URI = 'expert-expo-app://auth/callback
  * @returns {Promise<{ cancelled?: boolean, session?: import('@supabase/supabase-js').Session }>}
  */
 export async function signInWithGoogle(supabase) {
+  const publicUrl = (process.env.EXPO_PUBLIC_SUPABASE_URL || '').trim();
+  const publicAnon = (process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '').trim();
+  if (!publicUrl || !publicAnon) {
+    throw new Error(
+      'This build is missing Supabase settings (EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY). ' +
+        'Add them in Expo → Project → Environment variables for the same environment as this build (e.g. preview), ' +
+        'or in eas.json → build.<profile>.env, then create a new build.'
+    );
+  }
+
   const redirectTo = EXPERT_GOOGLE_OAUTH_REDIRECT_URI;
 
   const { data, error } = await supabase.auth.signInWithOAuth({

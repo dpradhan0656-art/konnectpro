@@ -11,3 +11,6 @@ supabase/.temp/
 # Android release signing (never commit)
 *.keystore
 *.jks
+
+# Expert Expo — local EAS archive inspect output (can be multi‑GB; never commit)
+expert-expo-app/_eas_inspect_out/
