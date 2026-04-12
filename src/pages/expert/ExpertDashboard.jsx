@@ -210,8 +210,12 @@ export default function ExpertDashboard() {
     if (!expert) return;
     setLocationLoading(true);
     if (expert.is_active) {
-        await supabase.from('experts').update({ is_active: false }).eq('id', expert.id);
-        setExpert({ ...expert, is_active: false });
+        // Clear coords when off duty so dispatch does not rank everyone by stale / shared office GPS
+        await supabase
+          .from('experts')
+          .update({ is_active: false, latitude: null, longitude: null })
+          .eq('id', expert.id);
+        setExpert({ ...expert, is_active: false, latitude: null, longitude: null });
         speakVoice(t.v_offline);
         if (watchIdRef.current) { navigator.geolocation.clearWatch(watchIdRef.current); watchIdRef.current = null; }
     } else {
@@ -228,7 +232,12 @@ export default function ExpertDashboard() {
 
   const handleLogout = async () => {
       if (!window.confirm("Logout?")) return;
-      if (expert?.is_active) await supabase.from('experts').update({ is_active: false }).eq('id', expert.id);
+      if (expert?.is_active) {
+        await supabase
+          .from('experts')
+          .update({ is_active: false, latitude: null, longitude: null })
+          .eq('id', expert.id);
+      }
       await supabase.auth.signOut();
       navigate('/expert/login'); 
   };

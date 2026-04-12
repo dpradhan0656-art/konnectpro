@@ -7,6 +7,7 @@ import {
 import BookingTimelineModal from '../../../components/admin/BookingTimelineModal';
 import { writeAdminAuditLog } from '../../../utils/adminAuditTrail';
 import { sendExpertAssignmentPush } from '../../../lib/sendExpertAssignmentPush';
+import { haversineKm } from '../../../lib/geoCoords';
 
 export default function DispatchTab() {
   const [bookings, setBookings] = useState([]);
@@ -40,16 +41,7 @@ export default function DispatchTab() {
     return () => clearInterval(interval);
   }, []);
 
-  // 🌍 THE RADAR MATH
-  const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    if (!lat1 || !lon1 || !lat2 || !lon2) return null;
-    const R = 6371; // Earth's Radius in KM
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return (R * c).toFixed(1); 
-  };
+  // 🌍 Distance uses shared Haversine + strict coord validation (see src/lib/geoCoords.js)
 
   // 🛠️ Smart Assign Expert + Area Head (by city)
   const handleAssign = async (bookingId, expertId, bookingCity) => {
@@ -252,16 +244,32 @@ export default function DispatchTab() {
                                         }
 
                                         return experts
-                                            .map(exp => {
-                                                const dist = calculateDistance(job.latitude, job.longitude, exp.latitude, exp.longitude);
-                                                return { ...exp, dist: dist ? parseFloat(dist) : 999 }; 
+                                            .map((exp) => {
+                                                const km = haversineKm(
+                                                  job.latitude,
+                                                  job.longitude,
+                                                  exp.latitude,
+                                                  exp.longitude
+                                                );
+                                                return { ...exp, distKm: km };
                                             })
-                                            .sort((a, b) => a.dist - b.dist)
-                                            .map(exp => {
-                                                const expName = exp.name || exp.full_name || "Unknown";
+                                            .sort((a, b) => {
+                                                const ak = a.distKm;
+                                                const bk = b.distKm;
+                                                if (ak == null && bk == null) return 0;
+                                                if (ak == null) return 1;
+                                                if (bk == null) return -1;
+                                                return ak - bk;
+                                            })
+                                            .map((exp) => {
+                                                const expName = exp.name || exp.full_name || 'Unknown';
+                                                const label =
+                                                  exp.distKm != null
+                                                    ? `🚗 ${exp.distKm.toFixed(1)} KM - `
+                                                    : '📍 No GPS - ';
                                                 return (
                                                     <option key={exp.id} value={exp.id} className="bg-slate-900">
-                                                        {exp.dist !== 999 ? `🚗 ${exp.dist} KM - ` : '📍 No GPS - '} 
+                                                        {label}
                                                         {expName} ({exp.service_category || 'No Category'})
                                                     </option>
                                                 );

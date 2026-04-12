@@ -4,3 +4,6 @@ dist/
 .vercel/
 *.log
 android/.gradle-local/
+
+# Supabase CLI local cache (never commit)
+supabase/.temp/
