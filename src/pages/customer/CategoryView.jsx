@@ -57,7 +57,7 @@ export default function CategoryView() {
                 <ArrowLeft size={24} className="text-white" />
             </button>
             <div>
-                <p className="text-teal-400 font-bold uppercase tracking-widest text-[10px] mb-1 flex items-center gap-1"><ShieldCheck size={12}/> Verified Experts</p>
+                <p className="text-blue-300 font-bold uppercase tracking-widest text-[10px] mb-1 flex items-center gap-1"><ShieldCheck size={12}/> Verified Experts</p>
                 <h1 className="text-3xl font-black capitalize tracking-tight">{cleanCategoryName}</h1>
             </div>
           </div>
@@ -67,17 +67,17 @@ export default function CategoryView() {
       <div className="px-4 mt-8 space-y-6 max-w-2xl mx-auto relative z-20 w-full min-w-0">
         
         {loading ? (
-           <div className="text-center py-20 bg-slate-900/60 backdrop-blur-xl rounded-[2rem] shadow-xl border border-white/10 ring-1 ring-white/5">
-             <div className="animate-spin w-10 h-10 border-4 border-teal-400 border-t-transparent rounded-full mx-auto mb-4"></div>
-             <p className="text-slate-400 font-bold uppercase tracking-widest animate-pulse text-xs">Loading {cleanCategoryName}...</p>
-             <p className="mt-3 text-[10px] font-bold uppercase tracking-widest text-slate-400/80">
+           <div className="text-center py-20 bg-white/95 backdrop-blur-xl rounded-[2rem] shadow-lg border border-slate-200/90 ring-1 ring-slate-100">
+             <div className="animate-spin w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+             <p className="text-slate-600 font-bold uppercase tracking-widest animate-pulse text-xs">Loading {cleanCategoryName}...</p>
+             <p className="mt-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">
                Powered by Kshatryx Technologies
              </p>
            </div>
         ) : services.length === 0 ? (
-           <div className="text-center py-16 bg-slate-900/60 backdrop-blur-xl rounded-[2rem] shadow-xl border border-white/10 p-8 ring-1 ring-white/5">
+           <div className="text-center py-16 bg-white/95 backdrop-blur-xl rounded-[2rem] shadow-lg border border-slate-200/90 p-8 ring-1 ring-slate-100">
               <span className="text-5xl block mb-4">{getServiceEmoji(cleanCategoryName)}</span>
-              <p className="text-slate-400 font-bold">No active services found for <span className="text-white capitalize">{cleanCategoryName}</span>.</p>
+              <p className="text-slate-600 font-bold">No active services found for <span className="text-slate-900 capitalize">{cleanCategoryName}</span>.</p>
            </div>
         ) : (
           services.map((service) => {
@@ -88,10 +88,10 @@ export default function CategoryView() {
             const imgSrc = useImgUrl ? (rawImg || fallbackImg) : fallbackImg;
 
             return (
-            <div key={service.id} className="bg-slate-900/50 backdrop-blur-sm p-4 rounded-[2rem] shadow-[0_16px_48px_-12px_rgba(0,0,0,0.45)] border border-white/10 flex gap-4 transition-all hover:border-teal-500/40 hover:shadow-[0_20px_50px_-8px_rgba(20,184,166,0.12)] group ring-1 ring-white/5">
+            <div key={service.id} className="bg-white/95 backdrop-blur-sm p-4 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(15,23,42,0.08)] border border-slate-200/90 flex gap-4 transition-all hover:border-blue-300/90 hover:shadow-[0_16px_44px_-8px_rgba(37,99,235,0.12)] group ring-1 ring-slate-100">
               
               {/* IMAGE SECTION – URL ya emoji */}
-              <div className="w-24 h-24 bg-slate-800 rounded-2xl overflow-hidden shrink-0 shadow-inner border border-white/5 relative flex items-center justify-center">
+              <div className="w-24 h-24 bg-slate-100 rounded-2xl overflow-hidden shrink-0 shadow-sm border border-slate-200/80 relative flex items-center justify-center">
                  <img 
                    src={imgSrc} 
                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
@@ -103,7 +103,7 @@ export default function CategoryView() {
               {/* INFO SECTION */}
               <div className="flex-1 flex flex-col justify-between py-1">
                  <div>
-                    <h3 className="font-black text-white text-lg leading-tight uppercase tracking-tight">{service.name}</h3>
+                    <h3 className="font-black text-slate-900 text-lg leading-tight uppercase tracking-tight">{service.name}</h3>
                     <div className="flex items-center gap-2 mt-1.5">
                        <span className="flex items-center gap-1 bg-amber-500/15 text-amber-300 border border-amber-500/20 px-1.5 py-0.5 rounded text-[10px] font-bold"><Star size={10} fill="currentColor"/> 4.8</span>
                        <span className="text-[10px] text-slate-500 font-medium flex items-center gap-1"><Clock size={10}/> 45 mins</span>
@@ -111,10 +111,10 @@ export default function CategoryView() {
 
                     {/* ✅ NEW: CUSTOMER NOTE */}
                     {service.note && (
-                        <div className="mt-2.5 bg-white/5 border border-white/10 p-2 rounded-lg flex gap-1.5 items-start">
-                            <Info size={12} className="text-teal-400 mt-0.5 shrink-0" />
-                            <p className="text-[9px] text-slate-400 leading-tight font-medium">
-                                <span className="font-bold text-slate-200">Note:</span> {service.note}
+                        <div className="mt-2.5 bg-slate-50 border border-slate-200/90 p-2 rounded-lg flex gap-1.5 items-start">
+                            <Info size={12} className="text-blue-600 mt-0.5 shrink-0" />
+                            <p className="text-[9px] text-slate-600 leading-tight font-medium">
+                                <span className="font-bold text-slate-800">Note:</span> {service.note}
                             </p>
                         </div>
                     )}
@@ -125,9 +125,9 @@ export default function CategoryView() {
                     {/* PRICE DISPLAY */}
                     <div>
                         {finalPrice ? (
-                            <div className="text-xl font-black text-white">₹{finalPrice}</div>
+                            <div className="text-xl font-black text-slate-900">₹{finalPrice}</div>
                         ) : (
-                            <div className="text-[10px] font-bold text-cyan-300 bg-cyan-500/10 px-2 py-1 rounded-lg border border-cyan-500/25">
+                            <div className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded-lg border border-blue-200/80">
                                 Price on Inspection
                             </div>
                         )}
@@ -135,13 +135,13 @@ export default function CategoryView() {
                     
                     {/* ADD BUTTON */}
                     {getQty(service.id) > 0 ? (
-                        <button onClick={() => navigate('/cart')} className="bg-white/10 border border-white/15 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg hover:bg-white/15 active:scale-95 transition-all">
+                        <button onClick={() => navigate('/cart')} className="bg-slate-100 border border-slate-300 text-slate-800 px-4 py-2 rounded-xl flex items-center gap-2 shadow-sm hover:bg-slate-200/90 active:scale-95 transition-all">
                            <ShoppingBag size={16}/> <span className="text-xs font-bold">VIEW CART</span>
                         </button>
                     ) : (
                         <button 
                            onClick={() => addToCart(service)}
-                           className="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-lg shadow-teal-500/25 border border-teal-400/30 active:scale-95 transition-all flex items-center gap-1"
+                           className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-md shadow-blue-600/25 border border-blue-500/80 active:scale-95 transition-all flex items-center gap-1"
                         >
                            ADD <Plus size={14}/>
                         </button>
