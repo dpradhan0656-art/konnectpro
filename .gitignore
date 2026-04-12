@@ -7,3 +7,7 @@ android/.gradle-local/
 
 # Supabase CLI local cache (never commit)
 supabase/.temp/
+
+# Android release signing (never commit)
+*.keystore
+*.jks

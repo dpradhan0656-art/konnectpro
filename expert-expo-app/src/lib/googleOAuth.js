@@ -1,22 +1,24 @@
 import * as WebBrowser from 'expo-web-browser';
-import { makeRedirectUri } from 'expo-auth-session';
 import { Platform } from 'react-native';
 
 /**
+ * Exact OAuth redirect (must match Supabase Auth → URL configuration → Redirect URLs).
+ * Using a literal avoids Expo `makeRedirectUri` variants (e.g. triple-slash) that break callback matching on Play builds.
+ *
+ * Keep in sync with `expo.scheme` in app.json (`expert-expo-app`).
+ */
+export const EXPERT_GOOGLE_OAUTH_REDIRECT_URI = 'expert-expo-app://auth/callback';
+
+/**
  * Google OAuth for Expo → Supabase session.
- * Requires `scheme` in app.json (e.g. expert-expo-app) and the same redirect URL
- * added in Supabase Dashboard → Authentication → URL configuration → Redirect URLs:
+ * Supabase Dashboard → Authentication → Redirect URLs must include:
  *   expert-expo-app://auth/callback
  *
  * @param {import('@supabase/supabase-js').SupabaseClient} supabase
  * @returns {Promise<{ cancelled?: boolean, session?: import('@supabase/supabase-js').Session }>}
  */
 export async function signInWithGoogle(supabase) {
-  // Keep callback scoped to Expert app scheme; never use customer/web redirect here.
-  const redirectTo = makeRedirectUri({
-    scheme: 'expert-expo-app',
-    path: 'auth/callback',
-  });
+  const redirectTo = EXPERT_GOOGLE_OAUTH_REDIRECT_URI;
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
@@ -52,9 +54,7 @@ export async function signInWithGoogle(supabase) {
 
   const normalizedRedirect = redirectTo.toLowerCase();
   const normalizedResult = String(result.url).toLowerCase();
-  const isExpectedCallback =
-    normalizedResult.startsWith(normalizedRedirect) ||
-    normalizedResult.includes('auth/callback');
+  const isExpectedCallback = normalizedResult.startsWith(normalizedRedirect);
   if (!isExpectedCallback) {
     if (Platform.OS === 'android') {
       await WebBrowser.coolDownAsync().catch(() => {});

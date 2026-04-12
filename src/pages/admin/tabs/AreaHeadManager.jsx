@@ -16,6 +16,7 @@ export default function AreaHeadManager() {
   const [formData, setFormData] = useState({
       name: '', email: '', phone: '', password: '', city: 'Jabalpur', type: 'salary', compensation: 0
   });
+  const [formCompensationError, setFormCompensationError] = useState('');
 
   useEffect(() => { fetchManagers(); }, []);
 
@@ -29,6 +30,16 @@ export default function AreaHeadManager() {
   // 👑 CREATE NEW AREA HEAD FUNCTION
   const handleCreateManager = async (e) => {
       e.preventDefault();
+      setFormCompensationError('');
+      const compNum = parseFloat(formData.compensation);
+      if (formData.type === 'commission') {
+          if (!Number.isFinite(compNum) || compNum > 9.5) {
+              setFormCompensationError(
+                  'Commission 9.5% se zyada nahi ho sakta kyonki Partner ka maximum share 9.5% hai.'
+              );
+              return;
+          }
+      }
       setFormLoading(true);
       
       try {
@@ -78,7 +89,12 @@ export default function AreaHeadManager() {
   const updateCompensation = async (id, type, val) => {
       const newVal = prompt(`Enter new ${type === 'salary' ? 'Salary Amount (₹)' : 'Commission Percentage (%)'}:`, val);
       if(!newVal || isNaN(newVal)) return;
-      await supabase.from('area_heads').update({ compensation_value: parseFloat(newVal) }).eq('id', id);
+      const n = parseFloat(newVal);
+      if (type === 'commission' && (n > 9.5 || !Number.isFinite(n))) {
+          alert('Commission 9.5% se zyada nahi ho sakta kyonki Partner ka maximum share 9.5% hai.');
+          return;
+      }
+      await supabase.from('area_heads').update({ compensation_value: n }).eq('id', id);
       fetchManagers();
   };
 
@@ -162,7 +178,7 @@ export default function AreaHeadManager() {
                   <div className="md:col-span-2 grid grid-cols-2 gap-4 mt-2 p-5 bg-slate-950/50 rounded-2xl border border-slate-800">
                       <div>
                           <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Compensation Type</label>
-                          <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl py-3 px-4 outline-none focus:border-teal-500/50 appearance-none font-bold">
+                          <select value={formData.type} onChange={e => { setFormCompensationError(''); setFormData({...formData, type: e.target.value}); }} className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl py-3 px-4 outline-none focus:border-teal-500/50 appearance-none font-bold">
                               <option value="salary">Monthly Salary</option>
                               <option value="commission">Revenue Commission (%)</option>
                           </select>
@@ -171,9 +187,22 @@ export default function AreaHeadManager() {
                           <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Amount / Percentage</label>
                           <div className="relative">
                               <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                              <input type="number" required placeholder={formData.type === 'salary' ? "e.g. 15000" : "e.g. 5 (for 5%)"} value={formData.compensation} onChange={e => setFormData({...formData, compensation: e.target.value})} className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl py-3 pl-12 pr-4 outline-none focus:border-teal-500/50 font-black" />
+                              <input
+                                  type="number"
+                                  required
+                                  min={0}
+                                  max={formData.type === 'commission' ? 9.5 : undefined}
+                                  step={formData.type === 'commission' ? '0.1' : '1'}
+                                  placeholder={formData.type === 'salary' ? "e.g. 15000" : "e.g. 5 (for 5%)"}
+                                  value={formData.compensation}
+                                  onChange={e => { setFormCompensationError(''); setFormData({...formData, compensation: e.target.value}); }}
+                                  className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl py-3 pl-12 pr-4 outline-none focus:border-teal-500/50 font-black"
+                              />
                           </div>
                       </div>
+                      {formCompensationError ? (
+                          <p className="md:col-span-2 text-sm text-amber-400 font-bold">{formCompensationError}</p>
+                      ) : null}
                   </div>
 
                   <button type="submit" disabled={formLoading} className="md:col-span-2 w-full mt-4 bg-teal-600 hover:bg-teal-500 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs flex justify-center items-center gap-2 shadow-lg shadow-teal-900/50 disabled:opacity-50">
