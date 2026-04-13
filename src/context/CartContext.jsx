@@ -23,6 +23,12 @@ export const CartProvider = ({ children }) => {
   const findBestPrice = (item) => {
     // Priority 1: 'base_price' (Jo humne DB scan me dekha)
     if (item.base_price) return Number(item.base_price);
+
+    // Expert rows from `experts` table
+    if (item.visiting_charges != null && item.visiting_charges !== '') {
+      const v = Number(item.visiting_charges);
+      if (!Number.isNaN(v) && v > 0) return v;
+    }
     
     // Priority 2: 'price' (Agar purana data ho)
     if (item.price) return Number(item.price);
@@ -55,7 +61,7 @@ export const CartProvider = ({ children }) => {
         name: item.name || item.service_name || 'Service', 
         price: finalPrice,
         image: item.image_url || item.image || item.profile_photo_url || '',
-        category: item.category || 'Expert Service'
+        category: item.category || item.service_category || 'Expert Service',
       };
 
       return [...prevCart, newItem];

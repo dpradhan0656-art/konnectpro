@@ -18,6 +18,7 @@ export default {
       fontFamily: {
         heading: "var(--font-heading)",
         body: "var(--font-body)",
+        display: ['"Plus Jakarta Sans"', 'var(--font-body)', 'system-ui', 'sans-serif'],
       },
       animation: {
         'blob': 'blob 7s infinite',
