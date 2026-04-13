@@ -8,12 +8,18 @@
       "environment": "preview",
       "developmentClient": false,
       "distribution": "internal",
+      "env": {
+        "KONNECTPRO_EAS_EXPERT_EXPO": "1"
+      },
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
       "environment": "production",
+      "env": {
+        "KONNECTPRO_EAS_EXPERT_EXPO": "1"
+      },
       "android": {
         "buildType": "app-bundle"
       }
