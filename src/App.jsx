@@ -39,6 +39,10 @@ import RegisterExpert from './pages/RegisterExpert';
 import AreaHeadApp from './pages/area_head/AreaHeadApp'; 
 import AreaHeadLogin from './pages/area_head/AreaHeadLogin'; 
 
+// 5. FIELD PARTNER (Bhenaji) PORTAL
+import PartnerPortalLogin from './pages/partner/PartnerPortalLogin';
+const PartnerPortalDashboard = lazy(() => import('./pages/partner/PartnerPortalDashboard'));
+
 // Legal Pages
 import About from './pages/legal/About';
 import Privacy from './pages/legal/Privacy';
@@ -60,7 +64,7 @@ function ScrollToTop() {
 function AdminServiceWorkerDisable() {
   const { pathname } = useLocation();
   useEffect(() => {
-    if (!pathname.startsWith('/deepakhq')) return;
+    if (!pathname.startsWith('/deepakhq') && !pathname.startsWith('/partner')) return;
     if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then((regs) => {
         regs.forEach((reg) => reg.unregister());
@@ -79,6 +83,7 @@ const Layout = ({ children }) => {
                        location.pathname.startsWith('/expert') || 
                        location.pathname === '/expert-dashboard' || 
                        location.pathname.startsWith('/area-head') || 
+                       location.pathname.startsWith('/partner') ||
                        location.pathname === '/login';
 
   return (
@@ -158,6 +163,10 @@ const AppRoutes = () => {
           {/* ========================================== */}
           <Route path="/area-head/login" element={<AreaHeadLogin />} />
           <Route path="/area-head/dashboard" element={session ? <AreaHeadApp /> : <Navigate to="/area-head/login" replace />} />
+
+          {/* FIELD PARTNER (Bhenaji) — separate from DeepakHQ Partner Drishti */}
+          <Route path="/partner-login" element={<PartnerPortalLogin />} />
+          <Route path="/partner-dashboard" element={session ? <PartnerPortalDashboard /> : <Navigate to="/partner-login" replace />} />
           
           {/* LEGAL & OTHERS */}
           <Route path="/about" element={<About />} />
