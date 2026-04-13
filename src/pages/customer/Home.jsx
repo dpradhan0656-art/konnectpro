@@ -128,6 +128,8 @@ export default function Home() {
         setCityStatus={setCityStatus}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
+        categories={categories}
+        categoriesLoading={loading}
       />
 
       {/* Consistent gap between sections — premium boxed layout */}

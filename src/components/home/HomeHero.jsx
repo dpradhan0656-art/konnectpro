@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { persistUserCity } from '../../lib/persistUserCity';
 import { Search, Mic, MapPin, X } from 'lucide-react';
-import ExpertPickModal from './ExpertPickModal';
+import CategoryPickModal from './CategoryPickModal';
 
 /** Sub-headline copy (SEO / reuse) */
 export const HERO_TRUST_LINE =
@@ -16,8 +16,10 @@ export default function HomeHero({
   setCityStatus,
   searchQuery,
   setSearchQuery,
+  categories = [],
+  categoriesLoading = false,
 }) {
-  const [expertPickerOpen, setExpertPickerOpen] = useState(false);
+  const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
 
   const handleLocationBlur = () => {
     setIsEditingLoc(false);
@@ -90,7 +92,7 @@ export default function HomeHero({
           </p>
           <button
             type="button"
-            onClick={() => setExpertPickerOpen(true)}
+            onClick={() => setCategoryPickerOpen(true)}
             className="mt-7 sm:mt-9 inline-flex items-center justify-center bg-blue-600 text-white font-semibold text-base rounded-xl px-10 py-4 shadow-lg shadow-blue-600/30 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/35 transition-all duration-200 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
           >
             Book Your Expert
@@ -133,10 +135,11 @@ export default function HomeHero({
         </div>
       </div>
 
-      <ExpertPickModal
-        open={expertPickerOpen}
-        onClose={() => setExpertPickerOpen(false)}
-        locationName={locationName}
+      <CategoryPickModal
+        open={categoryPickerOpen}
+        onClose={() => setCategoryPickerOpen(false)}
+        categories={categories}
+        loading={categoriesLoading}
       />
     </section>
   );
