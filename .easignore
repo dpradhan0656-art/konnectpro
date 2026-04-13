@@ -1,0 +1,10 @@
+# Shrink EAS uploads and avoid shipping stale native build outputs.
+# See https://docs.expo.dev/build-reference/eas-ignore/
+
+node_modules
+android/app/build
+android/build
+android/.gradle
+
+# Separate Expo app — not part of this Capacitor/Vite EAS project.
+expert-expo-app

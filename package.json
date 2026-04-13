@@ -4,6 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "eas-build-pre-install": "bash scripts/eas-build-pre-install.sh",
+    "eas-build-post-install": "bash scripts/eas-build-post-install.sh",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
