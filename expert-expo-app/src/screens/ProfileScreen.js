@@ -11,9 +11,12 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 
 import { supabase } from '../lib/supabase';
 import { ACCENT, BG, BORDER, CARD, TEXT, TEXT_MUTED } from '../components/dashboard/theme';
+import { uploadExpertProfileImage } from '../utils/uploadImage';
 
 const MOCK_REVIEWS = [
   {
@@ -75,6 +78,7 @@ export default function ProfileScreen({ expert }) {
   const [profile, setProfile] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [rankLabel, setRankLabel] = useState('\ud83c\udfc6 #2 Expert in your area');
+  const [photoUploading, setPhotoUploading] = useState(false);
 
   const display = useMemo(() => {
     const p = profile || {};
@@ -191,6 +195,78 @@ export default function ProfileScreen({ expert }) {
     setRefreshing(false);
   };
 
+  const pickAndUploadPhoto = async (mode) => {
+    if (!expertId || photoUploading) return;
+    setPhotoUploading(true);
+    try {
+      if (mode === 'camera') {
+        const cameraPerm = await ImagePicker.requestCameraPermissionsAsync();
+        if (cameraPerm.status !== 'granted') {
+          Alert.alert('Permission needed', 'Camera permission is required to capture profile photo.');
+          return;
+        }
+      } else {
+        const mediaPerm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (mediaPerm.status !== 'granted') {
+          Alert.alert('Permission needed', 'Gallery permission is required to select profile photo.');
+          return;
+        }
+      }
+
+      const result =
+        mode === 'camera'
+          ? await ImagePicker.launchCameraAsync({
+              mediaTypes: ['images'],
+              quality: 1,
+              allowsEditing: true,
+            })
+          : await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ['images'],
+              quality: 1,
+              allowsEditing: true,
+            });
+
+      if (result.canceled || !result.assets?.length) return;
+      const asset = result.assets[0];
+
+      const manipActions = [];
+      if (asset.width && asset.width > 800) {
+        manipActions.push({ resize: { width: 800 } });
+      }
+
+      const compressed = await ImageManipulator.manipulateAsync(asset.uri, manipActions, {
+        compress: 0.5,
+        format: ImageManipulator.SaveFormat.JPEG,
+      });
+
+      const { publicUrl } = await uploadExpertProfileImage({
+        localUri: compressed.uri,
+        expertId,
+      });
+
+      const { error: upErr } = await supabase
+        .from('experts')
+        .update({ photo_url: publicUrl })
+        .eq('id', expertId);
+      if (upErr) throw upErr;
+
+      setProfile((prev) => ({ ...(prev || {}), photo_url: publicUrl }));
+      Alert.alert('Success', 'Profile photo updated.');
+    } catch (e) {
+      Alert.alert('Upload failed', e?.message || String(e));
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
+  const openEditPhotoChooser = () => {
+    Alert.alert('Edit Photo', 'Choose image source', [
+      { text: 'Camera', onPress: () => pickAndUploadPhoto('camera').catch(() => {}) },
+      { text: 'Gallery', onPress: () => pickAndUploadPhoto('gallery').catch(() => {}) },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView
@@ -219,11 +295,23 @@ export default function ProfileScreen({ expert }) {
                     <Text style={styles.avatarText}>{display.fullName.slice(0, 1).toUpperCase()}</Text>
                   </View>
                 )}
+                {photoUploading ? (
+                  <View style={styles.avatarLoadingOverlay}>
+                    <ActivityIndicator color={ACCENT} />
+                  </View>
+                ) : null}
               </View>
               <View style={styles.heroText}>
                 <Text style={styles.name}>{display.fullName}</Text>
                 <Text style={styles.meta}>{display.category}</Text>
                 <Text style={styles.meta}>Member since {display.memberSince}</Text>
+                <Pressable
+                  style={({ pressed }) => [styles.editPhotoBtn, pressed && { opacity: 0.9 }, photoUploading && { opacity: 0.6 }]}
+                  onPress={openEditPhotoChooser}
+                  disabled={photoUploading}
+                >
+                  <Text style={styles.editPhotoBtnText}>{photoUploading ? 'Uploading...' : 'Edit Photo'}</Text>
+                </Pressable>
               </View>
             </View>
 
@@ -304,6 +392,14 @@ const styles = StyleSheet.create({
   },
   avatarWrap: { width: 72, height: 72 },
   avatar: { width: 72, height: 72, borderRadius: 36 },
+  avatarLoadingOverlay: {
+    position: 'absolute',
+    inset: 0,
+    borderRadius: 36,
+    backgroundColor: 'rgba(2, 6, 23, 0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   avatarFallback: {
     width: 72,
     height: 72,
@@ -316,6 +412,21 @@ const styles = StyleSheet.create({
   heroText: { flex: 1, justifyContent: 'center' },
   name: { color: TEXT, fontSize: 20, fontWeight: '800' },
   meta: { color: TEXT_MUTED, fontSize: 12, marginTop: 4 },
+  editPhotoBtn: {
+    marginTop: 10,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: BORDER,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    backgroundColor: '#0f172a',
+  },
+  editPhotoBtnText: {
+    color: TEXT,
+    fontSize: 12,
+    fontWeight: '700',
+  },
 
   infoCard: {
     backgroundColor: CARD,

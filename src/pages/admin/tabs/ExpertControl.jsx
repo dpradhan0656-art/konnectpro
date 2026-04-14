@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { adminResetPassword } from '../../../lib/authAdmin';
 import { canAccessDeepakHQ } from '../../../lib/adminAccess';
+import { compressAndUploadExpertPhoto } from '../../../utils/uploadImage';
 import { 
   UserCheck, Search, Phone, MapPin, Plus, Edit, Trash2, X,
   Lock, Briefcase, Loader2, ShieldCheck, Power, PowerOff, Mail
@@ -39,6 +40,9 @@ export default function ExpertControl() {
   const [pwModal, setPwModal] = useState(null);
   const [pwValue, setPwValue] = useState('');
   const [pwLoading, setPwLoading] = useState(false);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState('');
+  const [photoUploading, setPhotoUploading] = useState(false);
 
   useEffect(() => {
     checkWriteAccess();
@@ -153,6 +157,14 @@ export default function ExpertControl() {
       }
 
       try {
+          if (photoFile) {
+              setPhotoUploading(true);
+              const upload = await compressAndUploadExpertPhoto({
+                  file: photoFile,
+                  expertKey: editingId || emailTrim || `expert-${Date.now()}`,
+              });
+              payload.photo_url = upload.publicUrl;
+          }
           if (editingId) {
               const { error: upErr } = await supabase.from('experts').update(payload).eq('id', editingId);
               if (upErr) throw upErr;
@@ -173,9 +185,11 @@ export default function ExpertControl() {
               if (insErr) throw insErr;
           }
           setIsModalOpen(false); 
+          setPhotoFile(null);
+          setPhotoPreviewUrl('');
           fetchData();
       } catch (err) { alert(err.message || String(err)); } 
-      finally { setIsSaving(false); }
+      finally { setPhotoUploading(false); setIsSaving(false); }
   };
 
   const q = searchTerm.toLowerCase().trim();
@@ -218,7 +232,17 @@ export default function ExpertControl() {
       category: exp.category || exp.service_category || '',
       kyc_status: exp.kyc_status || 'pending',
     });
+    setPhotoFile(null);
+    setPhotoPreviewUrl(exp.photo_url || '');
     setIsModalOpen(true);
+  };
+
+  const onAdminPhotoChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setPhotoFile(file);
+    const objectUrl = URL.createObjectURL(file);
+    setPhotoPreviewUrl(objectUrl);
   };
 
   return (
@@ -513,6 +537,23 @@ export default function ExpertControl() {
                         </div>
                       </div>
 
+                      <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950 p-4">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Upload Photo (Compressed &lt; 300KB)</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={onAdminPhotoChange}
+                          className="w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-800 file:px-3 file:py-2 file:text-xs file:font-bold file:text-white"
+                        />
+                        {photoPreviewUrl ? (
+                          <img
+                            src={photoPreviewUrl}
+                            alt="Expert preview"
+                            className="w-16 h-16 rounded-xl border border-slate-700 object-cover"
+                          />
+                        ) : null}
+                      </div>
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1">
                           <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Expert Category</label>
@@ -543,7 +584,7 @@ export default function ExpertControl() {
                       </div>
 
                       <button disabled={isSaving || !canWrite} className="w-full bg-teal-600 hover:bg-teal-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black py-4 rounded-2xl shadow-lg shadow-teal-900/40 uppercase tracking-widest text-xs mt-4 active:scale-95 transition-all">
-                        {isSaving ? <Loader2 className="animate-spin mx-auto" size={20}/> : editingId ? 'Update Force Member' : 'Deploy to Army'}
+                        {isSaving || photoUploading ? <Loader2 className="animate-spin mx-auto" size={20}/> : editingId ? 'Update Force Member' : 'Deploy to Army'}
                       </button>
                   </form>
               </div>
