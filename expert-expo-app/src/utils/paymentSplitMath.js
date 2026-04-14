@@ -1,55 +1,33 @@
-export const STANDARD_EXPERT_SHARE = 0.81;
-export const STANDARD_KSHATRYX_SHARE = 0.19;
-export const MEDICAL_EXPERT_PARTNER_SHARE = 0.75;
-export const MEDICAL_KSHATRYX_SHARE = 0.25;
+export const TIER1_LIMIT_INR = 1999;
+export const TIER1_KSHATRYX_RATE = 0.19;
+export const TIER2_KSHATRYX_RATE = 0.05;
 
 function toAmount(value) {
   const n = Number(value);
   return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
-function classifyMedical(booking) {
-  const hay = [
-    booking?.category,
-    booking?.service_category,
-    booking?.service_type,
-    booking?.partner_module,
-    booking?.service_name,
-  ]
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase();
-
-  return hay.includes('medical');
-}
-
-/**
- * @param {object} booking
- * @returns {{
- *  isMedical: boolean,
- *  totalAmount: number,
- *  expertShare: number,
- *  kshatryxShare: number,
- *  expertPct: number,
- *  kshatryxPct: number
- * }}
- */
+/** @param {object} booking */
 export function computeKshatryxSplit(booking) {
   const totalAmount = toAmount(booking?.total_amount ?? booking?.amount ?? booking?.expert_payout);
-  const isMedical = classifyMedical(booking);
-
-  const expertPct = isMedical ? MEDICAL_EXPERT_PARTNER_SHARE : STANDARD_EXPERT_SHARE;
-  const kshatryxPct = isMedical ? MEDICAL_KSHATRYX_SHARE : STANDARD_KSHATRYX_SHARE;
-
-  const expertShare = totalAmount * expertPct;
-  const kshatryxShare = totalAmount * kshatryxPct;
+  const tier1Base = Math.min(totalAmount, TIER1_LIMIT_INR);
+  const tier2Base = Math.max(totalAmount - TIER1_LIMIT_INR, 0);
+  const tier1CommissionRaw = tier1Base * TIER1_KSHATRYX_RATE;
+  const tier2CommissionRaw = tier2Base * TIER2_KSHATRYX_RATE;
+  const commissionRounded = Math.round(tier1CommissionRaw + tier2CommissionRaw);
+  const expertShare = Math.round(totalAmount - commissionRounded);
+  const effectiveRatePct = totalAmount > 0 ? (commissionRounded / totalAmount) * 100 : 0;
 
   return {
-    isMedical,
     totalAmount,
+    tier1Base,
+    tier2Base,
+    tier1RatePct: TIER1_KSHATRYX_RATE * 100,
+    tier2RatePct: TIER2_KSHATRYX_RATE * 100,
+    tier1Commission: Math.round(tier1CommissionRaw),
+    tier2Commission: Math.round(tier2CommissionRaw),
     expertShare,
-    kshatryxShare,
-    expertPct: expertPct * 100,
-    kshatryxPct: kshatryxPct * 100,
+    kshatryxShare: commissionRounded,
+    effectiveKshatryxRatePct: Number(effectiveRatePct.toFixed(2)),
   };
 }

@@ -21,8 +21,8 @@ const MIN_WITHDRAWAL_INR = 500;
 
 function formatInr(value) {
   const n = Number(value);
-  if (!Number.isFinite(n)) return '?0';
-  return `?${n.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+  if (!Number.isFinite(n)) return '\u20B90';
+  return `\u20B9${n.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
 }
 
 function formatDate(value) {
@@ -146,7 +146,7 @@ export default function FinanceScreen({ expert }) {
       showToast('Withdrawal Request Sent to Kshatryx Admin');
       return;
     }
-    showToast('Minimum withdrawal amount is ?500');
+    showToast('Minimum withdrawal amount is \u20B9500');
   };
 
   return (
@@ -184,7 +184,7 @@ export default function FinanceScreen({ expert }) {
             >
               <Text style={styles.withdrawBtnText}>Withdraw Funds</Text>
             </Pressable>
-            <Text style={styles.withdrawRule}>Minimum withdrawal amount: ?500</Text>
+            <Text style={styles.withdrawRule}>Minimum withdrawal amount: \u20B9500</Text>
           </View>
         ) : null}
 
@@ -203,8 +203,8 @@ export default function FinanceScreen({ expert }) {
 
         {!loading ? (
           <View style={styles.cardSection}>
-            <Text style={styles.sectionTitle}>Kshatryx Commission Split (Display)</Text>
-            <Text style={styles.sectionSub}>Standard: 81% Expert / 19% Kshatryx. Medical: 75% Expert/Partner / 25% Kshatryx.</Text>
+            <Text style={styles.sectionTitle}>Kshatryx Hybrid Slab (Display)</Text>
+            <Text style={styles.sectionSub}>Tier 1: 19% on first \u20B91999. Tier 2: 5% above \u20B91999. Rounded with Math.round.</Text>
 
             {!splitPreview.length ? (
               <Text style={styles.emptyText}>No completed jobs yet for split preview.</Text>
@@ -214,15 +214,13 @@ export default function FinanceScreen({ expert }) {
               <View key={String(row.id)} style={styles.splitRow}>
                 <View style={styles.splitTop}>
                   <Text style={styles.splitService} numberOfLines={1}>{row.service}</Text>
-                  {row.split.isMedical ? (
-                    <View style={styles.medicalBadge}><Text style={styles.medicalBadgeText}>MEDICAL 25%</Text></View>
-                  ) : (
-                    <View style={styles.standardBadge}><Text style={styles.standardBadgeText}>STANDARD 19%</Text></View>
-                  )}
+                  <View style={styles.standardBadge}><Text style={styles.standardBadgeText}>HYBRID SLAB</Text></View>
                 </View>
                 <Text style={styles.splitMeta}>Job Total: {formatInr(row.split.totalAmount)}</Text>
-                <Text style={styles.splitMeta}>Expert/Partner: {row.split.expertPct}% ({formatInr(row.split.expertShare)})</Text>
-                <Text style={styles.splitMeta}>Kshatryx: {row.split.kshatryxPct}% ({formatInr(row.split.kshatryxShare)})</Text>
+                <Text style={styles.splitMeta}>Tier 1 ({row.split.tier1RatePct}% on {formatInr(row.split.tier1Base)}): {formatInr(row.split.tier1Commission)}</Text>
+                <Text style={styles.splitMeta}>Tier 2 ({row.split.tier2RatePct}% on {formatInr(row.split.tier2Base)}): {formatInr(row.split.tier2Commission)}</Text>
+                <Text style={styles.splitMeta}>Kshatryx Commission: {formatInr(row.split.kshatryxShare)} ({row.split.effectiveKshatryxRatePct}%)</Text>
+                <Text style={styles.splitMeta}>Expert Keeps: {formatInr(row.split.expertShare)}</Text>
               </View>
             ))}
           </View>
@@ -385,19 +383,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     flex: 1,
-  },
-  medicalBadge: {
-    borderRadius: 999,
-    backgroundColor: 'rgba(245,158,11,0.2)',
-    borderColor: 'rgba(245,158,11,0.4)',
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  medicalBadgeText: {
-    color: '#fbbf24',
-    fontSize: 10,
-    fontWeight: '800',
   },
   standardBadge: {
     borderRadius: 999,

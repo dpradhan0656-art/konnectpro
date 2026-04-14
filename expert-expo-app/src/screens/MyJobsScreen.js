@@ -34,8 +34,8 @@ function formatDate(value) {
 
 function formatInr(value) {
   const n = Number(value);
-  if (!Number.isFinite(n)) return '?0';
-  return `?${n.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+  if (!Number.isFinite(n)) return '\u20B90';
+  return `\u20B9${n.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
 }
 
 function showFeedback(message, type = 'info') {
@@ -281,8 +281,10 @@ export default function MyJobsScreen({ expert }) {
             {splitPreview ? (
               <View style={styles.splitBox}>
                 <Text style={styles.splitLine}>Final Bill: {formatInr(splitPreview.totalAmount)}</Text>
-                <Text style={styles.splitLine}>Expert Share ({splitPreview.expertPct}%): {formatInr(splitPreview.expertShare)}</Text>
-                <Text style={styles.splitLine}>Kshatryx Commission ({splitPreview.kshatryxPct}%): {formatInr(splitPreview.kshatryxShare)}</Text>
+                <Text style={styles.splitLine}>Tier 1 ({splitPreview.tier1RatePct}% on {formatInr(splitPreview.tier1Base)}): {formatInr(splitPreview.tier1Commission)}</Text>
+                <Text style={styles.splitLine}>Tier 2 ({splitPreview.tier2RatePct}% on {formatInr(splitPreview.tier2Base)}): {formatInr(splitPreview.tier2Commission)}</Text>
+                <Text style={styles.splitLine}>Kshatryx Commission: {formatInr(splitPreview.kshatryxShare)} ({splitPreview.effectiveKshatryxRatePct}%)</Text>
+                <Text style={styles.splitLine}>Expert Keeps: {formatInr(splitPreview.expertShare)}</Text>
               </View>
             ) : null}
 
