@@ -28,7 +28,10 @@ const GOOGLE_SIGNIN_TIMEOUT_MS = 120000;
  */
 export default function LoginScreen({ onOAuthSessionHint }) {
   const [isLoading, setIsLoading] = useState(false);
+  /** Blocks double-tap after OAuth returns while App reconciles session (screen may stay mounted briefly). */
+  const [oauthHandoff, setOauthHandoff] = useState(false);
   const googleSpinnerTimeoutRef = useRef(null);
+  const mountedRef = useRef(true);
 
   const clearGoogleSpinnerTimeout = useCallback(() => {
     if (googleSpinnerTimeoutRef.current) {
@@ -37,7 +40,13 @@ export default function LoginScreen({ onOAuthSessionHint }) {
     }
   }, []);
 
-  useEffect(() => () => clearGoogleSpinnerTimeout(), [clearGoogleSpinnerTimeout]);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      clearGoogleSpinnerTimeout();
+    };
+  }, [clearGoogleSpinnerTimeout]);
 
   // Keep UI responsive while `App.js` validates access and routes.
   useEffect(() => {
@@ -95,10 +104,17 @@ export default function LoginScreen({ onOAuthSessionHint }) {
         return;
       }
 
-      try {
-        await onOAuthSessionHint?.(result?.session ?? null);
-      } catch (hintErr) {
-        Alert.alert('Sign-in', hintErr?.message ?? 'Could not finish sign-in. Try again.');
+      // Do not await parent reconcile: Android release can block for a long time on storage/auth alignment.
+      // Spinner must clear in `finally`; routing updates when App state reconciles (hint + onAuthStateChange + AppState).
+      if (onOAuthSessionHint) {
+        setOauthHandoff(true);
+        void Promise.resolve(onOAuthSessionHint(result?.session ?? null))
+          .catch((hintErr) => {
+            Alert.alert('Sign-in', hintErr?.message ?? 'Could not finish sign-in. Try again.');
+          })
+          .finally(() => {
+            if (mountedRef.current) setOauthHandoff(false);
+          });
       }
     } catch (e) {
       clearGoogleSpinnerTimeout();
@@ -133,7 +149,7 @@ export default function LoginScreen({ onOAuthSessionHint }) {
                 isLoading && styles.btnDisabled,
               ]}
               onPress={onContinueWithGoogle}
-              disabled={isLoading}
+              disabled={isLoading || oauthHandoff}
             >
               {isLoading ? (
                 <ActivityIndicator color="#fff" />

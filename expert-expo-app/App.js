@@ -88,29 +88,31 @@ export default function App() {
   uiRef.current = { onLoginSurface };
 
   /**
-   * OAuth returns a Session in-memory before AsyncStorage always reflects it on Android.
-   * Re-apply via setSession so persist + auth listeners align, then reconcile UI.
+   * OAuth: `exchangeCodeForSession` / hash flow already updates the Supabase client + AsyncStorage.
+   * A second `await setSession` on Android release builds can hang indefinitely; never block routing on it.
+   * Reconcile UI immediately from the hinted session; align storage in the background with a hard timeout.
    */
   const onOAuthSessionHint = useCallback(
     async (sessionHint) => {
-      let s = sessionHint ?? null;
-      if (s?.access_token && s?.refresh_token) {
-        const { data, error } = await supabase.auth.setSession({
-          access_token: s.access_token,
-          refresh_token: s.refresh_token,
-        });
-        if (!error && data?.session?.user) {
-          s = data.session;
-        }
+      if (sessionHint?.access_token && sessionHint?.refresh_token) {
+        const at = sessionHint.access_token;
+        const rt = sessionHint.refresh_token;
+        void Promise.race([
+          supabase.auth.setSession({ access_token: at, refresh_token: rt }),
+          new Promise((resolve) => setTimeout(resolve, 10000)),
+        ]).catch(() => {});
       }
+
+      let s = sessionHint?.user ? sessionHint : null;
+
       if (!s?.user) {
-        for (let i = 0; i < 30; i++) {
+        for (let i = 0; i < 80; i++) {
           const { data } = await supabase.auth.getSession();
           if (data.session?.user) {
             s = data.session;
             break;
           }
-          await new Promise((r) => setTimeout(r, 100));
+          await new Promise((r) => setTimeout(r, 150));
         }
       }
       if (!s?.user) {
@@ -226,6 +228,20 @@ export default function App() {
         if (uiRef.current.onLoginSurface && nextSession.user) {
           await reconcileRef.current(nextSession);
         }
+        return;
+      }
+
+      // Any other auth event that carries a session while we still show login (storage / provider quirks).
+      if (
+        nextSession?.user &&
+        !forceExpertMode &&
+        uiRef.current.onLoginSurface &&
+        event !== 'SIGNED_IN' &&
+        event !== 'TOKEN_REFRESHED' &&
+        event !== 'SIGNED_OUT' &&
+        event !== 'INITIAL_SESSION'
+      ) {
+        await reconcileRef.current(nextSession);
       }
     });
 
@@ -246,12 +262,16 @@ export default function App() {
       if (state !== 'active' || forceExpertMode) return;
       if (timeoutId) clearTimeout(timeoutId);
       timeoutId = setTimeout(async () => {
-        if (!uiRef.current.onLoginSurface) return;
-        const {
-          data: { session: s },
-        } = await supabase.auth.getSession();
-        if (s?.user) {
-          await reconcileRef.current(s);
+        for (let attempt = 0; attempt < 5; attempt++) {
+          if (!uiRef.current.onLoginSurface) return;
+          const {
+            data: { session: s },
+          } = await supabase.auth.getSession();
+          if (s?.user) {
+            await reconcileRef.current(s);
+            return;
+          }
+          await new Promise((r) => setTimeout(r, 450));
         }
       }, 350);
     });
