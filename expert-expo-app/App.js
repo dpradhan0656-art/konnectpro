@@ -110,9 +110,8 @@ function ExpertAppRoot() {
   uiRef.current = { onLoginSurface };
 
   /**
-   * OAuth: `exchangeCodeForSession` / hash flow already updates the Supabase client + AsyncStorage.
-   * A second `await setSession` on Android release builds can hang indefinitely; never block routing on it.
-   * Reconcile UI immediately from the hinted session; align storage in the background with a hard timeout.
+   * OAuth: mirror session into React state immediately, then reconcile expert in the background.
+   * Do not await reconcile — that blocked the auth listener chain on Android release builds.
    */
   const onOAuthSessionHint = useCallback(
     async (sessionHint) => {
@@ -145,19 +144,18 @@ function ExpertAppRoot() {
         return;
       }
 
-      try {
-        await Promise.race([
-          reconcileExpertSession(s),
-          new Promise((_, rej) =>
-            setTimeout(
-              () => rej(new Error('Checking your expert profile timed out. Check internet and try again.')),
-              32000
-            )
-          ),
-        ]);
-      } catch (e) {
+      setSession(s);
+      void Promise.race([
+        reconcileExpertSession(s),
+        new Promise((_, rej) =>
+          setTimeout(
+            () => rej(new Error('Checking your expert profile timed out. Check internet and try again.')),
+            32000
+          )
+        ),
+      ]).catch((e) => {
         Alert.alert('Sign-in', e?.message ?? String(e));
-      }
+      });
     },
     [reconcileExpertSession]
   );
@@ -218,8 +216,15 @@ function ExpertAppRoot() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, nextSession) => {
-      if (event === 'INITIAL_SESSION') return;
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      // Keep React session in lockstep with Supabase client + AsyncStorage (single source of truth for routing).
+      if (event === 'INITIAL_SESSION') {
+        if (nextSession?.user) {
+          setSession(nextSession);
+          void reconcileRef.current(nextSession);
+        }
+        return;
+      }
 
       if (event === 'SIGNED_OUT') {
         if (forceExpertMode) {
@@ -235,8 +240,15 @@ function ExpertAppRoot() {
         return;
       }
 
-      if (nextSession?.user && event === 'SIGNED_IN') {
-        await reconcileRef.current(nextSession);
+      if (event === 'SIGNED_IN' && nextSession?.user) {
+        setSession(nextSession);
+        void reconcileRef.current(nextSession);
+        return;
+      }
+
+      if (event === 'USER_UPDATED' && nextSession?.user) {
+        setSession(nextSession);
+        void reconcileRef.current(nextSession);
         return;
       }
 
@@ -247,24 +259,24 @@ function ExpertAppRoot() {
           setAccessGate(null);
           return;
         }
-        // OAuth on Android sometimes updates tokens without a separate SIGNED_IN the UI sees — re-apply routing.
-        if (uiRef.current.onLoginSurface && nextSession.user) {
-          await reconcileRef.current(nextSession);
+        if (nextSession.user) {
+          void reconcileRef.current(nextSession);
         }
         return;
       }
 
-      // Any other auth event that carries a session while we still show login (storage / provider quirks).
       if (
         nextSession?.user &&
         !forceExpertMode &&
         uiRef.current.onLoginSurface &&
         event !== 'SIGNED_IN' &&
+        event !== 'USER_UPDATED' &&
         event !== 'TOKEN_REFRESHED' &&
         event !== 'SIGNED_OUT' &&
         event !== 'INITIAL_SESSION'
       ) {
-        await reconcileRef.current(nextSession);
+        setSession(nextSession);
+        void reconcileRef.current(nextSession);
       }
     });
 
