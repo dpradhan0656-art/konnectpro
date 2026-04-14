@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { splitGrossPaymentPaise } from '../../services/paymentSplitService';
 import LedgerView from '../admin/PartnerDashboard/LedgerView';
-import { RefreshCw, Users, IndianRupee, CalendarDays, LogOut, Handshake } from 'lucide-react';
+import { RefreshCw, Users, IndianRupee, CalendarDays, LogOut, Handshake, ShieldCheck } from 'lucide-react';
 
 function rupeesToPaise(rupees) {
   const n = Number(rupees);
@@ -38,19 +38,25 @@ export default function PartnerPortalDashboard() {
   const [todayPartnerPaise, setTodayPartnerPaise] = useState(0);
   const [monthPartnerPaise, setMonthPartnerPaise] = useState(0);
   const [ledgerRows, setLedgerRows] = useState([]);
+  const [expertRows, setExpertRows] = useState([]);
   const [ledgerLoading, setLedgerLoading] = useState(false);
+  const [kycSavingId, setKycSavingId] = useState(null);
   const [error, setError] = useState('');
 
   const loadGate = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       navigate('/partner-login', { replace: true });
       return;
     }
+    const email = String(user.email || '').trim().toLowerCase();
     const { data: row, error: err } = await supabase
       .from('business_partners')
-      .select('id, name, razorpay_account_id')
-      .eq('user_id', user.id)
+      .select('id, name, razorpay_account_id, assigned_area, access_role, user_id')
+      .or(`user_id.eq.${user.id},email.eq.${email}`)
+      .eq('access_role', 'partner')
       .eq('active_status', true)
       .maybeSingle();
     if (err) {
@@ -64,6 +70,9 @@ export default function PartnerPortalDashboard() {
       navigate('/partner-login', { replace: true });
       return;
     }
+    if (!row.user_id) {
+      await supabase.from('business_partners').update({ user_id: user.id }).eq('id', row.id);
+    }
     setPartner(row);
     setGateLoading(false);
   }, [navigate]);
@@ -75,11 +84,13 @@ export default function PartnerPortalDashboard() {
     try {
       const { data: experts, error: eErr } = await supabase
         .from('experts')
-        .select('id')
+        .select('id, name, city, category, kyc_status, average_rating, is_online')
         .eq('assigned_partner_id', partnerId);
       if (eErr) throw eErr;
-      const expertIds = (experts || []).map((e) => e.id);
+      const scopedExperts = experts || [];
+      const expertIds = scopedExperts.map((e) => e.id);
       setExpertCount(expertIds.length);
+      setExpertRows(scopedExperts);
 
       if (expertIds.length === 0) {
         setTodayPartnerPaise(0);
@@ -131,6 +142,47 @@ export default function PartnerPortalDashboard() {
     void refreshMetrics(partner.id);
   }, [partner?.id, refreshMetrics]);
 
+  useEffect(() => {
+    if (!partner?.id) return undefined;
+    const channel = supabase
+      .channel(`partner-access-${partner.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'business_partners', filter: `id=eq.${partner.id}` },
+        async (payload) => {
+          const next = payload?.new;
+          if (!next || next.active_status !== true || String(next.access_role || '') !== 'partner') {
+            await supabase.auth.signOut();
+            navigate('/partner-login', { replace: true });
+          }
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [navigate, partner?.id]);
+
+  const updateExpertKyc = async (expertId, nextStatus) => {
+    if (!partner?.id) return;
+    setKycSavingId(expertId);
+    try {
+      const { error: upErr } = await supabase
+        .from('experts')
+        .update({ kyc_status: nextStatus })
+        .eq('id', expertId)
+        .eq('assigned_partner_id', partner.id);
+      if (upErr) throw upErr;
+      setExpertRows((prev) =>
+        prev.map((x) => (String(x.id) === String(expertId) ? { ...x, kyc_status: nextStatus } : x))
+      );
+    } catch (e) {
+      alert(e?.message || String(e));
+    } finally {
+      setKycSavingId(null);
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/partner-login', { replace: true });
@@ -160,6 +212,11 @@ export default function PartnerPortalDashboard() {
             <p className="text-[10px] font-black uppercase tracking-widest text-violet-400 mb-1">Bhenaji portal</p>
             <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">{partner.name}</h1>
             <p className="text-slate-500 text-sm mt-1">Sirf aapke assigned experts & unke completed jobs</p>
+            {partner.assigned_area ? (
+              <p className="text-[10px] text-teal-400 font-bold uppercase tracking-widest mt-1">
+                Area Scope: {partner.assigned_area}
+              </p>
+            ) : null}
             {partner.razorpay_account_id && (
               <p className="text-[10px] text-slate-600 mt-1 font-mono truncate max-w-xs md:max-w-md">
                 Razorpay: {partner.razorpay_account_id}
@@ -212,6 +269,57 @@ export default function PartnerPortalDashboard() {
       <div>
         <h2 className="text-lg font-black text-white mb-3">Ledger</h2>
         <LedgerView rows={ledgerRows} loading={ledgerLoading} />
+      </div>
+
+      <div className="mt-10">
+        <h2 className="text-lg font-black text-white mb-3 flex items-center gap-2">
+          <ShieldCheck size={18} className="text-emerald-400" />
+          Expert Overview & KYC Review
+        </h2>
+        <div className="rounded-2xl border border-slate-800 bg-slate-900 overflow-x-auto">
+          <table className="w-full min-w-[920px] text-left">
+            <thead className="bg-slate-950/80 border-b border-slate-800">
+              <tr className="text-[10px] uppercase tracking-widest text-slate-500">
+                <th className="px-4 py-3">Expert</th>
+                <th className="px-4 py-3">City</th>
+                <th className="px-4 py-3">Category</th>
+                <th className="px-4 py-3">Rating</th>
+                <th className="px-4 py-3">Availability</th>
+                <th className="px-4 py-3">KYC Review</th>
+              </tr>
+            </thead>
+            <tbody>
+              {expertRows.map((exp) => (
+                <tr key={String(exp.id)} className="border-b border-slate-800/70 text-sm">
+                  <td className="px-4 py-3 text-white font-semibold">{exp.name || 'Expert'}</td>
+                  <td className="px-4 py-3 text-slate-300">{exp.city || '—'}</td>
+                  <td className="px-4 py-3 text-slate-300">{exp.category || '—'}</td>
+                  <td className="px-4 py-3 text-amber-300 font-semibold">{Number(exp.average_rating || 0).toFixed(1)}</td>
+                  <td className="px-4 py-3 text-slate-300">{exp.is_online ? 'Online' : 'Offline'}</td>
+                  <td className="px-4 py-3">
+                    <select
+                      value={String(exp.kyc_status || 'pending').toLowerCase()}
+                      disabled={kycSavingId === exp.id}
+                      onChange={(e) => updateExpertKyc(exp.id, e.target.value)}
+                      className="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-bold text-white"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="verified">Verified</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  </td>
+                </tr>
+              ))}
+              {expertRows.length === 0 ? (
+                <tr>
+                  <td className="px-4 py-6 text-slate-500" colSpan={6}>
+                    No experts assigned to your partner scope.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

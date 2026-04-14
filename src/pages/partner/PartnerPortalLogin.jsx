@@ -4,13 +4,23 @@ import { useNavigate } from 'react-router-dom';
 import { Handshake, Lock, Mail, ArrowRight, Loader2, Shield } from 'lucide-react';
 
 async function assertPartnerAccess(userId) {
+  const { data: authUser, error: authErr } = await supabase.auth.getUser();
+  if (authErr || !authUser?.user) return null;
+  const email = String(authUser.user.email || '').trim().toLowerCase();
+
   const { data, error } = await supabase
     .from('business_partners')
-    .select('id, name')
-    .eq('user_id', userId)
+    .select('id, name, user_id, email, access_role')
+    .or(email ? `user_id.eq.${userId},email.eq.${email}` : `user_id.eq.${userId}`)
+    .eq('access_role', 'partner')
     .eq('active_status', true)
     .maybeSingle();
   if (error) throw error;
+  if (!data) return null;
+
+  if (!data.user_id) {
+    await supabase.from('business_partners').update({ user_id: userId }).eq('id', data.id);
+  }
   return data;
 }
 
