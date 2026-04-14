@@ -253,10 +253,12 @@ export default function ProfileScreen({ expert }) {
             <View style={styles.reputationCard}>
               <Text style={styles.infoTitle}>Reputation Dashboard</Text>
               <View style={styles.ratingRow}>
-                <Text style={styles.rating}>{display.avgRating.toFixed(1)} \u2b50</Text>
+                <Text style={styles.rating}>
+                  {display.avgRating > 0 ? `${display.avgRating.toFixed(1)} \u2b50` : 'New Partner \ud83c\udd95'}
+                </Text>
                 <Text style={styles.reviewCount}>({display.totalReviews} reviews)</Text>
               </View>
-              <Text style={styles.stars}>{ratingStars(display.avgRating)}</Text>
+              {display.avgRating > 0 ? <Text style={styles.stars}>{ratingStars(display.avgRating)}</Text> : null}
               <View style={styles.rankBadge}>
                 <Text style={styles.rankText}>{rankLabel}</Text>
               </View>

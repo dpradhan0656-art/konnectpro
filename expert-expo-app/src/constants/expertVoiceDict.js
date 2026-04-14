@@ -84,6 +84,16 @@ const EXPO_UI_EN = {
   signOut: 'Sign out',
   expertFallback: 'Expert',
   dismissWorkAlertA11y: 'Dismiss work alert',
+  onlineStatusOnline: 'You are Online',
+  onlineStatusOffline: 'You are Offline',
+  onlineLabelOnline: 'Online',
+  onlineLabelOffline: 'Offline',
+  onlineToggleFailed: 'Could not update availability',
+  onlineToggleUpdatedOnline: 'You are online',
+  onlineToggleUpdatedOffline: 'You are offline',
+  partnerRatingLabel: 'Partner Rating',
+  newPartner: 'New Partner',
+  partnerCategoryPrefix: 'Category',
 };
 
 export const LANGUAGE_ORDER = ['en', 'hi', 'mr', 'gu', 'bn', 'ta', 'te', 'kn', 'ml', 'pa', 'ur', 'or', 'as', 'ne', 'sd', 'mai', 'ks', 'kok'];

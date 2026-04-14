@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Platform,
   Pressable,
   RefreshControl,
@@ -66,11 +67,45 @@ export default function DashboardScreen({ expert }) {
   const [walletStartRecharge, setWalletStartRecharge] = useState(false);
   const [isOnline, setIsOnline] = useState(Boolean(expert?.is_online));
   const [onlineUpdating, setOnlineUpdating] = useState(false);
+  const [expertProfileMeta, setExpertProfileMeta] = useState({
+    photo_url: expert?.photo_url || null,
+    category: expert?.category || null,
+    average_rating: Number(expert?.average_rating || 0),
+  });
   const prevWorkAlert = useRef(false);
 
   useEffect(() => {
     setIsOnline(Boolean(expert?.is_online));
   }, [expert?.is_online]);
+
+  useEffect(() => {
+    setExpertProfileMeta({
+      photo_url: expert?.photo_url || null,
+      category: expert?.category || null,
+      average_rating: Number(expert?.average_rating || 0),
+    });
+  }, [expert?.photo_url, expert?.category, expert?.average_rating]);
+
+  useEffect(() => {
+    if (!expertId) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error: profileErr } = await supabase
+        .from('experts')
+        .select('photo_url, category, average_rating')
+        .eq('id', expertId)
+        .maybeSingle();
+      if (cancelled || profileErr || !data) return;
+      setExpertProfileMeta({
+        photo_url: data.photo_url || null,
+        category: data.category || null,
+        average_rating: Number(data.average_rating || 0),
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [expertId]);
 
   useEffect(() => {
     if (workAlert && !prevWorkAlert.current) {
@@ -110,12 +145,29 @@ export default function DashboardScreen({ expert }) {
     setRefreshing(true);
     try {
       await refresh();
+      if (expertId) {
+        const { data, error: profileErr } = await supabase
+          .from('experts')
+          .select('photo_url, category, average_rating')
+          .eq('id', expertId)
+          .maybeSingle();
+        if (!profileErr && data) {
+          setExpertProfileMeta({
+            photo_url: data.photo_url || null,
+            category: data.category || null,
+            average_rating: Number(data.average_rating || 0),
+          });
+        }
+      }
     } finally {
       setRefreshing(false);
     }
   };
 
   const displayName = expert?.name || expert?.email || t.expertFallback;
+  const displayCategory = expertProfileMeta?.category || expert?.service_category || null;
+  const displayRating = Number(expertProfileMeta?.average_rating || 0);
+  const displayPhoto = expertProfileMeta?.photo_url || expert?.profile_photo_url || expert?.avatar_url || null;
 
   const showToast = (msg) => {
     if (!msg) return;
@@ -176,10 +228,10 @@ export default function DashboardScreen({ expert }) {
         .update({ is_online: nextValue })
         .eq('id', expertId);
       if (updateErr) throw updateErr;
-      showToast(nextValue ? 'You are online' : 'You are offline');
+      showToast(nextValue ? t.onlineToggleUpdatedOnline : t.onlineToggleUpdatedOffline);
     } catch (e) {
       setIsOnline(prev);
-      showToast(e?.message || 'Could not update availability');
+      showToast(e?.message || t.onlineToggleFailed);
     } finally {
       setOnlineUpdating(false);
     }
@@ -211,15 +263,37 @@ export default function DashboardScreen({ expert }) {
               <Text style={styles.badgeText}>{t.partnerBadge}</Text>
             </View>
             <Text style={styles.title}>{t.dashboardTitle}</Text>
+            <View style={styles.partnerMetaRow}>
+              {displayPhoto ? (
+                <View style={styles.avatarWrap}>
+                  <Image source={{ uri: displayPhoto }} style={styles.avatar} />
+                </View>
+              ) : (
+                <View style={styles.avatarFallback}>
+                  <Text style={styles.avatarFallbackText}>{displayName.slice(0, 1).toUpperCase()}</Text>
+                </View>
+              )}
+              <View style={styles.partnerMetaTextWrap}>
+                {displayCategory ? (
+                  <Text style={styles.partnerCategory} numberOfLines={1}>
+                    {t.partnerCategoryPrefix}: {displayCategory}
+                  </Text>
+                ) : null}
+                <Text style={styles.partnerRating}>
+                  {t.partnerRatingLabel}:{' '}
+                  {displayRating > 0 ? `${displayRating.toFixed(1)} ★` : `${t.newPartner} \ud83c\udd95`}
+                </Text>
+              </View>
+            </View>
             <View style={[styles.statusPill, isOnline ? styles.statusPillOnline : styles.statusPillOffline]}>
               <Text style={[styles.statusPillText, isOnline ? styles.statusPillTextOnline : styles.statusPillTextOffline]}>
-                {isOnline ? 'You are Online' : 'You are Offline'}
+                {isOnline ? t.onlineStatusOnline : t.onlineStatusOffline}
               </Text>
             </View>
           </View>
           <View style={styles.topActions}>
             <View style={styles.onlineWrap}>
-              <Text style={styles.onlineLabel}>{isOnline ? 'Online' : 'Offline'}</Text>
+              <Text style={styles.onlineLabel}>{isOnline ? t.onlineLabelOnline : t.onlineLabelOffline}</Text>
               <Switch
                 value={isOnline}
                 onValueChange={(value) => onToggleOnline(value).catch(() => {})}
@@ -388,6 +462,49 @@ const styles = StyleSheet.create({
   topActions: {
     alignItems: 'flex-end',
     gap: 8,
+  },
+  partnerMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  avatarWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    overflow: 'hidden',
+  },
+  avatar: {
+    width: 34,
+    height: 34,
+  },
+  avatarFallback: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#134e4a',
+  },
+  avatarFallbackText: {
+    color: '#f0fdfa',
+    fontWeight: '800',
+    fontSize: 14,
+  },
+  partnerMetaTextWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
+  partnerCategory: {
+    color: TEXT_MUTED,
+    fontSize: 11,
+    marginBottom: 2,
+  },
+  partnerRating: {
+    color: '#fbbf24',
+    fontSize: 12,
+    fontWeight: '700',
   },
   onlineWrap: {
     alignItems: 'center',

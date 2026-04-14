@@ -2,15 +2,30 @@ import * as Location from 'expo-location';
 
 const DEFAULT_LANGUAGE = 'en';
 
-// 🚀 SUPER COMPUTER LEVEL: All states mapped with perfect syntax (quotes added for spaces)
 const STATE_LANGUAGE_MAP = {
-  // Marathi Belt
+  // Common abbreviations
+  'tn': 'ta',
+  'mh': 'mr',
+  'mp': 'hi',
+  'up': 'hi',
+  'wb': 'bn',
+  'gj': 'gu',
+  'tg': 'te',
+  'ap': 'te',
+  'ka': 'kn',
+  'kl': 'ml',
+  'pb': 'pa',
+  'od': 'or',
+  'or': 'or',
+  'as': 'as',
+
+  // Marathi belt
   'maharashtra': 'mr',
   'goa': 'mr',
   'dadra and nagar haveli': 'mr',
   'daman and diu': 'mr',
 
-  // Hindi Belt (The Core Heartland)
+  // Hindi belt
   'uttar pradesh': 'hi',
   'madhya pradesh': 'hi',
   'delhi': 'hi',
@@ -22,29 +37,53 @@ const STATE_LANGUAGE_MAP = {
   'jharkhand': 'hi',
   'himachal pradesh': 'hi',
   'chandigarh': 'hi',
+
+  // Gujarati
+  'gujarat': 'gu',
+
+  // Bengali
+  'west bengal': 'bn',
+
+  // Tamil
+  'tamil nadu': 'ta',
+  'pondicherry': 'ta',
+  'puducherry': 'ta',
+
+  // Telugu
+  'andhra pradesh': 'te',
+  'telangana': 'te',
+
+  // Kannada
+  'karnataka': 'kn',
+
+  // Malayalam
+  'kerala': 'ml',
+
+  // Punjabi
+  'punjab': 'pa',
+
+  // Odia
+  'odisha': 'or',
+  'orissa': 'or',
+
+  // Assamese
+  'assam': 'as',
+
+  // Nepali (fallback for bordering usage)
+  'sikkim': 'ne',
 };
 
-/**
- * 🛠️ Utility: Normalizes the text (removes extra spaces and converts to lowercase)
- */
 function normalize(input) {
   if (!input) return '';
   return String(input).trim().toLowerCase();
 }
 
-/**
- * 🌍 Core Logic: Maps a state name to our supported App Language
- */
 export function mapRegionToLanguage(regionOrState) {
   const normalized = normalize(regionOrState);
   return STATE_LANGUAGE_MAP[normalized] || DEFAULT_LANGUAGE;
 }
 
-/**
- * 🛰️ GPS Engine: Converts real-time GPS Coordinates to Local Language
- */
 export async function mapGpsToLanguage(coords) {
-  // 1. Safety Check: If GPS coords are missing, return default safely
   if (!coords || typeof coords.latitude !== 'number' || typeof coords.longitude !== 'number') {
     if (__DEV__) {
       // eslint-disable-next-line no-console
@@ -54,7 +93,6 @@ export async function mapGpsToLanguage(coords) {
   }
 
   try {
-    // 2. Reverse Geocode: Ask Expo Location for the Address
     const [place] = await Location.reverseGeocodeAsync({
       latitude: coords.latitude,
       longitude: coords.longitude,
@@ -64,7 +102,6 @@ export async function mapGpsToLanguage(coords) {
       return { lang: DEFAULT_LANGUAGE, region: null };
     }
 
-    // 3. Extract the State (Expo usually puts State in 'region' or 'subregion')
     const state = place.region || place.subregion || place.city || null;
     
     if (__DEV__) {
