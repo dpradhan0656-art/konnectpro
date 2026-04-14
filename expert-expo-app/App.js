@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, AppState, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { validateExpertAccess } from './src/auth/expertAccess';
@@ -40,6 +40,104 @@ export default function App() {
   const [expert, setExpert] = useState(null);
   const [accessGate, setAccessGate] = useState(null);
 
+  const reconcileExpertSession = useCallback(async (nextSession) => {
+    if (forceExpertMode) {
+      if (nextSession?.user) {
+        setSession(nextSession);
+        setExpert(buildFallbackExpertFromUser(nextSession.user));
+        setAccessGate(null);
+      }
+      return;
+    }
+    if (!nextSession?.user) return;
+    try {
+      const result = await validateExpertAccess(supabase, nextSession.user);
+      if (result.ok) {
+        setSession(nextSession);
+        setExpert(result.expert);
+        setAccessGate(null);
+      } else {
+        setSession(nextSession);
+        setExpert(null);
+        setAccessGate({
+          title:
+            result.reason === 'not_approved'
+              ? 'Account Pending Approval'
+              : 'Complete Expert Registration',
+          message: result.message ?? 'Unable to access expert dashboard.',
+        });
+      }
+    } catch (e) {
+      await supabase.auth.signOut();
+      setSession(null);
+      setExpert(null);
+      setAccessGate(null);
+      Alert.alert('Error', e?.message ?? String(e));
+    }
+  }, [forceExpertMode]);
+
+  const reconcileRef = useRef(reconcileExpertSession);
+  reconcileRef.current = reconcileExpertSession;
+
+  const resolvedExpert =
+    expert ?? (forceExpertMode && session?.user ? buildFallbackExpertFromUser(session.user) : null);
+  const showDashboard = Boolean(session && (expert || forceExpertMode));
+  const onLoginSurface = !booting && !showDashboard && !accessGate;
+
+  const uiRef = useRef({ onLoginSurface: true });
+  uiRef.current = { onLoginSurface };
+
+  /**
+   * OAuth returns a Session in-memory before AsyncStorage always reflects it on Android.
+   * Re-apply via setSession so persist + auth listeners align, then reconcile UI.
+   */
+  const onOAuthSessionHint = useCallback(
+    async (sessionHint) => {
+      let s = sessionHint ?? null;
+      if (s?.access_token && s?.refresh_token) {
+        const { data, error } = await supabase.auth.setSession({
+          access_token: s.access_token,
+          refresh_token: s.refresh_token,
+        });
+        if (!error && data?.session?.user) {
+          s = data.session;
+        }
+      }
+      if (!s?.user) {
+        for (let i = 0; i < 30; i++) {
+          const { data } = await supabase.auth.getSession();
+          if (data.session?.user) {
+            s = data.session;
+            break;
+          }
+          await new Promise((r) => setTimeout(r, 100));
+        }
+      }
+      if (!s?.user) {
+        Alert.alert(
+          'Sign-in incomplete',
+          'Google finished but this device did not save the session yet. Fully close the app and open it again, or tap Continue with Google once more.'
+        );
+        return;
+      }
+
+      try {
+        await Promise.race([
+          reconcileExpertSession(s),
+          new Promise((_, rej) =>
+            setTimeout(
+              () => rej(new Error('Checking your expert profile timed out. Check internet and try again.')),
+              32000
+            )
+          ),
+        ]);
+      } catch (e) {
+        Alert.alert('Sign-in', e?.message ?? String(e));
+      }
+    },
+    [reconcileExpertSession]
+  );
+
   useEffect(() => {
     let mounted = true;
 
@@ -57,7 +155,7 @@ export default function App() {
         setBooting(false);
         return;
       }
-      
+
       if (initial?.user) {
         try {
           if (forceExpertMode) {
@@ -74,7 +172,6 @@ export default function App() {
             setExpert(result.expert);
             setAccessGate(null);
           } else {
-            // Keep the session and show an explicit gate for onboarding/approval.
             setSession(initial);
             setExpert(null);
             setAccessGate({
@@ -98,7 +195,7 @@ export default function App() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, nextSession) => {
       if (event === 'INITIAL_SESSION') return;
-      
+
       if (event === 'SIGNED_OUT') {
         if (forceExpertMode) {
           const fakeSession = buildForceModeSession();
@@ -112,50 +209,26 @@ export default function App() {
         setAccessGate(null);
         return;
       }
-      
+
       if (nextSession?.user && event === 'SIGNED_IN') {
-        try {
-          if (forceExpertMode) {
-            setSession(nextSession);
-            setExpert(buildFallbackExpertFromUser(nextSession.user));
-            setAccessGate(null);
-            return;
-          }
-          const result = await validateExpertAccess(supabase, nextSession.user);
-          if (result.ok) {
-            setSession(nextSession);
-            setExpert(result.expert);
-            setAccessGate(null);
-          } else {
-            setSession(nextSession);
-            setExpert(null);
-            setAccessGate({
-              title:
-                result.reason === 'not_approved'
-                  ? 'Account Pending Approval'
-                  : 'Complete Expert Registration',
-              message: result.message ?? 'Unable to access expert dashboard.',
-            });
-          }
-        } catch (e) {
-          await supabase.auth.signOut();
-          setSession(null);
-          setExpert(null);
-          setAccessGate(null);
-          Alert.alert('Error', e?.message ?? String(e));
-        }
+        await reconcileRef.current(nextSession);
+        return;
       }
-      
+
       if (event === 'TOKEN_REFRESHED' && nextSession) {
         setSession(nextSession);
         if (forceExpertMode) {
           setExpert((prev) => prev ?? buildFallbackExpertFromUser(nextSession.user));
           setAccessGate(null);
+          return;
+        }
+        // OAuth on Android sometimes updates tokens without a separate SIGNED_IN the UI sees — re-apply routing.
+        if (uiRef.current.onLoginSurface && nextSession.user) {
+          await reconcileRef.current(nextSession);
         }
       }
     });
 
-    // 🔥 THE FIX IS HERE: Safe Cleanup Check 🔥
     return () => {
       mounted = false;
       if (subscription && typeof subscription.unsubscribe === 'function') {
@@ -164,10 +237,29 @@ export default function App() {
         subscription.remove();
       }
     };
-  }, []);
+  }, [forceExpertMode]);
 
-  const resolvedExpert = expert ?? (forceExpertMode && session?.user ? buildFallbackExpertFromUser(session.user) : null);
-  const showDashboard = Boolean(session && (expert || forceExpertMode));
+  /** Coming back from Chrome Custom Tabs: session is saved but React state may still show login. */
+  useEffect(() => {
+    let timeoutId;
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state !== 'active' || forceExpertMode) return;
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(async () => {
+        if (!uiRef.current.onLoginSurface) return;
+        const {
+          data: { session: s },
+        } = await supabase.auth.getSession();
+        if (s?.user) {
+          await reconcileRef.current(s);
+        }
+      }, 350);
+    });
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      sub.remove();
+    };
+  }, [forceExpertMode]);
 
   return (
     <LanguageProvider>
@@ -187,7 +279,7 @@ export default function App() {
             }}
           />
         ) : (
-          <LoginScreen />
+          <LoginScreen onOAuthSessionHint={onOAuthSessionHint} />
         )}
         <StatusBar style="light" />
       </SafeAreaProvider>

@@ -1,3 +1,4 @@
+import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
 
@@ -29,6 +30,12 @@ export async function signInWithGoogle(supabase) {
   }
 
   const redirectTo = EXPERT_GOOGLE_OAUTH_REDIRECT_URI;
+  const normalizedRedirect = redirectTo.toLowerCase();
+
+  const matchesRedirect = (url) => {
+    if (!url) return false;
+    return String(url).toLowerCase().startsWith(normalizedRedirect);
+  };
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
@@ -44,40 +51,78 @@ export async function signInWithGoogle(supabase) {
   if (error) throw error;
   if (!data?.url) throw new Error('No OAuth URL returned from Supabase');
 
-  /*
-   * OLD trial: AuthSession.startAsync was not used here; Supabase recommends signInWithOAuth
-   * + WebBrowser.openAuthSessionAsync for the PKCE / implicit redirect back into the app.
-   */
+  /** Deep link may arrive before/after `openAuthSessionAsync` resolves (Android Custom Tabs). */
+  let capturedCallbackUrl = null;
+  const linkingSub = Linking.addEventListener('url', ({ url }) => {
+    if (matchesRedirect(url)) {
+      capturedCallbackUrl = url;
+    }
+  });
 
-  if (Platform.OS === 'android') {
-    await WebBrowser.warmUpAsync().catch(() => {});
-  }
-
-  const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-
-  if (result.type !== 'success' || !result.url) {
+  const cleanup = async () => {
+    linkingSub.remove();
     if (Platform.OS === 'android') {
       await WebBrowser.coolDownAsync().catch(() => {});
     }
-    return { cancelled: true };
-  }
+  };
 
-  const normalizedRedirect = redirectTo.toLowerCase();
-  const normalizedResult = String(result.url).toLowerCase();
-  const isExpectedCallback = normalizedResult.startsWith(normalizedRedirect);
-  if (!isExpectedCallback) {
-    if (Platform.OS === 'android') {
-      await WebBrowser.coolDownAsync().catch(() => {});
-    }
-    throw new Error('OAuth callback did not return to Expert app. Verify Supabase redirect URLs include expert-expo-app://auth/callback.');
-  }
+  /** Android: `openAuthSessionAsync` can hang forever; never await it without a ceiling. */
+  const BROWSER_WAIT_MS = Platform.OS === 'android' ? 48000 : 120000;
 
   try {
-    return await applyOAuthCallbackUrl(supabase, result.url);
-  } finally {
     if (Platform.OS === 'android') {
-      await WebBrowser.coolDownAsync().catch(() => {});
+      await WebBrowser.warmUpAsync().catch(() => {});
     }
+
+    const result = await Promise.race([
+      WebBrowser.openAuthSessionAsync(data.url, redirectTo),
+      new Promise((resolve) =>
+        setTimeout(() => resolve({ type: '__oauth_browser_timeout', url: null }), BROWSER_WAIT_MS)
+      ),
+    ]);
+
+    const browserTimedOut = result?.type === '__oauth_browser_timeout';
+
+    let urlToUse = result.type === 'success' && result.url ? result.url : null;
+    if (!urlToUse && matchesRedirect(capturedCallbackUrl)) {
+      urlToUse = capturedCallbackUrl;
+    }
+
+    if (urlToUse && matchesRedirect(urlToUse)) {
+      return await applyOAuthCallbackUrl(supabase, urlToUse);
+    }
+
+    // Dismiss / timeout / missing URL — deep link or session may arrive late (very common on Android).
+    const stepMs = 200;
+    const maxSteps = browserTimedOut ? 100 : 60;
+    for (let i = 0; i < maxSteps; i++) {
+      await new Promise((r) => setTimeout(r, stepMs));
+      if (matchesRedirect(capturedCallbackUrl)) {
+        return await applyOAuthCallbackUrl(supabase, capturedCallbackUrl);
+      }
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.user) {
+        return { session };
+      }
+    }
+
+    if (result.type !== 'success' || !result.url || browserTimedOut) {
+      const {
+        data: { session: lastChance },
+      } = await supabase.auth.getSession();
+      if (lastChance?.user) {
+        return { session: lastChance };
+      }
+      return { cancelled: true };
+    }
+
+    throw new Error(
+      'OAuth callback did not return to Expert app. Verify Supabase redirect URLs include expert-expo-app://auth/callback.'
+    );
+  } finally {
+    await cleanup();
   }
 }
 

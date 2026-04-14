@@ -22,9 +22,22 @@ const TEXT_MUTED = '#94a3b8';
 // If the OAuth custom-tab session never reports back, stop the spinner.
 const GOOGLE_SIGNIN_TIMEOUT_MS = 120000;
 
-export default function LoginScreen() {
+/**
+ * @param {{ onOAuthSessionHint?: (session: import('@supabase/supabase-js').Session | null | undefined) => Promise<void> }} props
+ * Parent must use the hinted session (not only getSession) — Android often lags persisting to AsyncStorage for one tick.
+ */
+export default function LoginScreen({ onOAuthSessionHint }) {
   const [isLoading, setIsLoading] = useState(false);
   const googleSpinnerTimeoutRef = useRef(null);
+
+  const clearGoogleSpinnerTimeout = useCallback(() => {
+    if (googleSpinnerTimeoutRef.current) {
+      clearTimeout(googleSpinnerTimeoutRef.current);
+      googleSpinnerTimeoutRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => () => clearGoogleSpinnerTimeout(), [clearGoogleSpinnerTimeout]);
 
   // Keep UI responsive while `App.js` validates access and routes.
   useEffect(() => {
@@ -32,6 +45,8 @@ export default function LoginScreen() {
 
     const { data: subscription } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN') {
+        // OAuth finished — cancel the "slow sign-in" timer so it never fires after success.
+        clearGoogleSpinnerTimeout();
         // Keep loading here. `App.js` will validate access and unmount this screen.
         // We only stop loading on explicit cancel/error/timeout.
       }
@@ -44,18 +59,26 @@ export default function LoginScreen() {
         subscription.remove();
       }
     };
-  }, [isLoading]);
+  }, [isLoading, clearGoogleSpinnerTimeout]);
 
   const onContinueWithGoogle = useCallback(async () => {
-    if (googleSpinnerTimeoutRef.current) {
-      clearTimeout(googleSpinnerTimeoutRef.current);
-      googleSpinnerTimeoutRef.current = null;
-    }
+    clearGoogleSpinnerTimeout();
 
     setIsLoading(true);
 
-    googleSpinnerTimeoutRef.current = setTimeout(() => {
+    googleSpinnerTimeoutRef.current = setTimeout(async () => {
       googleSpinnerTimeoutRef.current = null;
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session?.user) {
+          setIsLoading(false);
+          return;
+        }
+      } catch {
+        /* ignore */
+      }
       setIsLoading(false);
       Alert.alert(
         'Sign-in is slow',
@@ -65,18 +88,25 @@ export default function LoginScreen() {
 
     try {
       const result = await signInWithGoogle(supabase);
+      clearGoogleSpinnerTimeout();
+
       if (result?.cancelled) {
-        setIsLoading(false);
         Alert.alert('Sign-in cancelled', 'You can try again when you’re ready.');
         return;
       }
 
-      // Success: keep loading until `App.js` unmounts this screen after routing.
+      try {
+        await onOAuthSessionHint?.(result?.session ?? null);
+      } catch (hintErr) {
+        Alert.alert('Sign-in', hintErr?.message ?? 'Could not finish sign-in. Try again.');
+      }
     } catch (e) {
-      setIsLoading(false);
+      clearGoogleSpinnerTimeout();
       Alert.alert('Google sign-in failed', e?.message ?? String(e));
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  }, [clearGoogleSpinnerTimeout, onOAuthSessionHint]);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
