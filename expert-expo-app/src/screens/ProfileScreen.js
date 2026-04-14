@@ -49,7 +49,7 @@ function formatMemberSince(value) {
 function ratingStars(avg) {
   const n = Math.max(0, Math.min(5, Number(avg) || 0));
   const full = Math.round(n);
-  return '?????'.slice(0, full) + '?????'.slice(0, 5 - full);
+  return '\u2605\u2605\u2605\u2605\u2605'.slice(0, full) + '\u2606\u2606\u2606\u2606\u2606'.slice(0, 5 - full);
 }
 
 function formatReviewDate(value) {
@@ -74,7 +74,7 @@ export default function ProfileScreen({ expert }) {
 
   const [profile, setProfile] = useState(null);
   const [reviews, setReviews] = useState([]);
-  const [rankLabel, setRankLabel] = useState('?? #2 Expert in your area');
+  const [rankLabel, setRankLabel] = useState('\ud83c\udfc6 #2 Expert in your area');
 
   const display = useMemo(() => {
     const p = profile || {};
@@ -108,7 +108,7 @@ export default function ProfileScreen({ expert }) {
     const category = expertRow?.category || expertRow?.service_category || expertRow?.primary_category;
     const city = expertRow?.city || expertRow?.location_city || expertRow?.address_city;
     if (!category || !city) {
-      return `?? #2 ${display.category} in ${display.city}`;
+      return `\ud83c\udfc6 #2 ${display.category} in ${display.city}`;
     }
 
     try {
@@ -121,14 +121,14 @@ export default function ProfileScreen({ expert }) {
         .limit(100);
 
       if (rankErr || !Array.isArray(data) || !data.length) {
-        return `?? #2 ${category} in ${city}`;
+        return `\ud83c\udfc6 #2 ${category} in ${city}`;
       }
 
       const idx = data.findIndex((row) => String(row.id) === String(expertRow.id));
       const rank = idx >= 0 ? idx + 1 : 2;
-      return `?? #${rank} ${category} in ${city}`;
+      return `\ud83c\udfc6 #${rank} ${category} in ${city}`;
     } catch {
-      return `?? #2 ${category} in ${city}`;
+      return `\ud83c\udfc6 #2 ${category} in ${city}`;
     }
   };
 
@@ -136,7 +136,7 @@ export default function ProfileScreen({ expert }) {
     if (!expertId) {
       setProfile(null);
       setReviews([]);
-      setRankLabel('?? #2 Expert in your area');
+      setRankLabel('\ud83c\udfc6 #2 Expert in your area');
       setError(null);
       setLoading(false);
       return;
@@ -173,7 +173,7 @@ export default function ProfileScreen({ expert }) {
     } catch (e) {
       setError(e?.message || String(e));
       setReviews([]);
-      setRankLabel('?? #2 Expert in your area');
+      setRankLabel('\ud83c\udfc6 #2 Expert in your area');
     } finally {
       setLoading(false);
     }
@@ -253,7 +253,7 @@ export default function ProfileScreen({ expert }) {
             <View style={styles.reputationCard}>
               <Text style={styles.infoTitle}>Reputation Dashboard</Text>
               <View style={styles.ratingRow}>
-                <Text style={styles.rating}>{display.avgRating.toFixed(1)} ?</Text>
+                <Text style={styles.rating}>{display.avgRating.toFixed(1)} \u2b50</Text>
                 <Text style={styles.reviewCount}>({display.totalReviews} reviews)</Text>
               </View>
               <Text style={styles.stars}>{ratingStars(display.avgRating)}</Text>
@@ -266,7 +266,7 @@ export default function ProfileScreen({ expert }) {
                 {reputationReviews.map((item) => (
                   <View key={String(item.id)} style={styles.reviewCard}>
                     <Text style={styles.reviewName}>{item.customer_name || 'Customer'}</Text>
-                    <Text style={styles.reviewRating}>{Number(item.rating || 0).toFixed(1)} ?</Text>
+                    <Text style={styles.reviewRating}>{Number(item.rating || 0).toFixed(1)} \u2b50</Text>
                     <Text style={styles.reviewText} numberOfLines={4}>
                       {item.review_text || item.comment || 'Great service experience.'}
                     </Text>
