@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { adminResetPassword } from '../../../lib/authAdmin';
+import { canAccessDeepakHQ } from '../../../lib/adminAccess';
 import { 
   UserCheck, Search, Phone, MapPin, Plus, Edit, Trash2, X,
   Lock, Briefcase, Loader2, ShieldCheck, Power, PowerOff, Mail
@@ -11,6 +12,8 @@ export default function ExpertControl() {
   const [experts, setExperts] = useState([]);
   const [categories, setCategories] = useState([]); // ✅ Dynamic Categories from DB
   const [loading, setLoading] = useState(true);
+  const [checkingWriteAccess, setCheckingWriteAccess] = useState(true);
+  const [canWrite, setCanWrite] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   // Active roster only — pending / rejected review lives in KYC Verifications tab
   // Legacy Duplicate Approval Flow — status filter toggles (pending | approved | rejected)
@@ -22,17 +25,44 @@ export default function ExpertControl() {
   const [isSaving, setIsSaving] = useState(false);
   
   const [formData, setFormData] = useState({
-      name: '', phone: '', email: '', service_category: '', city: 'Jabalpur', password: ''
+      name: '',
+      phone: '',
+      email: '',
+      service_category: '',
+      city: 'Jabalpur',
+      password: '',
+      photo_url: '',
+      average_rating: '',
+      category: '',
+      kyc_status: 'pending',
   });
   const [pwModal, setPwModal] = useState(null);
   const [pwValue, setPwValue] = useState('');
   const [pwLoading, setPwLoading] = useState(false);
 
   useEffect(() => {
+    checkWriteAccess();
     fetchData();
     // Legacy Duplicate Approval Flow — refetch when filterStatus changed
     // }, [filterStatus]);
   }, []);
+
+  const checkWriteAccess = async () => {
+    setCheckingWriteAccess(true);
+    try {
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data?.user) {
+        setCanWrite(false);
+        return;
+      }
+      const allowed = await canAccessDeepakHQ(data.user);
+      setCanWrite(Boolean(allowed));
+    } catch {
+      setCanWrite(false);
+    } finally {
+      setCheckingWriteAccess(false);
+    }
+  };
 
   // --- 1. FETCH DATA (Experts + Categories) ---
   const fetchData = async () => {
@@ -73,6 +103,10 @@ export default function ExpertControl() {
 
   // --- 3. TOGGLE DUTY (Live/Off-Duty) ---
   const toggleDuty = async (expert) => {
+      if (!canWrite) {
+        alert('Only admin-authenticated users can edit expert records.');
+        return;
+      }
       const { error } = await supabase.from('experts').update({ 
           is_active: !expert.is_active 
       }).eq('id', expert.id);
@@ -82,6 +116,10 @@ export default function ExpertControl() {
   // --- 4. SAVE EXPERT ---
   const handleSave = async (e) => {
       e.preventDefault();
+      if (!canWrite) {
+          alert('Only admin-authenticated users can save expert profile changes.');
+          return;
+      }
       setIsSaving(true);
       const emailTrim = formData.email?.trim().toLowerCase() ?? '';
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrim)) {
@@ -100,8 +138,19 @@ export default function ExpertControl() {
           phone: phoneDigits, 
           email: emailTrim,
           service_category: formData.service_category, 
+          category: (formData.category || formData.service_category || '').trim() || null,
           city: formData.city.trim() || 'Jabalpur',
+          photo_url: formData.photo_url?.trim() || null,
+          average_rating: formData.average_rating === '' ? 0 : Number(formData.average_rating),
+          kyc_status: ['pending', 'verified', 'rejected'].includes(String(formData.kyc_status).toLowerCase())
+            ? String(formData.kyc_status).toLowerCase()
+            : 'pending',
       };
+      if (!Number.isFinite(payload.average_rating) || payload.average_rating < 0 || payload.average_rating > 5) {
+          alert('Average rating must be between 0 and 5.');
+          setIsSaving(false);
+          return;
+      }
 
       try {
           if (editingId) {
@@ -153,6 +202,23 @@ export default function ExpertControl() {
     } finally {
       setPwLoading(false);
     }
+  };
+
+  const openEditModal = (exp) => {
+    setEditingId(exp.id);
+    setFormData({
+      name: exp.name || '',
+      phone: exp.phone || '',
+      email: exp.email || '',
+      service_category: exp.service_category || categories[0]?.name || '',
+      city: exp.city || 'Jabalpur',
+      password: '',
+      photo_url: exp.photo_url || '',
+      average_rating: exp.average_rating ?? '',
+      category: exp.category || exp.service_category || '',
+      kyc_status: exp.kyc_status || 'pending',
+    });
+    setIsModalOpen(true);
   };
 
   return (
@@ -212,6 +278,66 @@ export default function ExpertControl() {
           <Search className="absolute left-4 top-4 text-slate-500 group-focus-within:text-teal-500 transition-colors" size={20}/>
           <input type="text" placeholder="Search by name, phone, or email..." className="w-full bg-slate-900 border border-slate-800 p-4 pl-12 rounded-2xl text-white outline-none focus:border-teal-500/50 transition-all font-medium placeholder:text-slate-700 shadow-inner" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}/>
       </div>
+      {!checkingWriteAccess && !canWrite ? (
+        <div className="rounded-2xl border border-red-700/40 bg-red-950/25 p-4 text-xs font-bold text-red-300">
+          Write actions are locked: only admin-authenticated users can edit expert profiles.
+        </div>
+      ) : null}
+
+      {/* Expert List Table (admin editor view) */}
+      {!loading ? (
+        <div className="rounded-[2rem] border border-slate-800 bg-slate-900 overflow-x-auto">
+          <table className="w-full min-w-[1100px] text-left">
+            <thead className="bg-slate-950/80 border-b border-slate-800">
+              <tr className="text-[10px] uppercase tracking-widest text-slate-500">
+                <th className="px-4 py-3">Expert</th>
+                <th className="px-4 py-3">Email</th>
+                <th className="px-4 py-3">Phone</th>
+                <th className="px-4 py-3">Category</th>
+                <th className="px-4 py-3">Rating</th>
+                <th className="px-4 py-3">KYC</th>
+                <th className="px-4 py-3">Photo URL</th>
+                <th className="px-4 py-3">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredExperts.map((exp) => (
+                <tr key={`table-${exp.id}`} className="border-b border-slate-800/70 text-sm">
+                  <td className="px-4 py-3 text-white font-semibold">{exp.name || '—'}</td>
+                  <td className="px-4 py-3 text-slate-300">{exp.email || '—'}</td>
+                  <td className="px-4 py-3 text-slate-300">{exp.phone || '—'}</td>
+                  <td className="px-4 py-3 text-slate-300">{exp.category || exp.service_category || '—'}</td>
+                  <td className="px-4 py-3 text-amber-300 font-semibold">{Number(exp.average_rating || 0).toFixed(1)}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wide ${
+                      String(exp.kyc_status || 'pending').toLowerCase() === 'verified'
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-600/30'
+                        : String(exp.kyc_status || 'pending').toLowerCase() === 'rejected'
+                        ? 'bg-red-500/20 text-red-300 border border-red-600/30'
+                        : 'bg-amber-500/20 text-amber-200 border border-amber-600/30'
+                    }`}>
+                      {String(exp.kyc_status || 'pending')}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-slate-400 text-xs max-w-[220px] truncate" title={exp.photo_url || ''}>
+                    {exp.photo_url || '—'}
+                  </td>
+                  <td className="px-4 py-3">
+                    <button
+                      type="button"
+                      disabled={!canWrite}
+                      onClick={() => openEditModal(exp)}
+                      className="bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-3 py-2 rounded-lg text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5"
+                    >
+                      <Edit size={12} /> Edit Profile
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
 
       {/* 💂‍♂️ EXPERTS GRID */}
       {loading ? (
@@ -273,10 +399,10 @@ export default function ExpertControl() {
                                     <Lock size={16}/>
                                 </button>
                             )}
-                            <button onClick={() => { setEditingId(exp.id); setFormData({name: exp.name, phone: exp.phone, email: exp.email || '', service_category: exp.service_category, city: exp.city, password: ''}); setIsModalOpen(true); }} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all">
+                            <button onClick={() => openEditModal(exp)} disabled={!canWrite} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
                                 <Edit size={14}/> Edit Profile
                             </button>
-                            <button onClick={async () => { if(window.confirm("Permanently remove this expert?")) { const { error } = await supabase.from('experts').delete().eq('id', exp.id); if (error) alert("Delete failed: " + error.message); else fetchData(); } }} className="p-3 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all">
+                            <button onClick={async () => { if (!canWrite) { alert('Only admin-authenticated users can delete experts.'); return; } if(window.confirm("Permanently remove this expert?")) { const { error } = await supabase.from('experts').delete().eq('id', exp.id); if (error) alert("Delete failed: " + error.message); else fetchData(); } }} className="p-3 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all">
                                 <Trash2 size={16}/>
                             </button>
                         </>
@@ -362,12 +488,61 @@ export default function ExpertControl() {
                           </select>
                       </div>
 
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Photo URL</label>
+                          <input
+                            className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white font-bold focus:border-teal-500 outline-none transition-all"
+                            placeholder="https://..."
+                            value={formData.photo_url}
+                            onChange={(e) => setFormData({ ...formData, photo_url: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Average Rating (0-5)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="5"
+                            className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white font-bold focus:border-teal-500 outline-none transition-all"
+                            placeholder="e.g. 4.7"
+                            value={formData.average_rating}
+                            onChange={(e) => setFormData({ ...formData, average_rating: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Expert Category</label>
+                          <input
+                            className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white font-bold focus:border-teal-500 outline-none transition-all"
+                            placeholder="e.g. Electrician"
+                            value={formData.category}
+                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">KYC Status</label>
+                          <select
+                            className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white font-black appearance-none outline-none focus:border-teal-500 transition-all cursor-pointer"
+                            value={formData.kyc_status}
+                            onChange={(e) => setFormData({ ...formData, kyc_status: e.target.value })}
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="verified">Verified</option>
+                            <option value="rejected">Rejected</option>
+                          </select>
+                        </div>
+                      </div>
+
                       <div className="pt-4 border-t border-slate-800">
                           <label className="text-[10px] font-bold text-teal-500 uppercase flex items-center gap-1 mb-2"><Lock size={12}/> {editingId ? 'Reset Password (Leave blank to keep same)' : 'Set Password'}</label>
                           <input className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white font-black tracking-widest outline-none focus:border-teal-500" type="password" placeholder="••••••••" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} required={!editingId}/>
                       </div>
 
-                      <button disabled={isSaving} className="w-full bg-teal-600 hover:bg-teal-500 text-white font-black py-4 rounded-2xl shadow-lg shadow-teal-900/40 uppercase tracking-widest text-xs mt-4 active:scale-95 transition-all">
+                      <button disabled={isSaving || !canWrite} className="w-full bg-teal-600 hover:bg-teal-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black py-4 rounded-2xl shadow-lg shadow-teal-900/40 uppercase tracking-widest text-xs mt-4 active:scale-95 transition-all">
                         {isSaving ? <Loader2 className="animate-spin mx-auto" size={20}/> : editingId ? 'Update Force Member' : 'Deploy to Army'}
                       </button>
                   </form>
