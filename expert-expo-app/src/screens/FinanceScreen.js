@@ -16,14 +16,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../lib/supabase';
 import { ACCENT, BG, BORDER, CARD, TEXT, TEXT_MUTED } from '../components/dashboard/theme';
 import { computeKshatryxSplit } from '../utils/paymentSplitMath';
+import { formatInr } from '../utils/formatInr';
 
 const MIN_WITHDRAWAL_INR = 500;
-
-function formatInr(value) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return '\u20B90';
-  return `\u20B9${n.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
-}
 
 function formatDate(value) {
   if (!value) return '-';
@@ -64,8 +59,10 @@ export default function FinanceScreen({ expert }) {
       completedJobs.reduce((sum, row) => {
         const payout = Number(row?.expert_payout);
         if (Number.isFinite(payout) && payout > 0) return sum + payout;
-        const fallback = Number(row?.total_amount);
-        return Number.isFinite(fallback) && fallback > 0 ? sum + fallback : sum;
+        const finalAmt = Number(row?.final_amount);
+        if (Number.isFinite(finalAmt) && finalAmt > 0) return sum + finalAmt;
+        const total = Number(row?.total_amount);
+        return Number.isFinite(total) && total > 0 ? sum + total : sum;
       }, 0),
     [completedJobs]
   );
@@ -100,7 +97,9 @@ export default function FinanceScreen({ expert }) {
         supabase.from('experts').select('wallet_balance').eq('id', expertId).maybeSingle(),
         supabase
           .from('bookings')
-          .select('id, status, service_name, category, service_category, service_type, partner_module, total_amount, expert_payout, created_at')
+          .select(
+            'id, status, service_name, category, service_category, service_type, partner_module, total_amount, final_amount, expert_payout, created_at'
+          )
           .eq('expert_id', expertId)
           .in('status', ['completed'])
           .order('created_at', { ascending: false })
@@ -143,10 +142,10 @@ export default function FinanceScreen({ expert }) {
 
   const onWithdraw = () => {
     if (walletBalance >= MIN_WITHDRAWAL_INR) {
-      showToast('Withdrawal Request Sent to Kshatryx Admin');
+      showToast('Withdrawal request sent to Kshatryx admin.');
       return;
     }
-    showToast('Minimum withdrawal amount is \u20B9500');
+    showToast(`Minimum withdrawal is ${formatInr(MIN_WITHDRAWAL_INR)}`);
   };
 
   return (
@@ -163,7 +162,7 @@ export default function FinanceScreen({ expert }) {
         }
       >
         <Text style={styles.title}>Finance</Text>
-        <Text style={styles.sub}>Wallet, split preview and withdrawal controls.</Text>
+        <Text style={styles.sub}>Wallet balance, commission breakdown on completed jobs, and withdrawals.</Text>
 
         {loading ? (
           <View style={styles.centered}><ActivityIndicator color={ACCENT} /></View>
@@ -184,7 +183,7 @@ export default function FinanceScreen({ expert }) {
             >
               <Text style={styles.withdrawBtnText}>Withdraw Funds</Text>
             </Pressable>
-            <Text style={styles.withdrawRule}>Minimum withdrawal amount: \u20B9500</Text>
+            <Text style={styles.withdrawRule}>Minimum withdrawal: {formatInr(MIN_WITHDRAWAL_INR)}</Text>
           </View>
         ) : null}
 
@@ -203,18 +202,23 @@ export default function FinanceScreen({ expert }) {
 
         {!loading ? (
           <View style={styles.cardSection}>
-            <Text style={styles.sectionTitle}>Kshatryx Hybrid Slab (Display)</Text>
-            <Text style={styles.sectionSub}>Tier 1: 19% on first \u20B91999. Tier 2: 5% above \u20B91999. Rounded with Math.round.</Text>
+            <Text style={styles.sectionTitle}>Commission breakdown</Text>
+            <Text style={styles.sectionSub}>
+              Kshatryx hybrid slab: 19% on the first ₹1,999 of the job total, then 5% on the remainder. Amounts are rounded to
+              whole rupees.
+            </Text>
 
             {!splitPreview.length ? (
-              <Text style={styles.emptyText}>No completed jobs yet for split preview.</Text>
+              <Text style={styles.emptyText}>No completed jobs yet — breakdown will appear here after jobs are completed.</Text>
             ) : null}
 
             {splitPreview.map((row) => (
               <View key={String(row.id)} style={styles.splitRow}>
                 <View style={styles.splitTop}>
                   <Text style={styles.splitService} numberOfLines={1}>{row.service}</Text>
-                  <View style={styles.standardBadge}><Text style={styles.standardBadgeText}>HYBRID SLAB</Text></View>
+                  <View style={styles.standardBadge}>
+                    <Text style={styles.standardBadgeText}>Slab</Text>
+                  </View>
                 </View>
                 <Text style={styles.splitMeta}>Job Total: {formatInr(row.split.totalAmount)}</Text>
                 <Text style={styles.splitMeta}>Tier 1 ({row.split.tier1RatePct}% on {formatInr(row.split.tier1Base)}): {formatInr(row.split.tier1Commission)}</Text>

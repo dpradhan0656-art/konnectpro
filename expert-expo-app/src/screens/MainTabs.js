@@ -2,6 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import DashboardScreen from './DashboardScreen';
 import MyJobsScreen from './MyJobsScreen';
@@ -25,6 +26,9 @@ function buildTabIcon(routeName, focused) {
  * @param {{ expert: object | null }} props
  */
 export default function MainTabs({ expert }) {
+  const insets = useSafeAreaInsets();
+  const bottomInset = Math.max(insets.bottom, 8);
+
   return (
     <NavigationContainer independent>
       <Tab.Navigator
@@ -36,9 +40,12 @@ export default function MainTabs({ expert }) {
           tabBarStyle: {
             backgroundColor: CARD,
             borderTopColor: BORDER,
-            height: 62,
-            paddingBottom: 6,
+            height: 62 + bottomInset,
+            paddingBottom: bottomInset,
             paddingTop: 6,
+          },
+          tabBarItemStyle: {
+            paddingVertical: 2,
           },
           tabBarLabelStyle: {
             fontSize: 11,

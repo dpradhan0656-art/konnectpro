@@ -12,35 +12,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import * as ImageManipulator from 'expo-image-manipulator';
 
 import { supabase } from '../lib/supabase';
 import { ACCENT, BG, BORDER, CARD, TEXT, TEXT_MUTED } from '../components/dashboard/theme';
 import { uploadExpertProfileImage } from '../utils/uploadImage';
-
-const MOCK_REVIEWS = [
-  {
-    id: 'mock-1',
-    customer_name: 'Rohit Sharma',
-    rating: 5,
-    review_text: 'Reached on time and completed the work neatly. Very professional.',
-    created_at: null,
-  },
-  {
-    id: 'mock-2',
-    customer_name: 'Neha Verma',
-    rating: 4.8,
-    review_text: 'Good communication and quick diagnosis. Recommended expert.',
-    created_at: null,
-  },
-  {
-    id: 'mock-3',
-    customer_name: 'Amit Patel',
-    rating: 4.7,
-    review_text: 'Solved a recurring issue in one visit. Clean and polite service.',
-    created_at: null,
-  },
-];
 
 function formatMemberSince(value) {
   if (!value) return '-';
@@ -56,15 +31,18 @@ function ratingStars(avg) {
 }
 
 function formatReviewDate(value) {
-  if (!value) return 'Recent';
+  if (!value) return '�';
   const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return 'Recent';
+  if (Number.isNaN(d.getTime())) return '�';
   return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
 }
 
-function normalizeKycStatus(raw) {
-  const normalized = String(raw || 'pending').trim().toLowerCase();
-  return ['verified', 'approved', 'completed', 'active'].includes(normalized) ? 'Verified' : 'Pending KYC';
+/** @returns {{ label: string; tone: 'verified' | 'pending' | 'rejected' }} */
+function kycFromRow(raw) {
+  const n = String(raw || 'pending').trim().toLowerCase();
+  if (['verified', 'approved', 'completed', 'active'].includes(n)) return { label: 'Verified', tone: 'verified' };
+  if (['rejected', 'declined', 'failed', 'denied'].includes(n)) return { label: 'Rejected', tone: 'rejected' };
+  return { label: 'Pending KYC', tone: 'pending' };
 }
 
 /** @param {{ expert: { id?: string | number | null; name?: string | null; email?: string | null } | null }} props */
@@ -77,15 +55,16 @@ export default function ProfileScreen({ expert }) {
 
   const [profile, setProfile] = useState(null);
   const [reviews, setReviews] = useState([]);
-  const [rankLabel, setRankLabel] = useState('\ud83c\udfc6 #2 Expert in your area');
+  const [rankLabel, setRankLabel] = useState(null);
+  const [rankLoaded, setRankLoaded] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
 
   const display = useMemo(() => {
     const p = profile || {};
-    const fullName = p.name || expert?.name || 'Expert';
-    const category = p.category || p.service_category || p.primary_category || 'General Service';
-    const city = p.city || p.location_city || p.address_city || 'Your City';
-    const kycStatus = normalizeKycStatus(p.kyc_status || p.kyc_verification_status);
+    const fullName = p.name || expert?.name || (expert?.email ? String(expert.email).split('@')[0] : '�');
+    const category = p.category || p.service_category || p.primary_category || '�';
+    const city = p.city || p.location_city || p.address_city || '�';
+    const kyc = kycFromRow(p.kyc_status || p.kyc_verification_status);
     const memberSince = formatMemberSince(p.created_at || p.member_since || p.joined_at);
     const avgRating = Number(p.average_rating ?? p.avg_rating ?? p.rating ?? 0);
     const totalReviews = Number(p.total_reviews ?? p.review_count ?? 0);
@@ -95,7 +74,8 @@ export default function ProfileScreen({ expert }) {
       fullName,
       category,
       city,
-      kycStatus,
+      kycLabel: kyc.label,
+      kycTone: kyc.tone,
       memberSince,
       avgRating: Number.isFinite(avgRating) ? avgRating : 0,
       totalReviews: Number.isFinite(totalReviews) ? totalReviews : 0,
@@ -103,36 +83,28 @@ export default function ProfileScreen({ expert }) {
     };
   }, [profile, expert?.name]);
 
-  const reputationReviews = useMemo(() => {
-    if (Array.isArray(reviews) && reviews.length) return reviews;
-    return MOCK_REVIEWS;
-  }, [reviews]);
-
   const loadRankLabel = async (expertRow) => {
-    const category = expertRow?.category || expertRow?.service_category || expertRow?.primary_category;
-    const city = expertRow?.city || expertRow?.location_city || expertRow?.address_city;
-    if (!category || !city) {
-      return `\ud83c\udfc6 #2 ${display.category} in ${display.city}`;
-    }
+    if (!expertRow?.id) return null;
+    const category = String(expertRow?.category || expertRow?.service_category || expertRow?.primary_category || '').trim();
+    const city = String(expertRow?.city || expertRow?.location_city || expertRow?.address_city || '').trim();
+    if (!category || !city) return null;
 
     try {
       const { data, error: rankErr } = await supabase
         .from('experts')
-        .select('id, average_rating, category, city')
+        .select('id, average_rating')
         .eq('category', category)
         .eq('city', city)
         .order('average_rating', { ascending: false })
-        .limit(100);
+        .limit(200);
 
-      if (rankErr || !Array.isArray(data) || !data.length) {
-        return `\ud83c\udfc6 #2 ${category} in ${city}`;
-      }
+      if (rankErr || !Array.isArray(data) || !data.length) return null;
 
       const idx = data.findIndex((row) => String(row.id) === String(expertRow.id));
-      const rank = idx >= 0 ? idx + 1 : 2;
-      return `\ud83c\udfc6 #${rank} ${category} in ${city}`;
+      if (idx < 0) return null;
+      return `\ud83c\udfc6 #${idx + 1} ${category} in ${city}`;
     } catch {
-      return `\ud83c\udfc6 #2 ${category} in ${city}`;
+      return null;
     }
   };
 
@@ -140,13 +112,15 @@ export default function ProfileScreen({ expert }) {
     if (!expertId) {
       setProfile(null);
       setReviews([]);
-      setRankLabel('\ud83c\udfc6 #2 Expert in your area');
+      setRankLabel(null);
+      setRankLoaded(true);
       setError(null);
       setLoading(false);
       return;
     }
 
     setError(null);
+    setRankLoaded(false);
     try {
       const { data: expertRow, error: profileErr } = await supabase
         .from('experts')
@@ -161,7 +135,7 @@ export default function ProfileScreen({ expert }) {
         supabase
           .from('expert_reviews')
           .select('id, customer_name, rating, review_text, created_at')
-          .eq('expert_id', expertId)
+          .eq('expert_id', String(expertId))
           .order('created_at', { ascending: false })
           .limit(10),
         loadRankLabel(expertRow || {}),
@@ -172,13 +146,17 @@ export default function ProfileScreen({ expert }) {
       if (!reviewsRes.error && Array.isArray(reviewsRes.data)) {
         setReviews(reviewsRes.data);
       } else {
+        if (reviewsRes.error) {
+          console.warn('expert_reviews:', reviewsRes.error.message);
+        }
         setReviews([]);
       }
     } catch (e) {
       setError(e?.message || String(e));
       setReviews([]);
-      setRankLabel('\ud83c\udfc6 #2 Expert in your area');
+      setRankLabel(null);
     } finally {
+      setRankLoaded(true);
       setLoading(false);
     }
   };
@@ -213,34 +191,24 @@ export default function ProfileScreen({ expert }) {
         }
       }
 
+      // Compress via picker quality only (stable across devices; no extra native image module).
+      const pickerOptions = {
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.52,
+      };
+
       const result =
         mode === 'camera'
-          ? await ImagePicker.launchCameraAsync({
-              mediaTypes: ['images'],
-              quality: 1,
-              allowsEditing: true,
-            })
-          : await ImagePicker.launchImageLibraryAsync({
-              mediaTypes: ['images'],
-              quality: 1,
-              allowsEditing: true,
-            });
+          ? await ImagePicker.launchCameraAsync(pickerOptions)
+          : await ImagePicker.launchImageLibraryAsync(pickerOptions);
 
       if (result.canceled || !result.assets?.length) return;
       const asset = result.assets[0];
 
-      const manipActions = [];
-      if (asset.width && asset.width > 800) {
-        manipActions.push({ resize: { width: 800 } });
-      }
-
-      const compressed = await ImageManipulator.manipulateAsync(asset.uri, manipActions, {
-        compress: 0.5,
-        format: ImageManipulator.SaveFormat.JPEG,
-      });
-
       const { publicUrl } = await uploadExpertProfileImage({
-        localUri: compressed.uri,
+        localUri: asset.uri,
         expertId,
       });
 
@@ -317,21 +285,45 @@ export default function ProfileScreen({ expert }) {
 
             <View style={styles.infoCard}>
               <Text style={styles.infoTitle}>Identity Status</Text>
-              <View style={[styles.kycPill, display.kycStatus === 'Verified' ? styles.kycVerified : styles.kycPending]}>
-                <Text style={[styles.kycText, display.kycStatus === 'Verified' ? styles.kycTextVerified : styles.kycTextPending]}>
-                  {display.kycStatus}
+              <View
+                style={[
+                  styles.kycPill,
+                  display.kycTone === 'verified' && styles.kycVerified,
+                  display.kycTone === 'pending' && styles.kycPending,
+                  display.kycTone === 'rejected' && styles.kycRejected,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.kycText,
+                    display.kycTone === 'verified' && styles.kycTextVerified,
+                    display.kycTone === 'pending' && styles.kycTextPending,
+                    display.kycTone === 'rejected' && styles.kycTextRejected,
+                  ]}
+                >
+                  {display.kycLabel}
                 </Text>
               </View>
               <View style={styles.actionRow}>
                 <Pressable
                   style={({ pressed }) => [styles.secondaryBtn, pressed && { opacity: 0.9 }]}
-                  onPress={() => Alert.alert('Update KYC', 'KYC document upload module coming in next phase.')}
+                  onPress={() =>
+                    Alert.alert(
+                      'Update KYC',
+                      'KYC is verified by the Kshatryx admin team. To submit or update Aadhaar/PAN, contact your field partner or Kshatryx support � they will update your record after verification.'
+                    )
+                  }
                 >
                   <Text style={styles.secondaryBtnText}>Update KYC (Aadhaar/PAN)</Text>
                 </Pressable>
                 <Pressable
                   style={({ pressed }) => [styles.secondaryBtn, pressed && { opacity: 0.9 }]}
-                  onPress={() => Alert.alert('Edit Profile', 'Profile edit module coming in next phase.')}
+                  onPress={() =>
+                    Alert.alert(
+                      'Edit profile',
+                      'Name, category, and photo are managed from your profile here (photo) and by admin for official records. Contact support if any detail is wrong.'
+                    )
+                  }
                 >
                   <Text style={styles.secondaryBtnText}>Edit Profile</Text>
                 </Pressable>
@@ -342,28 +334,40 @@ export default function ProfileScreen({ expert }) {
               <Text style={styles.infoTitle}>Reputation Dashboard</Text>
               <View style={styles.ratingRow}>
                 <Text style={styles.rating}>
-                  {display.avgRating > 0 ? `${display.avgRating.toFixed(1)} \u2b50` : 'New Partner \ud83c\udd95'}
+                  {display.avgRating > 0 ? `${display.avgRating.toFixed(1)} ?` : 'New partner'}
                 </Text>
                 <Text style={styles.reviewCount}>({display.totalReviews} reviews)</Text>
               </View>
               {display.avgRating > 0 ? <Text style={styles.stars}>{ratingStars(display.avgRating)}</Text> : null}
-              <View style={styles.rankBadge}>
-                <Text style={styles.rankText}>{rankLabel}</Text>
-              </View>
+              {rankLoaded && rankLabel ? (
+                <View style={styles.rankBadge}>
+                  <Text style={styles.rankText}>{rankLabel}</Text>
+                </View>
+              ) : null}
+              {rankLoaded && !rankLabel ? (
+                <Text style={styles.rankHint}>
+                  Local rank shows when your city and category match other experts. Ask admin to set city/category if this stays
+                  empty.
+                </Text>
+              ) : null}
 
-              <Text style={styles.reviewHeading}>Recent Customer Reviews</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.reviewScrollContent}>
-                {reputationReviews.map((item) => (
-                  <View key={String(item.id)} style={styles.reviewCard}>
-                    <Text style={styles.reviewName}>{item.customer_name || 'Customer'}</Text>
-                    <Text style={styles.reviewRating}>{Number(item.rating || 0).toFixed(1)} \u2b50</Text>
-                    <Text style={styles.reviewText} numberOfLines={4}>
-                      {item.review_text || item.comment || 'Great service experience.'}
-                    </Text>
-                    <Text style={styles.reviewDate}>{formatReviewDate(item.created_at)}</Text>
-                  </View>
-                ))}
-              </ScrollView>
+              <Text style={styles.reviewHeading}>Customer reviews</Text>
+              {!reviews.length ? (
+                <Text style={styles.emptyReviews}>No reviews yet. They will appear here when customers leave feedback.</Text>
+              ) : (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.reviewScrollContent}>
+                  {reviews.map((item) => (
+                    <View key={String(item.id)} style={styles.reviewCard}>
+                      <Text style={styles.reviewName}>{item.customer_name?.trim() || 'Customer'}</Text>
+                      <Text style={styles.reviewRating}>{Number(item.rating || 0).toFixed(1)} ?</Text>
+                      <Text style={styles.reviewText} numberOfLines={4}>
+                        {(item.review_text || item.comment || '').trim() || '�'}
+                      </Text>
+                      <Text style={styles.reviewDate}>{formatReviewDate(item.created_at)}</Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              )}
             </View>
           </>
         ) : null}
@@ -440,9 +444,11 @@ const styles = StyleSheet.create({
   kycPill: { alignSelf: 'flex-start', borderRadius: 999, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 6 },
   kycVerified: { backgroundColor: 'rgba(16, 185, 129, 0.12)', borderColor: 'rgba(16, 185, 129, 0.38)' },
   kycPending: { backgroundColor: 'rgba(245, 158, 11, 0.14)', borderColor: 'rgba(245, 158, 11, 0.45)' },
+  kycRejected: { backgroundColor: 'rgba(248, 113, 113, 0.12)', borderColor: 'rgba(248, 113, 113, 0.45)' },
   kycText: { fontSize: 12, fontWeight: '800' },
   kycTextVerified: { color: '#34d399' },
   kycTextPending: { color: '#fbbf24' },
+  kycTextRejected: { color: '#fca5a5' },
 
   actionRow: { marginTop: 12, gap: 8 },
   secondaryBtn: {
@@ -481,8 +487,10 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   rankText: { color: '#5eead4', fontSize: 12, fontWeight: '800' },
+  rankHint: { color: TEXT_MUTED, fontSize: 12, lineHeight: 18, marginTop: 8 },
 
   reviewHeading: { color: TEXT, fontSize: 14, fontWeight: '800', marginTop: 14, marginBottom: 10 },
+  emptyReviews: { color: TEXT_MUTED, fontSize: 12, lineHeight: 18, paddingVertical: 6 },
   reviewScrollContent: { gap: 10, paddingRight: 6 },
   reviewCard: {
     width: 245,

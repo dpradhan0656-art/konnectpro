@@ -9,7 +9,9 @@ function toAmount(value) {
 
 /** @param {object} booking */
 export function computeKshatryxSplit(booking) {
-  const totalAmount = toAmount(booking?.total_amount ?? booking?.amount ?? booking?.expert_payout);
+  const totalAmount = toAmount(
+    booking?.final_amount ?? booking?.total_amount ?? booking?.amount ?? booking?.expert_payout
+  );
   const tier1Base = Math.min(totalAmount, TIER1_LIMIT_INR);
   const tier2Base = Math.max(totalAmount - TIER1_LIMIT_INR, 0);
   const tier1CommissionRaw = tier1Base * TIER1_KSHATRYX_RATE;

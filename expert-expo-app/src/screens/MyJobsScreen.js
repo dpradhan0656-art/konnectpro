@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { supabase } from '../lib/supabase';
 import { computeKshatryxSplit } from '../utils/paymentSplitMath';
+import { formatInr } from '../utils/formatInr';
 import { ACCENT, BG, BORDER, CARD, TEXT, TEXT_MUTED } from '../components/dashboard/theme';
 
 function formatDate(value) {
@@ -30,12 +31,6 @@ function formatDate(value) {
     hour: '2-digit',
     minute: '2-digit',
   });
-}
-
-function formatInr(value) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return '\u20B90';
-  return `\u20B9${n.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
 }
 
 function showFeedback(message, type = 'info') {
@@ -80,7 +75,7 @@ export default function MyJobsScreen({ expert }) {
     if (!selectedJob) return null;
     const amount = Number(finalAmountInput);
     if (!Number.isFinite(amount) || amount <= 0) return null;
-    return computeKshatryxSplit({ ...selectedJob, total_amount: amount });
+    return computeKshatryxSplit({ ...selectedJob, final_amount: amount, total_amount: amount });
   }, [selectedJob, finalAmountInput]);
 
   const load = async () => {
@@ -142,7 +137,7 @@ export default function MyJobsScreen({ expert }) {
       return;
     }
 
-    const split = computeKshatryxSplit({ ...selectedJob, total_amount: finalAmount });
+    const split = computeKshatryxSplit({ ...selectedJob, final_amount: finalAmount, total_amount: finalAmount });
     setCompleting(true);
 
     try {
