@@ -6,6 +6,7 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
+  Switch,
   StyleSheet,
   Text,
   ToastAndroid,
@@ -28,7 +29,7 @@ import { ACCENT, BG, TEXT, TEXT_MUTED } from '../components/dashboard/theme';
 import { registerExpertPushToken } from '../services/pushRegistration';
 
 /**
- * @param {{ expert: { id?: string | number; name?: string | null; email?: string | null } | null }} props
+ * @param {{ expert: { id?: string | number; name?: string | null; email?: string | null; is_online?: boolean | null } | null }} props
  */
 export default function DashboardScreen({ expert }) {
   const { t, lang, setLang, setAutoLanguage, languageMode, autoRegion } = useLanguage();
@@ -63,7 +64,13 @@ export default function DashboardScreen({ expert }) {
   const [walletModalOpen, setWalletModalOpen] = useState(false);
   /** When true, wallet modal opens directly on the recharge (Add money) step */
   const [walletStartRecharge, setWalletStartRecharge] = useState(false);
+  const [isOnline, setIsOnline] = useState(Boolean(expert?.is_online));
+  const [onlineUpdating, setOnlineUpdating] = useState(false);
   const prevWorkAlert = useRef(false);
+
+  useEffect(() => {
+    setIsOnline(Boolean(expert?.is_online));
+  }, [expert?.is_online]);
 
   useEffect(() => {
     if (workAlert && !prevWorkAlert.current) {
@@ -158,6 +165,26 @@ export default function DashboardScreen({ expert }) {
     return res;
   };
 
+  const onToggleOnline = async (nextValue) => {
+    if (!expertId || onlineUpdating) return;
+    setOnlineUpdating(true);
+    const prev = isOnline;
+    setIsOnline(nextValue);
+    try {
+      const { error: updateErr } = await supabase
+        .from('experts')
+        .update({ is_online: nextValue })
+        .eq('id', expertId);
+      if (updateErr) throw updateErr;
+      showToast(nextValue ? 'You are online' : 'You are offline');
+    } catch (e) {
+      setIsOnline(prev);
+      showToast(e?.message || 'Could not update availability');
+    } finally {
+      setOnlineUpdating(false);
+    }
+  };
+
   // Legacy Dummy Recharge
   // const handleRechargePress = () => {
   //   showToast(t.paymentPending);
@@ -184,15 +211,32 @@ export default function DashboardScreen({ expert }) {
               <Text style={styles.badgeText}>{t.partnerBadge}</Text>
             </View>
             <Text style={styles.title}>{t.dashboardTitle}</Text>
+            <View style={[styles.statusPill, isOnline ? styles.statusPillOnline : styles.statusPillOffline]}>
+              <Text style={[styles.statusPillText, isOnline ? styles.statusPillTextOnline : styles.statusPillTextOffline]}>
+                {isOnline ? 'You are Online' : 'You are Offline'}
+              </Text>
+            </View>
           </View>
-          <Pressable
-            onPress={() => setLangModalOpen(true)}
-            style={({ pressed }) => [styles.langBtn, pressed && { opacity: 0.85 }]}
-            accessibilityRole="button"
-            accessibilityLabel={t.language}
-          >
-            <Ionicons name="globe-outline" size={26} color={ACCENT} />
-          </Pressable>
+          <View style={styles.topActions}>
+            <View style={styles.onlineWrap}>
+              <Text style={styles.onlineLabel}>{isOnline ? 'Online' : 'Offline'}</Text>
+              <Switch
+                value={isOnline}
+                onValueChange={(value) => onToggleOnline(value).catch(() => {})}
+                disabled={onlineUpdating || !expertId}
+                trackColor={{ false: '#475569', true: '#14b8a6' }}
+                thumbColor={isOnline ? '#f0fdfa' : '#e2e8f0'}
+              />
+            </View>
+            <Pressable
+              onPress={() => setLangModalOpen(true)}
+              style={({ pressed }) => [styles.langBtn, pressed && { opacity: 0.85 }]}
+              accessibilityRole="button"
+              accessibilityLabel={t.language}
+            >
+              <Ionicons name="globe-outline" size={26} color={ACCENT} />
+            </Pressable>
+          </View>
         </View>
         <Text style={styles.sub}>
           {t.signedInPrefix} {displayName}.
@@ -341,6 +385,21 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
+  topActions: {
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  onlineWrap: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  onlineLabel: {
+    color: TEXT_MUTED,
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.7,
+  },
   langBtn: {
     padding: 8,
     marginTop: -4,
@@ -367,6 +426,34 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: TEXT,
     marginBottom: 8,
+  },
+  statusPill: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+  statusPillOnline: {
+    backgroundColor: 'rgba(16, 185, 129, 0.16)',
+    borderColor: 'rgba(16, 185, 129, 0.4)',
+  },
+  statusPillOffline: {
+    backgroundColor: 'rgba(245, 158, 11, 0.14)',
+    borderColor: 'rgba(245, 158, 11, 0.4)',
+  },
+  statusPillText: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  statusPillTextOnline: {
+    color: '#34d399',
+  },
+  statusPillTextOffline: {
+    color: '#fbbf24',
   },
   sub: {
     fontSize: 15,

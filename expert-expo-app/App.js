@@ -7,7 +7,7 @@ import { buildFallbackExpertFromUser, isForceExpertDashboardMode } from './src/c
 import { LanguageProvider } from './src/context/LanguageContext';
 import { tryResumeOAuthFromPendingDeepLink } from './src/lib/googleOAuth';
 import { isSupabaseConfigured, supabase } from './src/lib/supabase';
-import DashboardScreen from './src/screens/DashboardScreen';
+import MainTabs from './src/screens/MainTabs';
 import LoginScreen from './src/screens/LoginScreen';
 import AccessGateScreen from './src/screens/AccessGateScreen';
 
@@ -324,7 +324,7 @@ function ExpertAppRoot() {
             <ActivityIndicator size="large" color="#0d9488" />
           </View>
         ) : showDashboard ? (
-          <DashboardScreen expert={resolvedExpert} />
+          <MainTabs expert={resolvedExpert} />
         ) : accessGate ? (
           <AccessGateScreen
             title={accessGate.title}

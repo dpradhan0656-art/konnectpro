@@ -40,7 +40,7 @@ async function validateExpertAccessCore(supabase, user) {
 
   const { data: expert, error } = await supabase
     .from('experts')
-    .select('id, status, name, email, user_id')
+    .select('id, status, name, email, user_id, is_online, category, kyc_status, created_at, average_rating, photo_url')
     .eq('user_id', userId)
     .maybeSingle();
 
@@ -71,7 +71,7 @@ async function validateExpertAccessCore(supabase, user) {
 
   const { data: unlinkedRows, error: unlinkedErr } = await supabase
     .from('experts')
-    .select('id, status, name, email, user_id')
+    .select('id, status, name, email, user_id, is_online, category, kyc_status, created_at, average_rating, photo_url')
     .is('user_id', null)
     .eq('email', emailNorm)
     .limit(1);

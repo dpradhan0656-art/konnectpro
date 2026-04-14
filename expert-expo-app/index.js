@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 import 'react-native-url-polyfill/auto';
 import * as WebBrowser from 'expo-web-browser';
 import { primeGlobalOAuthRedirectCapture } from './src/lib/oauthRedirectBuffer';
