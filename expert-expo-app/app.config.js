@@ -37,6 +37,9 @@ module.exports = {
       },
       /** Mirrors whether EXPO_PUBLIC_SUPABASE_* were present at bundle time (for support builds). */
       hasSupabasePublicEnv,
+      /** Runtime fallback when Metro env inlining differs from native config (release APK robustness). */
+      supabaseUrl: supabaseUrl || undefined,
+      supabaseAnonKey: supabaseAnonKey || undefined,
     },
   },
 };

@@ -1,6 +1,12 @@
-import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
+
+import { isSupabaseConfigured } from './supabase';
+import {
+  clearPendingOAuthRedirect,
+  peekPendingOAuthRedirect,
+  takePendingOAuthRedirect,
+} from './oauthRedirectBuffer';
 
 /**
  * Exact OAuth redirect (must match Supabase Auth → URL configuration → Redirect URLs).
@@ -19,13 +25,10 @@ export const EXPERT_GOOGLE_OAUTH_REDIRECT_URI = 'expert-expo-app://auth/callback
  * @returns {Promise<{ cancelled?: boolean, session?: import('@supabase/supabase-js').Session }>}
  */
 export async function signInWithGoogle(supabase) {
-  const publicUrl = (process.env.EXPO_PUBLIC_SUPABASE_URL || '').trim();
-  const publicAnon = (process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '').trim();
-  if (!publicUrl || !publicAnon) {
+  if (!isSupabaseConfigured()) {
     throw new Error(
       'This build is missing Supabase settings (EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY). ' +
-        'Add them in Expo → Project → Environment variables for the same environment as this build (e.g. preview), ' +
-        'or in eas.json → build.<profile>.env, then create a new build.'
+        'Add expert-expo-app/.env and rebuild the APK, or set them in EAS Environment variables, then rebuild.'
     );
   }
 
@@ -51,16 +54,7 @@ export async function signInWithGoogle(supabase) {
   if (error) throw error;
   if (!data?.url) throw new Error('No OAuth URL returned from Supabase');
 
-  /** Deep link may arrive before/after `openAuthSessionAsync` resolves (Android Custom Tabs). */
-  let capturedCallbackUrl = null;
-  const linkingSub = Linking.addEventListener('url', ({ url }) => {
-    if (matchesRedirect(url)) {
-      capturedCallbackUrl = url;
-    }
-  });
-
   const cleanup = async () => {
-    linkingSub.remove();
     if (Platform.OS === 'android') {
       await WebBrowser.coolDownAsync().catch(() => {});
     }
@@ -74,6 +68,9 @@ export async function signInWithGoogle(supabase) {
       await WebBrowser.warmUpAsync().catch(() => {});
     }
 
+    // Fresh Custom Tabs session — drop any buffered URL from an older attempt (not the upcoming return).
+    clearPendingOAuthRedirect();
+
     const result = await Promise.race([
       WebBrowser.openAuthSessionAsync(data.url, redirectTo),
       new Promise((resolve) =>
@@ -84,8 +81,9 @@ export async function signInWithGoogle(supabase) {
     const browserTimedOut = result?.type === '__oauth_browser_timeout';
 
     let urlToUse = result.type === 'success' && result.url ? result.url : null;
-    if (!urlToUse && matchesRedirect(capturedCallbackUrl)) {
-      urlToUse = capturedCallbackUrl;
+    if (!urlToUse) {
+      const fromBuffer = takePendingOAuthRedirect();
+      if (matchesRedirect(fromBuffer)) urlToUse = fromBuffer;
     }
 
     if (urlToUse && matchesRedirect(urlToUse)) {
@@ -97,8 +95,9 @@ export async function signInWithGoogle(supabase) {
     const maxSteps = browserTimedOut ? 100 : 60;
     for (let i = 0; i < maxSteps; i++) {
       await new Promise((r) => setTimeout(r, stepMs));
-      if (matchesRedirect(capturedCallbackUrl)) {
-        return await applyOAuthCallbackUrl(supabase, capturedCallbackUrl);
+      const buffered = peekPendingOAuthRedirect();
+      if (matchesRedirect(buffered)) {
+        return await applyOAuthCallbackUrl(supabase, takePendingOAuthRedirect());
       }
       const {
         data: { session },
@@ -122,8 +121,34 @@ export async function signInWithGoogle(supabase) {
       'OAuth callback did not return to Expert app. Verify Supabase redirect URLs include expert-expo-app://auth/callback.'
     );
   } finally {
+    clearPendingOAuthRedirect();
     await cleanup();
   }
+}
+
+/**
+ * If the app cold-started from expert-expo-app://auth/callback?code=... (e.g. process killed during OAuth),
+ * exchange the code using the PKCE verifier Supabase stored in AsyncStorage.
+ * @param {import('@supabase/supabase-js').SupabaseClient} supabase
+ */
+export async function tryResumeOAuthFromPendingDeepLink(supabase) {
+  if (!isSupabaseConfigured()) return;
+  const u = peekPendingOAuthRedirect();
+  if (!u) return;
+  if (!String(u).toLowerCase().startsWith(normalizedRedirectStatic())) {
+    clearPendingOAuthRedirect();
+    return;
+  }
+  takePendingOAuthRedirect();
+  try {
+    await applyOAuthCallbackUrl(supabase, u);
+  } catch {
+    /* invalid/expired code or missing verifier — user can tap Google again */
+  }
+}
+
+function normalizedRedirectStatic() {
+  return EXPERT_GOOGLE_OAUTH_REDIRECT_URI.toLowerCase();
 }
 
 /**

@@ -46,7 +46,10 @@ export function mapRegionToLanguage(regionOrState) {
 export async function mapGpsToLanguage(coords) {
   // 1. Safety Check: If GPS coords are missing, return default safely
   if (!coords || typeof coords.latitude !== 'number' || typeof coords.longitude !== 'number') {
-    console.warn('⚠️ [LanguageMapper]: Invalid GPS coords passed. Defaulting to English.');
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.warn('[LanguageMapper]: Invalid GPS coords; defaulting to English.');
+    }
     return { lang: DEFAULT_LANGUAGE, region: null };
   }
 
@@ -64,16 +67,21 @@ export async function mapGpsToLanguage(coords) {
     // 3. Extract the State (Expo usually puts State in 'region' or 'subregion')
     const state = place.region || place.subregion || place.city || null;
     
-    // 🎯 Co-Founder Debug Log: See what the satellite found!
-    console.log(`📍 [GPS Engine]: Satellite detected region -> "${state}"`); 
-    
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.log(`[GPS Engine]: region -> "${state}"`);
+    }
+
     return {
       lang: mapRegionToLanguage(state),
       region: state,
     };
 
   } catch (error) {
-    console.error('❌ [LanguageMapper]: Reverse Geocoding Failed:', error);
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.error('[LanguageMapper]: Reverse geocoding failed:', error);
+    }
     return { lang: DEFAULT_LANGUAGE, region: null };
   }
 }

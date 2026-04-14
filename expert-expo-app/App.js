@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, AppState, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, AppState, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { validateExpertAccess } from './src/auth/expertAccess';
 import { buildFallbackExpertFromUser, isForceExpertDashboardMode } from './src/config/expertAuthFlags';
 import { LanguageProvider } from './src/context/LanguageContext';
-import { supabase } from './src/lib/supabase';
+import { tryResumeOAuthFromPendingDeepLink } from './src/lib/googleOAuth';
+import { isSupabaseConfigured, supabase } from './src/lib/supabase';
 import DashboardScreen from './src/screens/DashboardScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import AccessGateScreen from './src/screens/AccessGateScreen';
@@ -33,7 +34,28 @@ function buildForceModeSession() {
   };
 }
 
-export default function App() {
+function MisconfiguredExpertApp() {
+  return (
+    <SafeAreaProvider>
+      <View style={styles.configErr}>
+        <ScrollView contentContainerStyle={styles.configErrScroll}>
+          <Text style={styles.configErrTitle}>Expert app — configuration</Text>
+          <Text style={styles.configErrBody}>
+            This APK was built without Supabase credentials. Google sign-in and the dashboard cannot work until you add
+            EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY to expert-expo-app/.env, then run a new release
+            build (cd android → gradlew assembleRelease).
+          </Text>
+          <Text style={styles.configErrHint}>
+            For EAS builds, set the same variables in Expo → Project → Environment variables for your profile.
+          </Text>
+        </ScrollView>
+      </View>
+      <StatusBar style="light" />
+    </SafeAreaProvider>
+  );
+}
+
+function ExpertAppRoot() {
   const forceExpertMode = isForceExpertDashboardMode();
   const [booting, setBooting] = useState(true);
   const [session, setSession] = useState(null);
@@ -144,6 +166,7 @@ export default function App() {
     let mounted = true;
 
     async function initSession() {
+      await tryResumeOAuthFromPendingDeepLink(supabase);
       const {
         data: { session: initial },
       } = await supabase.auth.getSession();
@@ -307,11 +330,44 @@ export default function App() {
   );
 }
 
+export default function App() {
+  if (!isSupabaseConfigured()) {
+    return <MisconfiguredExpertApp />;
+  }
+  return <ExpertAppRoot />;
+}
+
 const styles = StyleSheet.create({
   boot: {
     flex: 1,
     backgroundColor: '#0f172a',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  configErr: {
+    flex: 1,
+    backgroundColor: '#0f172a',
+    paddingTop: 48,
+  },
+  configErrScroll: {
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+  },
+  configErrTitle: {
+    color: '#f8fafc',
+    fontSize: 20,
+    fontWeight: '800',
+    marginBottom: 16,
+  },
+  configErrBody: {
+    color: '#94a3b8',
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 14,
+  },
+  configErrHint: {
+    color: '#64748b',
+    fontSize: 13,
+    lineHeight: 20,
   },
 });

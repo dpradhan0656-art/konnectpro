@@ -1,13 +1,33 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 import { createClient } from '@supabase/supabase-js';
 
 /**
  * Same Supabase project as the web app — use EXPO_PUBLIC_* vars in `.env` (see `.env.example`).
- * Do not use VITE_* here: Metro never inlines those. Never use a placeholder Supabase URL as fallback.
+ * Also reads `expo.extra` from app.config.js so release builds still resolve URL/key if one pipeline omits env.
  * `react-native-url-polyfill` is imported in `index.js` before this module loads.
  */
-const supabaseUrl = (process.env.EXPO_PUBLIC_SUPABASE_URL ?? '').trim();
-const supabaseAnonKey = (process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '').trim();
+function resolveSupabasePublicConfig() {
+  const extra = Constants.expoConfig?.extra ?? {};
+  const url = (
+    process.env.EXPO_PUBLIC_SUPABASE_URL ??
+    extra.supabaseUrl ??
+    ''
+  ).trim();
+  const anonKey = (
+    process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ??
+    extra.supabaseAnonKey ??
+    ''
+  ).trim();
+  return { url, anonKey };
+}
+
+const { url: supabaseUrl, anonKey: supabaseAnonKey } = resolveSupabasePublicConfig();
+
+export function isSupabaseConfigured() {
+  const c = resolveSupabasePublicConfig();
+  return Boolean(c.url && c.anonKey);
+}
 
 if (__DEV__) {
   const viteUrl = (process.env.VITE_SUPABASE_URL ?? '').trim();
