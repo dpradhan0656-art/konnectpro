@@ -14,4 +14,5 @@ supabase/.temp/
 
 # Expert Expo — local EAS archive inspect output (can be multi‑GB; never commit)
 expert-expo-app/_eas_inspect_out/
+expert-expo-app/_eas_inspect_archive/
 expert-expo-app/dist-expo-verify-native/

@@ -6,10 +6,10 @@ const EXPERT_PHOTO_BUCKET = 'expert-photos';
 /**
  * Compresses an image file and uploads it to Supabase storage.
  *
- * @param {{ file: File; expertKey: string | number }} params
+ * @param {{ file: File; expertKey: string | number; objectSuffix?: string }} params
  * @returns {Promise<{ publicUrl: string; objectPath: string; compressedFile: File }>}
  */
-export async function compressAndUploadExpertPhoto({ file, expertKey }) {
+export async function compressAndUploadExpertPhoto({ file, expertKey, objectSuffix = 'admin' }) {
   if (!file) throw new Error('Image file is required.');
   if (!expertKey) throw new Error('Expert key is required for upload path.');
 
@@ -21,7 +21,8 @@ export async function compressAndUploadExpertPhoto({ file, expertKey }) {
     fileType: 'image/jpeg',
   });
 
-  const objectPath = `experts/${expertKey}/${Date.now()}-admin.jpg`;
+  const safeSuffix = String(objectSuffix || 'admin').replace(/[^a-zA-Z0-9_-]/g, '');
+  const objectPath = `experts/${expertKey}/${Date.now()}-${safeSuffix || 'admin'}.jpg`;
   const { error: uploadErr } = await supabase.storage.from(EXPERT_PHOTO_BUCKET).upload(objectPath, compressedFile, {
     contentType: 'image/jpeg',
     upsert: true,

@@ -1,0 +1,13 @@
+# Used when EAS_PROJECT_ROOT points at this app (monorepo: upload only this folder).
+# Shrinks upload vs uploading the whole monorepo from git root.
+
+_eas_inspect_archive/
+_eas_inspect_out/
+dist-expo-verify-native/
+
+android/.gradle
+android/app/build
+android/build
+
+ios/Pods
+ios/build

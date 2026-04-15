@@ -25,6 +25,22 @@ export const EXPERT_VOICE_DICT = {
   kok: { name: "कोंकणी (Konkani)", langCode: 'mr-IN', wallet: "वालेट बॅलन्स", withdraw: "पैसे काडात", online: "ऑनलायन", offline: "ऑफलायन", jobs: "काम", noJobs: "कांयच काम ना.", accept: "काम घेयात", navigate: "वाट पळयात", start: "काम सुरू करात", complete: "काम जाले 🏆", logout: "लॉग आउट", v_newJob: "नवे काम आयला.", v_checkApp: "अॅप पळयात.", v_accepted: "काम घेतला.", v_completed: "काम जाले, पैसे जमा जाले.", v_offline: "तुमी ऑफलायन आसात.", v_online: "तुमी ऑनलायन आसात.", v_withdraw: "विनंती धाडल्या." },
 };
 
+const voiceStubFromEn = (name, langCode) => ({
+  ...EXPERT_VOICE_DICT.en,
+  name,
+  langCode,
+});
+
+/** North-East & scheduled-language stubs: English voice strings until native copy ships (zero UI breakage). */
+Object.assign(EXPERT_VOICE_DICT, {
+  brx: voiceStubFromEn("Bodo (बर')", 'brx-IN'),
+  mni: voiceStubFromEn('ꯃꯤꯇꯩꯂꯣꯟ (Manipuri / Meitei)', 'mni-IN'),
+  lus: voiceStubFromEn('Mizo (Lushai)', 'lus-IN'),
+  kha: voiceStubFromEn('Khasi', 'kha-IN'),
+  grt: voiceStubFromEn('Garo', 'grt-IN'),
+  trp: voiceStubFromEn('Kokborok (Tripuri)', 'trp-IN'),
+});
+
 /** Expo dashboard-only strings (Simple English); merged last so any key missing in a locale falls back via getStrings. */
 const EXPO_UI_EN = {
   dashboardTitle: 'Expert dashboard',
@@ -96,7 +112,32 @@ const EXPO_UI_EN = {
   partnerCategoryPrefix: 'Category',
 };
 
-export const LANGUAGE_ORDER = ['en', 'hi', 'mr', 'gu', 'bn', 'ta', 'te', 'kn', 'ml', 'pa', 'ur', 'or', 'as', 'ne', 'sd', 'mai', 'ks', 'kok'];
+export const LANGUAGE_ORDER = [
+  'en',
+  'hi',
+  'mr',
+  'gu',
+  'bn',
+  'ta',
+  'te',
+  'kn',
+  'ml',
+  'pa',
+  'ur',
+  'or',
+  'as',
+  'ne',
+  'sd',
+  'mai',
+  'ks',
+  'kok',
+  'brx',
+  'mni',
+  'lus',
+  'kha',
+  'grt',
+  'trp',
+];
 
 export const STORAGE_KEY_LANG = 'kshatr_expo_lang';
 

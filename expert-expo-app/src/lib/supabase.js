@@ -7,7 +7,8 @@ import { createClient } from '@supabase/supabase-js';
  * Also reads `expo.extra` from app.config.js so release builds still resolve URL/key if one pipeline omits env.
  * `react-native-url-polyfill` is imported in `index.js` before this module loads.
  */
-function resolveSupabasePublicConfig() {
+/** Resolved at call time so Metro/EAS env and `expo.extra` stay in sync. */
+export function resolveSupabasePublicConfig() {
   const extra = Constants.expoConfig?.extra ?? {};
   const url = (
     process.env.EXPO_PUBLIC_SUPABASE_URL ??

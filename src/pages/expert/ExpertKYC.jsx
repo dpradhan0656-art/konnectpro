@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import { upsertExpertProfileMaster } from '../../lib/expertProfileMaster';
+import { compressAndUploadExpertPhoto } from '../../utils/uploadImage';
 import {
   Camera,
   FileText,
@@ -94,7 +96,7 @@ export default function ExpertKYC() {
     return true;
   };
 
-  /** Submit form: mock upload + update experts table */
+  /** Submit form: Storage uploads + experts + expert_profile_master */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -103,23 +105,49 @@ export default function ExpertKYC() {
     setSubmitting(true);
 
     try {
-      // Mock upload: simulate 2-second delay (no actual Supabase Storage upload)
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Update experts table for current user: status='pending', is_kyc_submitted=true
-      const { error: updateError } = await supabase
+      const { data: expertRow, error: expErr } = await supabase
         .from('experts')
-        .update({
-          status: 'pending',
-          is_kyc_submitted: true,
-          // Optional: store form values if your DB has these columns
-          // aadhar_number: formData.aadharNumber,
-          // experience_years: parseInt(formData.experienceYears, 10),
-          // full_address: formData.fullAddress,
-        })
-        .eq('user_id', user.id);
+        .select('id, status')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (expErr) throw expErr;
+      if (!expertRow?.id) {
+        throw new Error('Expert profile not found. Complete registration first, then try KYC again.');
+      }
+
+      const expertId = expertRow.id;
+      const profileUp = await compressAndUploadExpertPhoto({
+        file: formData.profilePhoto,
+        expertKey: expertId,
+        objectSuffix: 'profile-selfie',
+      });
+      const aadharUp = await compressAndUploadExpertPhoto({
+        file: formData.aadharPhoto,
+        expertKey: expertId,
+        objectSuffix: 'aadhar-front',
+      });
+
+      const expYears = parseInt(String(formData.experienceYears).trim(), 10);
+      const expertPatch = {
+        photo_url: profileUp.publicUrl,
+        aadhar_number: formData.aadharNumber.replace(/\s/g, ''),
+        experience_years: Number.isFinite(expYears) ? expYears : 0,
+        is_kyc_submitted: true,
+        kyc_status: 'pending',
+      };
+      if (expertRow.status === 'pending' || expertRow.status === 'rejected') {
+        expertPatch.status = 'pending';
+      }
+
+      const { error: updateError } = await supabase.from('experts').update(expertPatch).eq('user_id', user.id);
 
       if (updateError) throw updateError;
+
+      await upsertExpertProfileMaster(expertId, {
+        residential_address: formData.fullAddress.trim(),
+        aadhar_card_photo_url: aadharUp.publicUrl,
+      });
 
       setSuccess(true);
       // Reset form

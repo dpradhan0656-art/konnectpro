@@ -8,6 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,6 +16,7 @@ import * as ImagePicker from 'expo-image-picker';
 
 import { supabase } from '../lib/supabase';
 import { ACCENT, BG, BORDER, CARD, TEXT, TEXT_MUTED } from '../components/dashboard/theme';
+import { fetchExpertProfileMaster, upsertExpertProfileMaster } from '../utils/expertProfileMaster';
 import { uploadExpertProfileImage } from '../utils/uploadImage';
 
 function formatMemberSince(value) {
@@ -31,9 +33,9 @@ function ratingStars(avg) {
 }
 
 function formatReviewDate(value) {
-  if (!value) return '�';
+  if (!value) return '-';
   const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return '�';
+  if (Number.isNaN(d.getTime())) return '-';
   return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
 }
 
@@ -58,12 +60,21 @@ export default function ProfileScreen({ expert }) {
   const [rankLabel, setRankLabel] = useState(null);
   const [rankLoaded, setRankLoaded] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [masterDraft, setMasterDraft] = useState({
+    residential_address: '',
+    bank_account_holder_name: '',
+    bank_account_number: '',
+    ifsc_code: '',
+    pan_number: '',
+  });
+  const [masterSaving, setMasterSaving] = useState(false);
+  const [aadharUploading, setAadharUploading] = useState(false);
 
   const display = useMemo(() => {
     const p = profile || {};
-    const fullName = p.name || expert?.name || (expert?.email ? String(expert.email).split('@')[0] : '�');
-    const category = p.category || p.service_category || p.primary_category || '�';
-    const city = p.city || p.location_city || p.address_city || '�';
+    const fullName = p.name || expert?.name || (expert?.email ? String(expert.email).split('@')[0] : '-');
+    const category = p.category || p.service_category || p.primary_category || '-';
+    const city = p.city || p.location_city || p.address_city || '-';
     const kyc = kycFromRow(p.kyc_status || p.kyc_verification_status);
     const memberSince = formatMemberSince(p.created_at || p.member_since || p.joined_at);
     const avgRating = Number(p.average_rating ?? p.avg_rating ?? p.rating ?? 0);
@@ -130,6 +141,20 @@ export default function ProfileScreen({ expert }) {
       if (profileErr) throw profileErr;
 
       setProfile(expertRow || null);
+
+      let masterRow = null;
+      try {
+        masterRow = await fetchExpertProfileMaster(expertId);
+      } catch {
+        masterRow = null;
+      }
+      setMasterDraft({
+        residential_address: masterRow?.residential_address || '',
+        bank_account_holder_name: masterRow?.bank_account_holder_name || '',
+        bank_account_number: masterRow?.bank_account_number || '',
+        ifsc_code: masterRow?.ifsc_code || '',
+        pan_number: masterRow?.pan_number || '',
+      });
 
       const [reviewsRes, nextRank] = await Promise.all([
         supabase
@@ -216,7 +241,11 @@ export default function ProfileScreen({ expert }) {
         .from('experts')
         .update({ photo_url: publicUrl })
         .eq('id', expertId);
-      if (upErr) throw upErr;
+      if (upErr) {
+        // eslint-disable-next-line no-console
+        console.log('[experts photo_url update] Supabase error:', upErr.message, upErr);
+        throw upErr;
+      }
 
       setProfile((prev) => ({ ...(prev || {}), photo_url: publicUrl }));
       Alert.alert('Success', 'Profile photo updated.');
@@ -231,6 +260,81 @@ export default function ProfileScreen({ expert }) {
     Alert.alert('Edit Photo', 'Choose image source', [
       { text: 'Camera', onPress: () => pickAndUploadPhoto('camera').catch(() => {}) },
       { text: 'Gallery', onPress: () => pickAndUploadPhoto('gallery').catch(() => {}) },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
+  const saveMasterProfile = async () => {
+    if (!expertId || masterSaving) return;
+    const ifsc = masterDraft.ifsc_code.replace(/\s/g, '').toUpperCase();
+    if (ifsc && ifsc.length !== 11) {
+      Alert.alert('Check IFSC', 'IFSC code should be 11 characters when provided.');
+      return;
+    }
+    const pan = masterDraft.pan_number.replace(/\s/g, '').toUpperCase();
+    if (pan && pan.length !== 10) {
+      Alert.alert('Check PAN', 'PAN should be 10 characters when provided.');
+      return;
+    }
+    setMasterSaving(true);
+    try {
+      await upsertExpertProfileMaster(expertId, {
+        residential_address: masterDraft.residential_address.trim() || null,
+        bank_account_holder_name: masterDraft.bank_account_holder_name.trim() || null,
+        bank_account_number: masterDraft.bank_account_number.replace(/\s/g, '') || null,
+        ifsc_code: ifsc || null,
+        pan_number: pan || null,
+      });
+      Alert.alert('Saved', 'Bank and address details updated.');
+    } catch (e) {
+      Alert.alert('Save failed', e?.message || String(e));
+    } finally {
+      setMasterSaving(false);
+    }
+  };
+
+  const pickAadharFront = async (mode) => {
+    if (!expertId || aadharUploading) return;
+    setAadharUploading(true);
+    try {
+      if (mode === 'camera') {
+        const cameraPerm = await ImagePicker.requestCameraPermissionsAsync();
+        if (cameraPerm.status !== 'granted') {
+          Alert.alert('Permission needed', 'Camera permission is required.');
+          return;
+        }
+      } else {
+        const mediaPerm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (mediaPerm.status !== 'granted') {
+          Alert.alert('Permission needed', 'Gallery permission is required.');
+          return;
+        }
+      }
+      const pickerOptions = { mediaTypes: ['images'], allowsEditing: true, aspect: [4, 3], quality: 0.52 };
+      const result =
+        mode === 'camera'
+          ? await ImagePicker.launchCameraAsync(pickerOptions)
+          : await ImagePicker.launchImageLibraryAsync(pickerOptions);
+      if (result.canceled || !result.assets?.length) return;
+      const asset = result.assets[0];
+      const { publicUrl } = await uploadExpertProfileImage({
+        localUri: asset.uri,
+        expertId,
+        objectSuffix: 'aadhar-front',
+      });
+      await upsertExpertProfileMaster(expertId, { aadhar_card_photo_url: publicUrl });
+      Alert.alert('Success', 'Aadhaar front image saved.');
+    } catch (e) {
+      Alert.alert('Upload failed', e?.message || String(e));
+    } finally {
+      setAadharUploading(false);
+    }
+  };
+
+  const openAadharChooser = () => {
+    Alert.alert('Aadhaar card (front)', 'Choose source', [
+      { text: 'Camera', onPress: () => pickAadharFront('camera').catch(() => {}) },
+      { text: 'Gallery', onPress: () => pickAadharFront('gallery').catch(() => {}) },
       { text: 'Cancel', style: 'cancel' },
     ]);
   };
@@ -284,6 +388,73 @@ export default function ProfileScreen({ expert }) {
             </View>
 
             <View style={styles.infoCard}>
+              <Text style={styles.infoTitle}>Payout & address</Text>
+              <Text style={styles.masterHint}>
+                Saved to expert_profile_master. Use the same spelling as in your bank passbook.
+              </Text>
+              <Text style={styles.fieldLabel}>residential_address</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="House, street, city, state, PIN"
+                placeholderTextColor="#64748b"
+                value={masterDraft.residential_address}
+                onChangeText={(t) => setMasterDraft((d) => ({ ...d, residential_address: t }))}
+                multiline
+              />
+              <Text style={styles.fieldLabel}>bank_account_holder_name</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Account holder name"
+                placeholderTextColor="#64748b"
+                value={masterDraft.bank_account_holder_name}
+                onChangeText={(t) => setMasterDraft((d) => ({ ...d, bank_account_holder_name: t }))}
+              />
+              <Text style={styles.fieldLabel}>bank_account_number</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Account number"
+                placeholderTextColor="#64748b"
+                keyboardType="number-pad"
+                value={masterDraft.bank_account_number}
+                onChangeText={(t) => setMasterDraft((d) => ({ ...d, bank_account_number: t }))}
+              />
+              <Text style={styles.fieldLabel}>ifsc_code</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="11-character IFSC"
+                placeholderTextColor="#64748b"
+                autoCapitalize="characters"
+                value={masterDraft.ifsc_code}
+                onChangeText={(t) => setMasterDraft((d) => ({ ...d, ifsc_code: t }))}
+              />
+              <Text style={styles.fieldLabel}>pan_number</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="10-character PAN"
+                placeholderTextColor="#64748b"
+                autoCapitalize="characters"
+                value={masterDraft.pan_number}
+                onChangeText={(t) => setMasterDraft((d) => ({ ...d, pan_number: t }))}
+              />
+              <Pressable
+                style={({ pressed }) => [styles.secondaryBtn, pressed && { opacity: 0.9 }, aadharUploading && { opacity: 0.6 }]}
+                onPress={openAadharChooser}
+                disabled={aadharUploading}
+              >
+                <Text style={styles.secondaryBtnText}>
+                  {aadharUploading ? 'Uploading Aadhaar…' : 'Upload Aadhaar card (front)'}
+                </Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [styles.editPhotoBtn, { marginTop: 12 }, pressed && { opacity: 0.9 }, masterSaving && { opacity: 0.6 }]}
+                onPress={() => saveMasterProfile().catch(() => {})}
+                disabled={masterSaving}
+              >
+                <Text style={styles.editPhotoBtnText}>{masterSaving ? 'Saving…' : 'Save bank & address'}</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.infoCard}>
               <Text style={styles.infoTitle}>Identity Status</Text>
               <View
                 style={[
@@ -304,37 +475,17 @@ export default function ProfileScreen({ expert }) {
                   {display.kycLabel}
                 </Text>
               </View>
-              <View style={styles.actionRow}>
-                <Pressable
-                  style={({ pressed }) => [styles.secondaryBtn, pressed && { opacity: 0.9 }]}
-                  onPress={() =>
-                    Alert.alert(
-                      'Update KYC',
-                      'KYC is verified by the Kshatryx admin team. To submit or update Aadhaar/PAN, contact your field partner or Kshatryx support � they will update your record after verification.'
-                    )
-                  }
-                >
-                  <Text style={styles.secondaryBtnText}>Update KYC (Aadhaar/PAN)</Text>
-                </Pressable>
-                <Pressable
-                  style={({ pressed }) => [styles.secondaryBtn, pressed && { opacity: 0.9 }]}
-                  onPress={() =>
-                    Alert.alert(
-                      'Edit profile',
-                      'Name, category, and photo are managed from your profile here (photo) and by admin for official records. Contact support if any detail is wrong.'
-                    )
-                  }
-                >
-                  <Text style={styles.secondaryBtnText}>Edit Profile</Text>
-                </Pressable>
-              </View>
+              <Text style={styles.masterHint}>
+                Official name and category are set by admin. Use Payout & address above for bank, IFSC, PAN, and Aadhaar
+                photo; complete web KYC if your coordinator asks.
+              </Text>
             </View>
 
             <View style={styles.reputationCard}>
               <Text style={styles.infoTitle}>Reputation Dashboard</Text>
               <View style={styles.ratingRow}>
                 <Text style={styles.rating}>
-                  {display.avgRating > 0 ? `${display.avgRating.toFixed(1)} ?` : 'New partner'}
+                  {display.avgRating > 0 ? `${display.avgRating.toFixed(1)} ★` : 'New partner'}
                 </Text>
                 <Text style={styles.reviewCount}>({display.totalReviews} reviews)</Text>
               </View>
@@ -359,9 +510,9 @@ export default function ProfileScreen({ expert }) {
                   {reviews.map((item) => (
                     <View key={String(item.id)} style={styles.reviewCard}>
                       <Text style={styles.reviewName}>{item.customer_name?.trim() || 'Customer'}</Text>
-                      <Text style={styles.reviewRating}>{Number(item.rating || 0).toFixed(1)} ?</Text>
+                      <Text style={styles.reviewRating}>{Number(item.rating || 0).toFixed(1)} ★</Text>
                       <Text style={styles.reviewText} numberOfLines={4}>
-                        {(item.review_text || item.comment || '').trim() || '�'}
+                        {(item.review_text || item.comment || '').trim() || '-'}
                       </Text>
                       <Text style={styles.reviewDate}>{formatReviewDate(item.created_at)}</Text>
                     </View>
@@ -383,6 +534,18 @@ const styles = StyleSheet.create({
   sub: { color: TEXT_MUTED, fontSize: 13, marginTop: 6, marginBottom: 16 },
   center: { paddingVertical: 20, alignItems: 'center' },
   error: { color: '#fca5a5', marginBottom: 10 },
+  masterHint: { color: TEXT_MUTED, fontSize: 12, lineHeight: 18, marginBottom: 10 },
+  fieldLabel: { color: TEXT_MUTED, fontSize: 11, fontWeight: '700', marginTop: 8, marginBottom: 4 },
+  input: {
+    backgroundColor: '#0f172a',
+    borderWidth: 1,
+    borderColor: BORDER,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: TEXT,
+    fontSize: 14,
+  },
 
   heroCard: {
     backgroundColor: CARD,

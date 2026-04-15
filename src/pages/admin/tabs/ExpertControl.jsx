@@ -3,6 +3,7 @@ import { supabase } from '../../../lib/supabase';
 import { adminResetPassword } from '../../../lib/authAdmin';
 import { canAccessDeepakHQ } from '../../../lib/adminAccess';
 import { compressAndUploadExpertPhoto } from '../../../utils/uploadImage';
+import { fetchExpertProfileMaster, upsertExpertProfileMaster } from '../../../lib/expertProfileMaster';
 import { 
   UserCheck, Search, Phone, MapPin, Plus, Edit, Trash2, X,
   Lock, Briefcase, Loader2, ShieldCheck, Power, PowerOff, Mail
@@ -36,6 +37,12 @@ export default function ExpertControl() {
       average_rating: '',
       category: '',
       kyc_status: 'pending',
+      residential_address: '',
+      bank_account_holder_name: '',
+      bank_account_number: '',
+      ifsc_code: '',
+      pan_number: '',
+      aadhar_card_photo_url: '',
   });
   const [pwModal, setPwModal] = useState(null);
   const [pwValue, setPwValue] = useState('');
@@ -174,15 +181,39 @@ export default function ExpertControl() {
                       await adminResetPassword(expert.user_id, formData.password);
                   }
               }
+              await upsertExpertProfileMaster(editingId, {
+                residential_address: formData.residential_address,
+                bank_account_holder_name: formData.bank_account_holder_name,
+                bank_account_number: formData.bank_account_number,
+                ifsc_code: formData.ifsc_code ? formData.ifsc_code.toUpperCase().replace(/\s/g, '') : null,
+                pan_number: formData.pan_number ? formData.pan_number.toUpperCase().replace(/\s/g, '') : null,
+                aadhar_card_photo_url: formData.aadhar_card_photo_url?.trim() || null,
+              });
           } else {
-              const { error: insErr } = await supabase.from('experts').insert([{ 
-                  ...payload, 
-                  user_id: null,
-                  status: 'approved', 
-                  is_verified: true,
-                  is_active: true // Default Online
-              }]);
+              const { data: insRow, error: insErr } = await supabase
+                .from('experts')
+                .insert([
+                  {
+                    ...payload,
+                    user_id: null,
+                    status: 'approved',
+                    is_verified: true,
+                    is_active: true,
+                  },
+                ])
+                .select('id')
+                .single();
               if (insErr) throw insErr;
+              if (insRow?.id) {
+                await upsertExpertProfileMaster(insRow.id, {
+                  residential_address: formData.residential_address,
+                  bank_account_holder_name: formData.bank_account_holder_name,
+                  bank_account_number: formData.bank_account_number,
+                  ifsc_code: formData.ifsc_code ? formData.ifsc_code.toUpperCase().replace(/\s/g, '') : null,
+                  pan_number: formData.pan_number ? formData.pan_number.toUpperCase().replace(/\s/g, '') : null,
+                  aadhar_card_photo_url: formData.aadhar_card_photo_url?.trim() || null,
+                });
+              }
           }
           setIsModalOpen(false); 
           setPhotoFile(null);
@@ -218,8 +249,14 @@ export default function ExpertControl() {
     }
   };
 
-  const openEditModal = (exp) => {
+  const openEditModal = async (exp) => {
     setEditingId(exp.id);
+    let master = null;
+    try {
+      master = await fetchExpertProfileMaster(exp.id);
+    } catch {
+      master = null;
+    }
     setFormData({
       name: exp.name || '',
       phone: exp.phone || '',
@@ -231,6 +268,12 @@ export default function ExpertControl() {
       average_rating: exp.average_rating ?? '',
       category: exp.category || exp.service_category || '',
       kyc_status: exp.kyc_status || 'pending',
+      residential_address: master?.residential_address || '',
+      bank_account_holder_name: master?.bank_account_holder_name || '',
+      bank_account_number: master?.bank_account_number || '',
+      ifsc_code: master?.ifsc_code || '',
+      pan_number: master?.pan_number || '',
+      aadhar_card_photo_url: master?.aadhar_card_photo_url || '',
     });
     setPhotoFile(null);
     setPhotoPreviewUrl(exp.photo_url || '');
@@ -457,7 +500,7 @@ export default function ExpertControl() {
       {/* 📝 ADD/EDIT MODAL */}
       {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in zoom-in duration-200">
-              <div className="bg-slate-900 w-full max-w-md rounded-[2.5rem] border border-slate-800 shadow-2xl p-8 relative overflow-hidden">
+              <div className="bg-slate-900 w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-[2.5rem] border border-slate-800 shadow-2xl p-8 relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-full h-1 bg-teal-500"></div>
                   <div className="flex justify-between items-start gap-3 mb-6">
                       <div>
@@ -575,6 +618,66 @@ export default function ExpertControl() {
                             <option value="verified">Verified</option>
                             <option value="rejected">Rejected</option>
                           </select>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 rounded-2xl border border-slate-700/60 bg-slate-950/50 p-4">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-teal-400">
+                          expert_profile_master (bank & address)
+                        </p>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">residential_address</label>
+                          <textarea
+                            rows={2}
+                            className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-white text-sm focus:border-teal-500 outline-none"
+                            value={formData.residential_address}
+                            onChange={(e) => setFormData({ ...formData, residential_address: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">bank_account_holder_name</label>
+                          <input
+                            className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-white text-sm"
+                            value={formData.bank_account_holder_name}
+                            onChange={(e) => setFormData({ ...formData, bank_account_holder_name: e.target.value })}
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">bank_account_number</label>
+                            <input
+                              className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-white text-sm"
+                              value={formData.bank_account_number}
+                              onChange={(e) => setFormData({ ...formData, bank_account_number: e.target.value })}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">ifsc_code</label>
+                            <input
+                              className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-white text-sm uppercase"
+                              value={formData.ifsc_code}
+                              onChange={(e) => setFormData({ ...formData, ifsc_code: e.target.value })}
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">pan_number</label>
+                            <input
+                              className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-white text-sm uppercase"
+                              value={formData.pan_number}
+                              onChange={(e) => setFormData({ ...formData, pan_number: e.target.value })}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">aadhar_card_photo_url</label>
+                            <input
+                              className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-white text-xs"
+                              placeholder="https://..."
+                              value={formData.aadhar_card_photo_url}
+                              onChange={(e) => setFormData({ ...formData, aadhar_card_photo_url: e.target.value })}
+                            />
+                          </div>
                         </div>
                       </div>
 
