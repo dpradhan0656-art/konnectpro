@@ -5,6 +5,10 @@ node_modules
 android/app/build
 android/build
 android/.gradle
+android/.gradle-local
+android/.gradle-local/**
+expert-expo-app/_eas_inspect_archive
+expert-expo-app/_eas_inspect_archive/**
 
 # Separate Expo app — not part of this Capacitor/Vite EAS project.
 expert-expo-app
