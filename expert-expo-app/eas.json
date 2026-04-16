@@ -23,6 +23,17 @@
       "android": {
         "buildType": "app-bundle"
       }
+    },
+    "production-apk": {
+      "environment": "production",
+      "distribution": "internal",
+      "developmentClient": false,
+      "env": {
+        "KONNECTPRO_EAS_EXPERT_EXPO": "1"
+      },
+      "android": {
+        "buildType": "apk"
+      }
     }
   }
 }
