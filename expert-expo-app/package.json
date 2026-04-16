@@ -7,9 +7,9 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "build:android:store": "eas build --platform android --profile production",
-    "build:android:store-test-apk": "eas build --platform android --profile production-apk",
-    "build:android:preview-apk": "eas build --platform android --profile preview"
+    "build:android:store": "node scripts/eas-with-app-root.cjs --platform android --profile production",
+    "build:android:store-test-apk": "node scripts/eas-with-app-root.cjs --platform android --profile production-apk",
+    "build:android:preview-apk": "node scripts/eas-with-app-root.cjs --platform android --profile preview"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
