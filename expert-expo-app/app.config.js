@@ -3,6 +3,7 @@
  * Override: EXPO_PUBLIC_EAS_PROJECT_ID in .env
  */
 const appJson = require('./app.json');
+const { sanitizeSupabaseUrl } = require('./supabasePublicEnv.cjs');
 
 /** Default = KonnectPro / Kshatr Expert EAS project (same as app.json extra.eas.projectId). */
 const DEFAULT_EAS_PROJECT_ID = '935435de-9eba-4416-9ef8-9ce694d302b3';
@@ -12,7 +13,7 @@ const projectId =
   (appJson.expo?.extra?.eas?.projectId || '').trim() ||
   DEFAULT_EAS_PROJECT_ID;
 
-const supabaseUrl = (process.env.EXPO_PUBLIC_SUPABASE_URL || '').trim();
+const supabaseUrl = sanitizeSupabaseUrl(process.env.EXPO_PUBLIC_SUPABASE_URL || '');
 const supabaseAnonKey = (process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '').trim();
 const hasSupabasePublicEnv = Boolean(supabaseUrl && supabaseAnonKey);
 

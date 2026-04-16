@@ -2,6 +2,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { createClient } from '@supabase/supabase-js';
 
+// eslint-disable-next-line import/no-commonjs
+const { sanitizeSupabaseUrl } = require('../../supabasePublicEnv.cjs');
+
 /**
  * Same Supabase project as the web app — use EXPO_PUBLIC_* vars in `.env` (see `.env.example`).
  * Also reads `expo.extra` from app.config.js so release builds still resolve URL/key if one pipeline omits env.
@@ -10,11 +13,12 @@ import { createClient } from '@supabase/supabase-js';
 /** Resolved at call time so Metro/EAS env and `expo.extra` stay in sync. */
 export function resolveSupabasePublicConfig() {
   const extra = Constants.expoConfig?.extra ?? {};
-  const url = (
+  const rawUrl = (
     process.env.EXPO_PUBLIC_SUPABASE_URL ??
     extra.supabaseUrl ??
     ''
   ).trim();
+  const url = sanitizeSupabaseUrl(rawUrl);
   const anonKey = (
     process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ??
     extra.supabaseAnonKey ??

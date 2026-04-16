@@ -16,3 +16,6 @@ supabase/.temp/
 expert-expo-app/_eas_inspect_out/
 expert-expo-app/_eas_inspect_archive*/
 expert-expo-app/dist-expo-verify-native/
+
+# Local EAS env preview dumps — debug only, never commit
+expert-expo-app/_eas_env_*.json
