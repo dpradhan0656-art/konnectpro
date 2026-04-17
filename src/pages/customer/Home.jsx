@@ -10,6 +10,7 @@ import Logger from '../../utils/logger';
 
 import SOSButton from '../../components/common/SOSButton';
 import HomeHero from '../../components/home/HomeHero';
+import HomePromoHero from '../../components/home/HomePromoHero';
 import CategorySection from '../../components/home/CategorySection';
 import OffersSection from '../../components/home/OffersSection';
 import ServicesSection from '../../components/home/ServicesSection';
@@ -118,6 +119,8 @@ export default function Home() {
   return (
     <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-slate-950 font-sans text-slate-100 selection:bg-teal-500/35 relative pb-32">
       <SOSButton />
+
+      <HomePromoHero />
 
       <HomeHero
         locationName={locationName}

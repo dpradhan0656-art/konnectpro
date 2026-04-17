@@ -14,6 +14,9 @@ export default {
         background: "var(--bg-color)",
         surface: "var(--surface-color)",
         text: "var(--text-color)",
+        // KSHATR Premium palette (additive — used by new premium UI blocks)
+        'brand-primary': 'var(--color-primary)',
+        'brand-accent': 'var(--color-accent)',
       },
       fontFamily: {
         heading: "var(--font-heading)",

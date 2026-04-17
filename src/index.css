@@ -102,6 +102,10 @@ body {
 
 /* 🎭 DYNAMIC THEME OVERRIDES (Backup Variables) */
 :root {
+  /* KSHATR Premium Theme Defaults (new premium palette — used by brand-* Tailwind keys) */
+  --color-primary: #064E3B; /* Dark Emerald Green */
+  --color-accent: #F59E0B;  /* Premium Gold/Amber */
+
   --theme-primary: #1d4ed8;
   /* Default Navy (royal blue) */
   --theme-bg: #ffffff;
