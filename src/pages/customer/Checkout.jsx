@@ -31,6 +31,7 @@ import {
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import TimeSlotPicker from '../../components/booking/TimeSlotPicker';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -107,6 +108,7 @@ export default function Checkout() {
   const [success, setSuccess] = useState(false);
   const [user, setUser] = useState(null);
   const [date, setDate] = useState('');
+  const [timeSlot, setTimeSlot] = useState('');
 
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
@@ -308,7 +310,7 @@ export default function Checkout() {
           totalAmount: item?.price,
           bookingDate: date,
           scheduledDate: date,
-          scheduledTime: null,
+          scheduledTime: timeSlot,
           address: finalAddress,
           latitude: finalLat,
           longitude: finalLng,
@@ -398,6 +400,10 @@ export default function Checkout() {
   const handleBooking = async () => {
     if (!date) {
       alert('⚠️ Please select a preferred Date!');
+      return;
+    }
+    if (!timeSlot) {
+      alert('⚠️ Please select a preferred Time Slot!');
       return;
     }
     if (isRemoteBooking && (!contactName || !contactPhone)) {
@@ -644,12 +650,17 @@ export default function Checkout() {
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="w-full bg-slate-950/50 border border-white/10 rounded-2xl p-4 text-slate-100 font-bold focus:ring-2 focus:ring-teal-500/50 focus:bg-slate-950/70 focus:border-teal-500/30 transition-all duration-300 outline-none [color-scheme:dark]"
-                    min={new Date().toISOString().split('T')[0]}
-                 />
-             </div>
+                   className="w-full bg-slate-950/50 border border-white/10 rounded-2xl p-4 text-slate-100 font-bold focus:ring-2 focus:ring-teal-500/50 focus:bg-slate-950/70 focus:border-teal-500/30 transition-all duration-300 outline-none [color-scheme:dark]"
+                   min={new Date().toISOString().split('T')[0]}
+                />
+            </div>
 
-             {/* 👥 Remote Booking Card */}
+            {/* ⏱️ Time Slot Picker Card (light-theme island on dark Checkout bg) */}
+            <div className="bg-white p-5 md:p-6 rounded-3xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] ring-1 ring-emerald-500/10">
+                <TimeSlotPicker selectedSlot={timeSlot} onSelectSlot={setTimeSlot} />
+            </div>
+
+            {/* 👥 Remote Booking Card */}
              <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-3xl border border-white/10 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] transition-all duration-300 ring-1 ring-white/5">
                 <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
