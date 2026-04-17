@@ -12,6 +12,6 @@ if (!supabaseUrl || !supabaseKey) {
 // 3. Client Create karna (custom storageKey reduces multi-tab lock contention)
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
-    storageKey: 'kshatryx-auth-token',
+    storageKey: 'kshatr-auth-token',
   },
 });
