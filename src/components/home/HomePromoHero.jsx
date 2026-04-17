@@ -1,67 +1,71 @@
+// src/components/home/HomePromoHero.jsx (Smart Anchor Fix)
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-/**
- * HomePromoHero — KSHATR Premium 3-part promo banner.
- * Additive: renders above the existing interactive HomeHero (location/search/categories)
- * so we never break core booking flow state or routing.
- */
 const HomePromoHero = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-brand-primary text-white rounded-2xl mx-4 my-6 overflow-hidden relative shadow-xl">
-      {/* 3-Part Flex Container */}
-      <div className="flex items-center justify-between gap-2 px-3 py-8 md:gap-4 md:px-8 md:py-10 relative z-10">
-
-        {/* Left: Happy Customer Image */}
-        <div className="w-1/4 flex justify-center">
+    <div className="relative w-full max-w-[100vw] overflow-hidden rounded-3xl bg-brand-primary shadow-2xl px-0 pt-0 pb-0">
+      <div className="relative flex items-center justify-between w-full h-[320px] sm:h-[350px] md:h-[400px] lg:h-[450px]">
+        
+        {/* ==============================
+           LEFT IMAGE: HAPPY CUSTOMER
+           Fix: Changed back to object-cover and added object-left-top to eliminate top blank space
+           ============================== */}
+        <div className="absolute left-0 top-0 h-full w-[45%] md:w-[40%] z-0">
           <img
             src="/images/happy-customer.png"
             alt="Happy Customer"
-            className="w-28 sm:w-32 md:w-44 lg:w-52 h-auto object-contain drop-shadow-2xl"
+            className="w-full h-full object-cover object-left-top z-0"
             onError={(e) => {
               e.target.onerror = null;
-              e.target.src = 'https://via.placeholder.com/100/064E3B/FFFFFF?text=Customer';
+              e.target.src = 'https://via.placeholder.com/300/064E3B/FFFFFF?text=Customer';
             }}
           />
+          {/* subtle gradient fade for better blend */}
+          <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-r from-transparent via-brand-primary/60 to-brand-primary" />
         </div>
 
-        {/* Center: Offer & Text */}
-        <div className="w-2/4 text-center px-1">
-          <h2 className="text-base md:text-2xl font-extrabold leading-tight mb-1">
-            Book Trusted <br className="hidden md:block" />
+        {/* ==============================
+           CENTRAL TEXT: Book Trusted Experts
+           ============================== */}
+        <div className="relative z-10 flex flex-col items-center justify-center text-center max-w-xl mx-auto px-4 w-[50%] md:w-[60%] h-full">
+          <p className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight drop-shadow-lg">
+            Book Trusted <br />
             <span className="text-brand-accent">Experts in 2 Hours!</span> ⚡
-          </h2>
-          <p className="text-[10px] md:text-sm text-gray-200 mb-3 font-medium">
-            KSHATR Home Services. Guaranteed Quality.
           </p>
-          <button
+          <p className="text-white/90 text-sm sm:text-base mt-3 mb-6 max-w-md drop-shadow-md">
+            KSHATR Home Services, Guaranteed Quality
+          </p>
+          <button 
             onClick={() => navigate('/category/all')}
-            className="bg-white text-brand-primary text-xs md:text-sm font-bold py-2 px-5 rounded-full shadow-lg hover:bg-gray-100 transition-all transform hover:scale-105"
+            className="bg-brand-accent text-emerald-950 px-10 py-4 rounded-full font-bold text-lg hover:bg-white transition-colors flex items-center gap-2 group shadow-xl"
           >
             Explore Services
           </button>
         </div>
 
-        {/* Right: KSHATR Professional Image */}
-        <div className="w-1/4 flex justify-center">
+        {/* ==============================
+           RIGHT IMAGE: KSHATR EXPERT
+           Fix: Changed back to object-cover and added object-right-top to eliminate top blank space
+           ============================= */}
+        <div className="absolute right-0 top-0 h-full w-[45%] md:w-[40%] z-0">
           <img
             src="/images/kshatr-expert.png"
-            alt="KSHATR Professional"
-            className="w-28 sm:w-32 md:w-44 lg:w-52 h-auto object-contain drop-shadow-2xl"
+            alt="KSHATR Expert"
+            className="w-full h-full object-cover object-right-top z-0"
             onError={(e) => {
               e.target.onerror = null;
-              e.target.src = 'https://via.placeholder.com/100/064E3B/FFFFFF?text=Expert';
+              e.target.src = 'https://via.placeholder.com/300/064E3B/FFFFFF?text=Expert';
             }}
           />
+          {/* subtle gradient fade for better blend */}
+          <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-l from-transparent via-brand-primary/60 to-brand-primary" />
         </div>
 
       </div>
-
-      {/* Abstract Background Elements for Premium Feel */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10 blur-xl"></div>
-      <div className="absolute bottom-0 left-0 w-24 h-24 bg-brand-accent opacity-20 rounded-full -ml-10 -mb-10 blur-2xl"></div>
     </div>
   );
 };

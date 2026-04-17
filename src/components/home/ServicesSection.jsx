@@ -16,8 +16,8 @@ export default function ServicesSection({ services, cart, onAddToCart }) {
   return (
     <section className="px-4 sm:px-6 max-w-4xl mx-auto w-full min-w-0 overflow-hidden" aria-labelledby="services-heading">
       <div className="flex items-center justify-between gap-2 mb-4">
-        <h2 id="services-heading" className="font-bold text-white text-xl tracking-tight flex items-center gap-2">
-          <Tag size={20} className="text-blue-400" aria-hidden="true" />
+        <h2 id="services-heading" className="font-display font-extrabold text-white text-xl tracking-tight flex items-center gap-2 border-l-[3px] border-amber-400 pl-3">
+          <Tag size={20} className="text-amber-400" aria-hidden="true" />
           Bestselling Services
         </h2>
         {services.length > 1 && (

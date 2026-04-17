@@ -84,7 +84,7 @@ export default function ServiceCard({
   const imageSrc = useImageUrl ? rawImage : fallbackImage;
 
   return (
-    <article className="min-w-[200px] w-[200px] max-w-[200px] flex flex-col bg-white rounded-2xl border border-slate-200/90 shadow-[0_12px_40px_-12px_rgba(15,23,42,0.08)] hover:shadow-[0_16px_48px_-8px_rgba(37,99,235,0.12)] hover:border-blue-300/80 hover:-translate-y-1 transition-all duration-300 group overflow-hidden active:scale-[0.99] ring-1 ring-slate-100">
+    <article className="min-w-[200px] w-[200px] max-w-[200px] flex flex-col bg-white rounded-2xl border border-slate-200/90 shadow-[0_12px_40px_-12px_rgba(15,23,42,0.08)] hover:shadow-[0_16px_48px_-8px_rgba(245,158,11,0.30)] hover:border-amber-300/70 hover:-translate-y-1 transition-all duration-300 group overflow-hidden active:scale-[0.99] ring-1 ring-slate-100">
       <div className="relative w-full aspect-[4/3] bg-slate-100 shrink-0 flex items-center justify-center overflow-hidden">
         <img
           src={imageSrc}
@@ -104,7 +104,7 @@ export default function ServiceCard({
           <span className="text-slate-900 text-lg font-bold shrink-0 flex items-center gap-1.5" aria-live="polite">
             {priceLoading && isDynamicPricingEnabled ? (
               <>
-                <Loader2 className="animate-spin text-blue-600" size={18} aria-hidden="true" />
+                <Loader2 className="animate-spin text-emerald-700" size={18} aria-hidden="true" />
                 <span className="sr-only">Loading price</span>
               </>
             ) : (
@@ -112,7 +112,7 @@ export default function ServiceCard({
             )}
           </span>
         </div>
-        <h3 className="font-bold text-slate-800 text-base leading-tight mb-1 line-clamp-2 min-h-[40px] group-hover:text-blue-700 transition-colors">
+        <h3 className="font-bold text-slate-800 text-base leading-tight mb-1 line-clamp-2 min-h-[40px] group-hover:text-emerald-700 transition-colors">
           {service.name}
         </h3>
         <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest truncate mb-4">
@@ -130,7 +130,7 @@ export default function ServiceCard({
             });
           }}
           disabled={isInCart}
-          className={`w-full min-h-[44px] py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98] mt-auto ${isInCart ? 'bg-slate-100 text-slate-600 border border-slate-300 cursor-default' : 'bg-blue-600 text-white shadow-md shadow-blue-600/25 hover:bg-blue-700 border border-blue-500/80'}`}
+          className={`w-full min-h-[44px] py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98] mt-auto ${isInCart ? 'bg-slate-100 text-slate-600 border border-slate-300 cursor-default' : 'bg-emerald-700 text-white shadow-md shadow-emerald-700/30 hover:bg-emerald-800 border border-emerald-600/80'}`}
         >
           {isInCart ? (
             <>
