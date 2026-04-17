@@ -10,7 +10,7 @@ export default function Footer() {
 
   const [contactInfo, setContactInfo] = useState({
     phone: '+91 9589634799',
-    email: 'apnahunars@gmail.com',
+    email: 'support@kshatr.com',
     address: 'Jabalpur, Madhya Pradesh,\nIndia - 482005'
   });
 

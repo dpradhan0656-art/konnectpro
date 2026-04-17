@@ -43,10 +43,10 @@ export default function Careers() {
                 We are always looking for talented developers, designers, and operation managers. Send your CV directly to our HR team.
              </p>
              
-             <a href="mailto:apnahunars@gmail.com" className="inline-flex items-center gap-3 bg-white text-slate-900 px-6 py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-teal-50 transition-all active:scale-95">
-                <Mail size={20} className="text-teal-600"/>
-                apnahunars@gmail.com
-             </a>
+            <a href="mailto:support@kshatr.com" className="inline-flex items-center gap-3 bg-white text-slate-900 px-6 py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-emerald-50 transition-all active:scale-95">
+               <Mail size={20} className="text-emerald-700"/>
+               support@kshatr.com
+            </a>
              
              <p className="text-[10px] text-slate-500 mt-6 uppercase tracking-widest">
                 Powered by Kshatryx Technologies

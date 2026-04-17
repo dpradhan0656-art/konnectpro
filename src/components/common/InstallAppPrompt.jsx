@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Download, X } from 'lucide-react';
 import { usePwaInstallPrompt } from '../../hooks/usePwaInstallPrompt';
 
-const STORAGE_KEY = 'apnahunar_install_prompt_dismissed';
+const STORAGE_KEY = 'kshatryx_install_prompt_dismissed';
 
 export default function InstallAppPrompt() {
   const [show, setShow] = useState(false);

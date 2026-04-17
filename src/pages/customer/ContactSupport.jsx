@@ -13,7 +13,7 @@ const FAQ_ITEMS = [
 const OFFICIAL_CONTACT = {
   phone: '+91-9589634799',
   phoneHref: '+919589634799',
-  email: 'apnahunars@gmail.com',
+  email: 'support@kshatr.com',
   address: 'H-36, Mastana Road, Ranjhi, Jabalpur, MP - 482005'
 };
 

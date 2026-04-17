@@ -27,7 +27,7 @@ export const BRAND = {
   },
 
   contact: {
-    email: "apnahunars@gmail.com",
+    email: "support@kshatr.com",
     phone: "+91-9589634799", // Official support number
     address: "H-36, Mastana Road, Ranjhi, Jabalpur, MP - 482005"
   }

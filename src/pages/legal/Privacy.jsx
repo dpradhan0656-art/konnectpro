@@ -73,7 +73,7 @@ export default function Privacy() {
                 <strong>Website:</strong> www.kshatr.com
               </p>
               <p className="text-sm">
-                <strong>Email:</strong> apnahunars@gmail.com
+                <strong>Email:</strong> support@kshatr.com
               </p>
               <p className="text-sm">
                 <strong>Phone:</strong> +91-9589634799
