@@ -63,7 +63,7 @@ export default function Bookings() {
       switch(status) {
           case 'pending': return <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-amber-200 flex items-center gap-1"><Clock size={12}/> Finding Expert</span>;
           case 'assigned': 
-          case 'accepted': return <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-blue-200 flex items-center gap-1"><User size={12}/> Expert Assigned</span>;
+          case 'accepted': return <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-emerald-200 flex items-center gap-1"><User size={12}/> Expert Assigned</span>;
           case 'in_progress': return <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-yellow-200 flex items-center gap-1"><Wrench size={12}/> Job Started</span>;
           case 'completed': return <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-green-200 flex items-center gap-1"><CheckCircle size={12}/> Completed</span>;
           case 'cancelled': return <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-red-200 flex items-center gap-1"><XCircle size={12}/> Cancelled</span>;
@@ -89,7 +89,7 @@ export default function Bookings() {
           <div className="relative w-full mt-8 mb-8 px-2">
               <div className="absolute top-4 left-6 right-6 h-1 bg-slate-100 rounded-full z-0"></div>
               <div 
-                className="absolute top-4 left-6 h-1 bg-teal-500 rounded-full z-0 transition-all duration-1000" 
+                className="absolute top-4 left-6 h-1 bg-emerald-600 rounded-full z-0 transition-all duration-1000" 
                 style={{ width: `calc(${(currentIndex / 3) * 100}% - 24px)` }}
               ></div>
               <div className="flex justify-between relative z-10">
@@ -98,10 +98,10 @@ export default function Bookings() {
                       const Icon = step.icon;
                       return (
                           <div key={step.id} className="flex flex-col items-center gap-2 w-16">
-                              <div className={`w-9 h-9 rounded-full flex items-center justify-center border-4 ${isActive ? 'bg-teal-500 border-white text-white shadow-lg shadow-teal-500/40' : 'bg-slate-100 border-white text-slate-300'}`}>
+                              <div className={`w-9 h-9 rounded-full flex items-center justify-center border-4 ${isActive ? 'bg-emerald-600 border-white text-white shadow-lg shadow-emerald-600/40' : 'bg-slate-100 border-white text-slate-300'}`}>
                                   <Icon size={14} />
                               </div>
-                              <span className={`text-[9px] font-black uppercase tracking-wider text-center ${isActive ? 'text-teal-700' : 'text-slate-400'}`}>{step.label}</span>
+                              <span className={`text-[9px] font-black uppercase tracking-wider text-center ${isActive ? 'text-emerald-700' : 'text-slate-400'}`}>{step.label}</span>
                           </div>
                       );
                   })}
@@ -120,7 +120,7 @@ export default function Bookings() {
         {loading ? (
             /* OLD: text-center py-20 — no centering/containment */
             <div className="flex flex-col items-center justify-center min-h-[calc(100vh-120px)] w-full max-w-[100vw] text-center px-4" style={{ minHeight: 'calc(100dvh - 120px)' }}>
-                <Loader2 className="animate-spin w-8 h-8 text-teal-500 mb-4" />
+                <Loader2 className="animate-spin w-8 h-8 text-emerald-600 mb-4" />
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Loading Your Bookings...</p>
                 <p className="mt-3 text-[10px] font-bold uppercase tracking-widest text-slate-400/80">
                   Powered by Kshatryx Technologies
@@ -140,7 +140,7 @@ export default function Bookings() {
                     <span className="text-4xl sm:text-5xl block mb-4" aria-hidden>📅</span>
                     <h3 className="text-lg font-bold text-slate-700 mb-2">No bookings yet</h3>
                     <p className="text-slate-400 text-sm mb-6">You haven't booked any service yet.</p>
-                    <button onClick={() => navigate('/')} className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all">
+                    <button onClick={() => navigate('/')} className="bg-emerald-700 hover:bg-emerald-800 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-emerald-900/30 active:scale-95 transition-all">
                         Book Now
                     </button>
                 </div>
@@ -162,15 +162,15 @@ export default function Bookings() {
                         {renderTimeline(booking.status)}
 
                         {booking.experts ? (
-                            <div className="bg-teal-50 border border-teal-100 p-4 rounded-xl flex items-center gap-4 mb-6">
-                                <div className="w-10 h-10 bg-teal-500 rounded-full flex items-center justify-center text-white font-black">
+                            <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl flex items-center gap-4 mb-6">
+                                <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-black">
                                     {booking.experts.name?.charAt(0) || 'E'}
                                 </div>
                                 <div>
-                                    <p className="text-[10px] font-black text-teal-600 uppercase tracking-widest">Expert Assigned</p>
+                                    <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Expert Assigned</p>
                                     <h4 className="font-bold text-slate-900">{booking.experts.name}</h4>
                                 </div>
-                                <a href={`tel:${booking.experts.phone}`} className="ml-auto bg-teal-500 p-2.5 rounded-full text-white shadow-md">
+                                <a href={`tel:${booking.experts.phone}`} className="ml-auto bg-emerald-600 hover:bg-emerald-700 p-2.5 rounded-full text-white shadow-md transition-colors">
                                     <Phone size={16}/>
                                 </a>
                             </div>

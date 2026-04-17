@@ -9,7 +9,7 @@ function CartItemIcon({ item }) {
   const showImg = isImageUrl(item.image) && !imgError;
   const emoji = item.image && !isImageUrl(item.image) ? item.image : getServiceEmoji(item.category || item.name);
   return (
-    <div className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden shrink-0 bg-teal-50">
+    <div className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden shrink-0 bg-emerald-50">
       {showImg ? (
         <img src={item.image} alt={item.name} className="w-full h-full object-cover" onError={() => setImgError(true)} />
       ) : (
@@ -40,7 +40,7 @@ export default function Cart() {
         </p>
         <button
           onClick={() => navigate('/')}
-          className="bg-slate-900 text-white px-6 sm:px-8 py-3 rounded-xl font-bold hover:bg-slate-800 transition-all flex items-center gap-2"
+          className="bg-emerald-700 text-white px-6 sm:px-8 py-3 rounded-xl font-bold hover:bg-emerald-800 transition-all flex items-center gap-2"
         >
           <ArrowLeft size={18} /> Go to Services
         </button>
@@ -71,7 +71,7 @@ export default function Cart() {
               <div>
                 <h3 className="font-bold text-slate-800 text-sm">{item.name}</h3>
                 <p className="text-[10px] text-slate-400 uppercase font-black">{item.category || 'Service'}</p>
-                <p className="text-sm font-black text-blue-600 mt-1">₹{item.base_price || item.price}</p>
+                <p className="text-sm font-black text-emerald-700 mt-1">₹{item.base_price || item.price}</p>
               </div>
             </div>
 
@@ -112,10 +112,10 @@ export default function Cart() {
         <div className="max-w-md mx-auto">
             <button 
                 onClick={() => navigate('/checkout')} 
-                className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-blue-500/30 flex justify-between items-center px-6 hover:bg-blue-700 transition-all active:scale-95"
+                className="w-full bg-emerald-700 text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-emerald-900/40 flex justify-between items-center px-6 hover:bg-emerald-800 transition-all active:scale-95"
             >
                 <div className="text-left">
-                    <p className="text-[10px] text-blue-200 uppercase leading-none">Total to pay</p>
+                    <p className="text-[10px] text-amber-200 uppercase leading-none">Total to pay</p>
                     <p className="text-xl">₹{cartTotal}</p>
                 </div>
                 <span className="flex items-center gap-2">Checkout <ArrowRight size={20}/></span>

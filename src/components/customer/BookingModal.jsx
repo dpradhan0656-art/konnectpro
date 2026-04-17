@@ -19,6 +19,7 @@ import {
   User,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import TimeSlotPicker from '../booking/TimeSlotPicker';
 
 const loadRazorpayScript = () =>
   new Promise((resolve) => {
@@ -54,6 +55,7 @@ export default function BookingModal({ service, onClose, user }) {
 
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
   const [address, setAddress] = useState('');
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
@@ -166,7 +168,7 @@ export default function BookingModal({ service, onClose, user }) {
         totalAmount: service?.price,
         bookingDate: date,
         scheduledDate: date,
-        scheduledTime: time,
+        scheduledTime: selectedTimeSlot,
         address,
         latitude: latitudeRow,
         longitude: longitudeRow,
@@ -224,7 +226,7 @@ export default function BookingModal({ service, onClose, user }) {
           alert('Payment window closed. No booking created.');
         },
       },
-      theme: { color: '#0f766e' },
+      theme: { color: '#047857' },
     };
 
     try {
@@ -241,6 +243,10 @@ export default function BookingModal({ service, onClose, user }) {
   const handleConfirm = async () => {
     if (!date || !time) {
       alert('Select Date & Time');
+      return;
+    }
+    if (!selectedTimeSlot) {
+      alert('Please select a time slot');
       return;
     }
     if (!address) {
@@ -268,17 +274,17 @@ export default function BookingModal({ service, onClose, user }) {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in">
-      <div className="bg-slate-900 text-white w-full max-w-md rounded-3xl p-6 shadow-2xl relative border border-slate-800">
+      <div className="bg-emerald-950 text-white w-full max-w-md rounded-3xl p-6 shadow-2xl relative border border-emerald-900">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 bg-slate-800/80 p-2 rounded-full hover:bg-red-500/20 text-slate-400 hover:text-red-300 transition-colors"
+          className="absolute right-4 top-4 bg-emerald-900/80 p-2 rounded-full hover:bg-red-500/20 text-slate-400 hover:text-red-300 transition-colors"
         >
           <X size={18} />
         </button>
 
         {step === 'login' && (
           <div className="text-center py-4">
-            <div className="w-16 h-16 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-teal-400 border border-teal-500/40">
+            <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-400 border border-emerald-500/40">
               <Phone size={28} />
             </div>
             <h2 className="text-xl font-black text-white">Quick Login</h2>
@@ -291,14 +297,14 @@ export default function BookingModal({ service, onClose, user }) {
                 <input
                   type="email"
                   placeholder="Enter Email ID"
-                  className="w-full bg-slate-800 border border-slate-700 p-3 rounded-xl font-medium text-sm outline-none focus:border-teal-500 placeholder-slate-500"
+                  className="w-full bg-emerald-900 border border-emerald-800 p-3 rounded-xl font-medium text-sm outline-none focus:border-emerald-500 placeholder-slate-500"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
                 <button
                   onClick={handleQuickLogin}
                   disabled={loading}
-                  className="w-full bg-teal-600 hover:bg-teal-500 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-colors disabled:opacity-60"
+                  className="w-full bg-emerald-700 hover:bg-emerald-800 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-colors disabled:opacity-60"
                 >
                   {loading ? 'Sending...' : 'Send Login Link'}
                 </button>
@@ -323,17 +329,17 @@ export default function BookingModal({ service, onClose, user }) {
           <div className="space-y-5">
             <div className="mb-1">
               <h2 className="text-xl font-black text-white flex items-center gap-2">
-                <Calendar size={18} className="text-teal-400" />
+                <Calendar size={18} className="text-emerald-400" />
                 Confirm Details
               </h2>
-              <p className="text-[11px] font-bold text-teal-400 uppercase tracking-widest mt-1">
+              <p className="text-[11px] font-bold text-emerald-400 uppercase tracking-widest mt-1">
                 {service.name}
               </p>
             </div>
 
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-slate-900 border border-slate-800 p-3 rounded-2xl">
+                <div className="bg-emerald-950 border border-emerald-900 p-3 rounded-2xl">
                   <label className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1 mb-1">
                     <Calendar size={10} /> Date
                   </label>
@@ -343,7 +349,7 @@ export default function BookingModal({ service, onClose, user }) {
                     onChange={(e) => setDate(e.target.value)}
                   />
                 </div>
-                <div className="bg-slate-900 border border-slate-800 p-3 rounded-2xl">
+                <div className="bg-emerald-950 border border-emerald-900 p-3 rounded-2xl">
                   <label className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1 mb-1">
                     <Clock size={10} /> Time
                   </label>
@@ -355,7 +361,12 @@ export default function BookingModal({ service, onClose, user }) {
                 </div>
               </div>
 
-              <div className="bg-slate-900 border border-slate-800 p-3 rounded-2xl relative">
+              {/* ⏱️ Time Slot Picker — light-theme island (KSHATR Premium) */}
+              <div className="bg-white p-4 rounded-2xl shadow-lg ring-1 ring-emerald-500/10">
+                <TimeSlotPicker selectedSlot={selectedTimeSlot} onSelectSlot={setSelectedTimeSlot} />
+              </div>
+
+              <div className="bg-emerald-950 border border-emerald-900 p-3 rounded-2xl relative">
                 <label className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1 mb-1">
                   <MapPin size={10} /> Service Address
                 </label>
@@ -369,15 +380,15 @@ export default function BookingModal({ service, onClose, user }) {
                 <button
                   type="button"
                   onClick={handleGPSLocation}
-                  className="absolute right-2 bottom-2 p-2 bg-teal-500/15 text-teal-300 rounded-full hover:bg-teal-500/25 transition"
+                  className="absolute right-2 bottom-2 p-2 bg-emerald-500/15 text-amber-300 rounded-full hover:bg-emerald-500/25 transition"
                 >
                   <Crosshair size={16} />
                 </button>
               </div>
 
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl px-4 py-3 flex items-center justify-between">
+              <div className="bg-emerald-950 border border-emerald-900 rounded-2xl px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <User size={16} className="text-teal-400" />
+                  <User size={16} className="text-emerald-400" />
                   <div>
                     <p className="text-[11px] font-bold uppercase tracking-widest text-slate-200">
                       Booking for someone else?
@@ -394,7 +405,7 @@ export default function BookingModal({ service, onClose, user }) {
                     checked={isRemoteBooking}
                     onChange={(e) => setIsRemoteBooking(e.target.checked)}
                   />
-                  <div className="w-9 h-5 bg-slate-700 rounded-full peer-checked:bg-teal-500 transition-colors relative">
+                  <div className="w-9 h-5 bg-slate-700 rounded-full peer-checked:bg-emerald-500 transition-colors relative">
                     <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform peer-checked:translate-x-4" />
                   </div>
                 </label>
@@ -402,7 +413,7 @@ export default function BookingModal({ service, onClose, user }) {
 
               {isRemoteBooking && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="bg-slate-900 border border-slate-800 p-3 rounded-2xl">
+                  <div className="bg-emerald-950 border border-emerald-900 p-3 rounded-2xl">
                     <label className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1 mb-1">
                       <User size={10} /> Contact Name
                     </label>
@@ -414,7 +425,7 @@ export default function BookingModal({ service, onClose, user }) {
                       placeholder="Person at service address"
                     />
                   </div>
-                  <div className="bg-slate-900 border border-slate-800 p-3 rounded-2xl">
+                  <div className="bg-emerald-950 border border-emerald-900 p-3 rounded-2xl">
                     <label className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1 mb-1">
                       <Phone size={10} /> Contact Phone
                     </label>
@@ -429,10 +440,10 @@ export default function BookingModal({ service, onClose, user }) {
                 </div>
               )}
 
-              <div className="bg-slate-900 border border-slate-800 p-3 rounded-2xl">
+              <div className="bg-emerald-950 border border-emerald-900 p-3 rounded-2xl">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <MapPin size={14} className="text-teal-400" />
+                    <MapPin size={14} className="text-emerald-400" />
                     <span className="text-[10px] font-bold uppercase tracking-widest text-slate-200">
                       Manual Location Pin
                     </span>
@@ -447,14 +458,14 @@ export default function BookingModal({ service, onClose, user }) {
                     type="text"
                     value={latitude}
                     onChange={(e) => setLatitude(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 outline-none focus:border-teal-500 placeholder-slate-500"
+                    className="w-full bg-emerald-950 border border-emerald-900 rounded-xl px-3 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500 placeholder-slate-500"
                     placeholder="Lat e.g. 23.1827"
                   />
                   <input
                     type="text"
                     value={longitude}
                     onChange={(e) => setLongitude(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 outline-none focus:border-teal-500 placeholder-slate-500"
+                    className="w-full bg-emerald-950 border border-emerald-900 rounded-xl px-3 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500 placeholder-slate-500"
                     placeholder="Long e.g. 79.9864"
                   />
                 </div>
@@ -463,7 +474,7 @@ export default function BookingModal({ service, onClose, user }) {
                     href={`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-2 inline-flex items-center gap-1 text-[10px] text-teal-400 hover:text-teal-300"
+                    className="mt-2 inline-flex items-center gap-1 text-[10px] text-emerald-400 hover:text-amber-300"
                   >
                     <ArrowRight size={12} /> Preview in Google Maps
                   </a>
@@ -472,7 +483,7 @@ export default function BookingModal({ service, onClose, user }) {
 
               <div className="space-y-2">
                 <p className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1">
-                  <CreditCard size={10} className="text-teal-400" />
+                  <CreditCard size={10} className="text-emerald-400" />
                   Payment Method
                 </p>
                 <div className="grid grid-cols-2 gap-3">
@@ -481,7 +492,7 @@ export default function BookingModal({ service, onClose, user }) {
                     onClick={() => setPaymentMethod('online')}
                     className={`flex items-center gap-2 p-3 rounded-2xl border-2 text-[10px] font-bold uppercase tracking-widest transition-all ${
                       paymentMethod === 'online'
-                        ? 'border-teal-500 bg-teal-500/10 text-teal-300'
+                        ? 'border-emerald-500 bg-emerald-500/10 text-amber-300'
                         : 'border-slate-700 text-slate-300'
                     }`}
                   >
@@ -493,7 +504,7 @@ export default function BookingModal({ service, onClose, user }) {
                     onClick={() => setPaymentMethod('cash')}
                     className={`flex items-center gap-2 p-3 rounded-2xl border-2 text-[10px] font-bold uppercase tracking-widest transition-all ${
                       paymentMethod === 'cash'
-                        ? 'border-teal-500 bg-slate-800 text-teal-300'
+                        ? 'border-emerald-500 bg-emerald-900 text-amber-300'
                         : 'border-slate-700 text-slate-300'
                     }`}
                   >
@@ -504,7 +515,7 @@ export default function BookingModal({ service, onClose, user }) {
               </div>
             </div>
 
-            <div className="mt-5 pt-4 border-t border-slate-800 flex items-center justify-between">
+            <div className="mt-5 pt-4 border-t border-emerald-900 flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase text-slate-400">Total</p>
                 <p className="text-2xl font-black text-white flex items-center gap-1">
@@ -514,7 +525,7 @@ export default function BookingModal({ service, onClose, user }) {
               <button
                 onClick={handleConfirm}
                 disabled={loading}
-                className="bg-teal-600 hover:bg-teal-500 text-white px-6 py-3 rounded-xl font-black text-[11px] uppercase tracking-[0.18em] flex items-center gap-2 shadow-lg shadow-teal-900/40 transition-all disabled:opacity-60"
+                className="bg-emerald-700 hover:bg-emerald-800 text-white px-6 py-3 rounded-xl font-black text-[11px] uppercase tracking-[0.18em] flex items-center gap-2 shadow-lg shadow-emerald-900/40 transition-all disabled:opacity-60"
               >
                 {loading ? (
                   'Processing...'

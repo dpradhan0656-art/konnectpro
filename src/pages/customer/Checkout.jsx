@@ -65,10 +65,10 @@ function SuccessScreen() {
   return (
     /* Centering & containment: full viewport, safe for notches/gesture bars */
     <div
-      className="fixed inset-0 z-[100] bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex flex-col items-center justify-center p-6 text-center overflow-auto w-full max-w-[100vw] min-h-[100dvh]"
+      className="fixed inset-0 z-[100] bg-gradient-to-b from-emerald-950 via-emerald-950 to-emerald-950 flex flex-col items-center justify-center p-6 text-center overflow-auto w-full max-w-[100vw] min-h-[100dvh]"
       style={{ minHeight: '100dvh' }}
     >
-      <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-full flex items-center justify-center mb-6 sm:mb-8 shadow-2xl shadow-teal-500/35 animate-bounce shrink-0 ring-4 ring-teal-500/20">
+      <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-emerald-500 to-amber-500 rounded-full flex items-center justify-center mb-6 sm:mb-8 shadow-2xl shadow-amber-500/35 animate-bounce shrink-0 ring-4 ring-amber-400/25">
         <CheckCircle size={40} className="text-white sm:w-12 sm:h-12" aria-hidden />
       </div>
       <h1 className="text-2xl sm:text-4xl font-black text-white mb-3 tracking-tight">Booking Confirmed!</h1>
@@ -430,24 +430,24 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 pb-32 pt-24 px-4 md:px-6">
+    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-gradient-to-b from-emerald-950 via-emerald-950 to-emerald-950 pb-32 pt-24 px-4 md:px-6">
       <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
          
          {/* LEFT SIDE: ADDRESS & DETAILS */}
          <div className="space-y-6">
              <div className="mb-2">
                  <h1 className="text-3xl font-black text-white flex items-center gap-3 tracking-tight">
-                    <ShieldCheck className="text-teal-400 drop-shadow-[0_0_12px_rgba(45,212,191,0.35)]" size={32} /> Secure Checkout
+                    <ShieldCheck className="text-emerald-400 drop-shadow-[0_0_12px_rgba(52,211,153,0.35)]" size={32} /> Secure Checkout
                  </h1>
                  <p className="text-slate-400 text-sm mt-1 font-medium">Where should we send the expert?</p>
              </div>
 
              {/* 🏠 SAVED ADDRESSES LIST */}
              {!showNewForm && savedAddresses.length > 0 && (
-                 <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-3xl border border-white/10 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] transition-all duration-300 ring-1 ring-white/5">
+                 <div className="bg-emerald-950/60 backdrop-blur-xl p-6 rounded-3xl border border-white/10 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] transition-all duration-300 ring-1 ring-white/5">
                      <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-3">
                          <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Saved Addresses</h3>
-                         <button onClick={() => setShowNewForm(true)} className="text-teal-300 font-bold text-xs flex items-center gap-1 hover:text-teal-200 transition-colors bg-teal-500/15 border border-teal-500/25 px-3 py-1.5 rounded-full">
+                         <button onClick={() => setShowNewForm(true)} className="text-amber-300 font-bold text-xs flex items-center gap-1 hover:text-amber-200 transition-colors bg-emerald-500/15 border border-emerald-500/25 px-3 py-1.5 rounded-full">
                              <Plus size={14}/> Add New
                          </button>
                      </div>
@@ -458,20 +458,20 @@ export default function Checkout() {
                               key={addr.id}
                               onClick={() => setSelectedAddressId(addr.id)}
                               className={`p-4 rounded-2xl border-2 cursor-pointer transition-all duration-300 flex items-start gap-4 ${
-                                  selectedAddressId === addr.id ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_20px_rgba(20,184,166,0.15)]' : 'bg-white/5 border-white/10 hover:border-teal-500/40'
+                                  selectedAddressId === addr.id ? 'bg-emerald-500/10 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.15)]' : 'bg-white/5 border-white/10 hover:border-emerald-500/40'
                               }`}
                            >
                                <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-                                   selectedAddressId === addr.id ? 'border-teal-400 bg-teal-500 text-white' : 'border-slate-500'
+                                   selectedAddressId === addr.id ? 'border-emerald-400 bg-emerald-500 text-white' : 'border-slate-500'
                                }`}>
                                    {selectedAddressId === addr.id && <div className="w-2 h-2 bg-white rounded-full"/>}
                                </div>
                                <div className="w-full">
-                                   <h3 className={`font-black text-sm flex items-center gap-2 ${selectedAddressId === addr.id ? 'text-teal-200' : 'text-slate-200'}`}>
+                                   <h3 className={`font-black text-sm flex items-center gap-2 ${selectedAddressId === addr.id ? 'text-amber-200' : 'text-slate-200'}`}>
                                       {addr.tag === 'Home' ? <Home size={14}/> : addr.tag === 'Work' ? <Briefcase size={14}/> : <MapPin size={14}/>} 
                                       {addr.tag}
                                    </h3>
-                                   <p className={`text-xs mt-1.5 leading-relaxed line-clamp-2 ${selectedAddressId === addr.id ? 'text-teal-300/90' : 'text-slate-400'}`}>
+                                   <p className={`text-xs mt-1.5 leading-relaxed line-clamp-2 ${selectedAddressId === addr.id ? 'text-amber-300/90' : 'text-slate-400'}`}>
                                        {addr.address}
                                    </p>
                                </div>
@@ -483,9 +483,9 @@ export default function Checkout() {
 
              {/* 📍 NEW ADDRESS FORM CARD */}
              {showNewForm && (
-                 <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-3xl border border-white/10 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] animate-in fade-in slide-in-from-top-4 transition-all duration-300 ring-1 ring-white/5">
+                 <div className="bg-emerald-950/60 backdrop-blur-xl p-6 rounded-3xl border border-white/10 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] animate-in fade-in slide-in-from-top-4 transition-all duration-300 ring-1 ring-white/5">
                      <div className="flex justify-between items-center mb-5 border-b border-white/10 pb-4">
-                        <h3 className="font-black text-white flex items-center gap-2 text-lg"><MapPin className="text-teal-400"/> Service Location</h3>
+                        <h3 className="font-black text-white flex items-center gap-2 text-lg"><MapPin className="text-emerald-400"/> Service Location</h3>
                         {savedAddresses.length > 0 && (
                             <button onClick={() => setShowNewForm(false)} className="text-slate-400 hover:text-white text-[11px] font-bold uppercase tracking-widest px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-colors">Cancel</button>
                         )}
@@ -496,7 +496,7 @@ export default function Checkout() {
                        type="button"
                        onClick={detectLocation}
                        disabled={locationLoading}
-                       className="w-full mb-6 py-4 rounded-2xl bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-lg shadow-teal-500/25 transition-all duration-300 disabled:opacity-70 active:scale-[0.98]"
+                       className="w-full mb-6 py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-lg shadow-emerald-700/30 transition-all duration-300 disabled:opacity-70 active:scale-[0.98]"
                      >
                        {locationLoading ? <Loader2 size={22} className="animate-spin" /> : <Navigation size={22} />}
                        {locationLoading ? 'Finding your location...' : '📍 Use My Current Location'}
@@ -507,7 +507,7 @@ export default function Checkout() {
                              <button 
                                 key={tag} 
                                 onClick={() => setNewTag(tag)}
-                                className={`px-5 py-2.5 rounded-xl text-xs font-bold border transition-all duration-300 ${newTag === tag ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white border-teal-500/40 shadow-lg shadow-teal-500/20' : 'bg-white/5 text-slate-400 border-white/10 hover:border-teal-500/30 hover:bg-white/10'}`}
+                                className={`px-5 py-2.5 rounded-xl text-xs font-bold border transition-all duration-300 ${newTag === tag ? 'bg-gradient-to-r from-emerald-700 to-emerald-800 text-white border-emerald-500/40 shadow-lg shadow-emerald-500/20' : 'bg-white/5 text-slate-400 border-white/10 hover:border-emerald-500/30 hover:bg-white/10'}`}
                              >
                                  {tag === 'Home' && <Home size={12} className="inline mr-1.5 -mt-0.5" />}
                                  {tag === 'Work' && <Briefcase size={12} className="inline mr-1.5 -mt-0.5" />}
@@ -521,13 +521,13 @@ export default function Checkout() {
                         value={newAddress}
                         onChange={(e) => setNewAddress(e.target.value)}
                         placeholder="e.g. House 12, Near City Mall, Ranjhi..."
-                        className="w-full bg-slate-950/50 border border-white/10 rounded-2xl p-4 text-slate-100 font-medium focus:ring-2 focus:ring-teal-500/50 focus:bg-slate-950/70 focus:border-teal-500/30 transition-all duration-300 outline-none h-24 resize-none mb-5 placeholder:text-slate-500"
+                        className="w-full bg-emerald-950/50 border border-white/10 rounded-2xl p-4 text-slate-100 font-medium focus:ring-2 focus:ring-emerald-500/50 focus:bg-emerald-950/70 focus:border-emerald-500/30 transition-all duration-300 outline-none h-24 resize-none mb-5 placeholder:text-slate-500"
                      />
 
                      {/* 🗺️ Map & Search */}
                      <div className="mt-6">
                         <div className="flex items-center gap-2 mb-3">
-                            <MapPinned className="text-teal-600" size={18}/>
+                            <MapPinned className="text-emerald-600" size={18}/>
                             <p className="text-sm font-black text-white">Pin your exact location</p>
                         </div>
                         <p className="text-xs text-slate-400 mb-4 font-medium">
@@ -535,8 +535,8 @@ export default function Checkout() {
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-2 mb-4 p-3 bg-white/5 rounded-2xl border border-white/10">
-                          <div className="flex-1 flex items-center gap-2 px-4 py-2.5 bg-slate-950/40 rounded-xl border border-white/10 focus-within:ring-2 focus-within:ring-teal-500/40 focus-within:border-teal-500/30 transition-all">
-                            <Search size={18} className="text-teal-400/70 shrink-0" />
+                          <div className="flex-1 flex items-center gap-2 px-4 py-2.5 bg-emerald-950/40 rounded-xl border border-white/10 focus-within:ring-2 focus-within:ring-emerald-500/40 focus-within:border-emerald-500/30 transition-all">
+                            <Search size={18} className="text-emerald-400/70 shrink-0" />
                             <input
                               type="text"
                               value={searchQuery}
@@ -550,7 +550,7 @@ export default function Checkout() {
                             type="button"
                             onClick={handleSearchLocation}
                             disabled={searchLoading || !searchQuery.trim()}
-                            className="px-6 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 shadow-md shadow-teal-600/20 text-white text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-6 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 shadow-md shadow-emerald-700/30 text-white text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {searchLoading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
                             Search
@@ -561,7 +561,7 @@ export default function Checkout() {
                           <button
                             type="button"
                             onClick={() => setMapType(mapType === 'street' ? 'satellite' : 'street')}
-                            className="absolute top-3 right-3 z-[400] bg-slate-950/90 backdrop-blur-xl p-2.5 rounded-xl shadow-lg border border-white/15 text-slate-200 hover:text-teal-300 hover:border-teal-500/40 transition-all font-bold text-[10px] uppercase tracking-widest flex items-center gap-2"
+                            className="absolute top-3 right-3 z-[400] bg-emerald-950/90 backdrop-blur-xl p-2.5 rounded-xl shadow-lg border border-white/15 text-slate-200 hover:text-amber-300 hover:border-emerald-500/40 transition-all font-bold text-[10px] uppercase tracking-widest flex items-center gap-2"
                           >
                             <Layers size={14} />
                             {mapType === 'street' ? 'Satellite' : 'Map'}
@@ -569,8 +569,8 @@ export default function Checkout() {
 
                           {!manualLat && !manualLng && (
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] pointer-events-none">
-                              <div className="bg-slate-950/90 backdrop-blur-xl px-6 py-4 rounded-2xl shadow-xl border border-white/10 text-center ring-1 ring-teal-500/20">
-                                <MapPinned className="mx-auto text-teal-400 mb-2" size={32} />
+                              <div className="bg-emerald-950/90 backdrop-blur-xl px-6 py-4 rounded-2xl shadow-xl border border-white/10 text-center ring-1 ring-emerald-500/20">
+                                <MapPinned className="mx-auto text-emerald-400 mb-2" size={32} />
                                 <p className="text-sm font-bold text-white">Tap on map to pin</p>
                                 <p className="text-xs text-slate-400 mt-0.5">Or use "Use My Location" above</p>
                               </div>
@@ -628,7 +628,7 @@ export default function Checkout() {
                               href={`https://www.google.com/maps/search/?api=1&query=${manualLat},${manualLng}`}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center gap-2 text-xs font-bold text-teal-300 hover:text-teal-200 transition-colors bg-teal-500/15 border border-teal-500/25 px-4 py-2 rounded-xl"
+                              className="inline-flex items-center gap-2 text-xs font-bold text-amber-300 hover:text-amber-200 transition-colors bg-emerald-500/15 border border-emerald-500/25 px-4 py-2 rounded-xl"
                             >
                               <Navigation size={14}/> Open in Google Maps
                             </a>
@@ -642,15 +642,15 @@ export default function Checkout() {
              )}
 
              {/* 📅 Date Picker Card */}
-             <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-3xl border border-white/10 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] transition-all duration-300 ring-1 ring-white/5">
+             <div className="bg-emerald-950/60 backdrop-blur-xl p-6 rounded-3xl border border-white/10 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] transition-all duration-300 ring-1 ring-white/5">
                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                    <Calendar size={14} className="text-teal-400"/> Preferred Service Date
+                    <Calendar size={14} className="text-emerald-400"/> Preferred Service Date
                  </label>
                  <input 
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                   className="w-full bg-slate-950/50 border border-white/10 rounded-2xl p-4 text-slate-100 font-bold focus:ring-2 focus:ring-teal-500/50 focus:bg-slate-950/70 focus:border-teal-500/30 transition-all duration-300 outline-none [color-scheme:dark]"
+                   className="w-full bg-emerald-950/50 border border-white/10 rounded-2xl p-4 text-slate-100 font-bold focus:ring-2 focus:ring-emerald-500/50 focus:bg-emerald-950/70 focus:border-emerald-500/30 transition-all duration-300 outline-none [color-scheme:dark]"
                    min={new Date().toISOString().split('T')[0]}
                 />
             </div>
@@ -661,11 +661,11 @@ export default function Checkout() {
             </div>
 
             {/* 👥 Remote Booking Card */}
-             <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-3xl border border-white/10 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] transition-all duration-300 ring-1 ring-white/5">
+             <div className="bg-emerald-950/60 backdrop-blur-xl p-6 rounded-3xl border border-white/10 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] transition-all duration-300 ring-1 ring-white/5">
                 <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-teal-500/15 border border-teal-500/25 flex items-center justify-center shrink-0">
-                            <User className="text-teal-400" size={18}/>
+                        <div className="w-10 h-10 rounded-full bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
+                            <User className="text-emerald-400" size={18}/>
                         </div>
                         <div>
                             <p className="text-[11px] font-black text-white uppercase tracking-widest mb-0.5">Booking for someone else?</p>
@@ -679,7 +679,7 @@ export default function Checkout() {
                           checked={isRemoteBooking}
                           onChange={(e) => setIsRemoteBooking(e.target.checked)}
                         />
-                        <div className="w-11 h-6 bg-slate-700 rounded-full peer-checked:bg-teal-500 transition-colors relative shadow-inner border border-white/10">
+                        <div className="w-11 h-6 bg-slate-700 rounded-full peer-checked:bg-emerald-500 transition-colors relative shadow-inner border border-white/10">
                             <div className="absolute top-[2px] left-[2px] w-5 h-5 bg-white rounded-full shadow-sm transition-transform peer-checked:translate-x-5" />
                         </div>
                     </label>
@@ -696,7 +696,7 @@ export default function Checkout() {
                            value={contactName}
                            onChange={(e) => setContactName(e.target.value)}
                            placeholder="Person at address"
-                           className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-slate-100 outline-none focus:ring-2 focus:ring-teal-500/50 transition-all duration-300 placeholder:text-slate-500"
+                           className="w-full bg-emerald-950/50 border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-slate-100 outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all duration-300 placeholder:text-slate-500"
                          />
                      </div>
                      <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
@@ -708,7 +708,7 @@ export default function Checkout() {
                            value={contactPhone}
                            onChange={(e) => setContactPhone(e.target.value)}
                            placeholder="10-digit mobile"
-                           className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-slate-100 outline-none focus:ring-2 focus:ring-teal-500/50 transition-all duration-300 placeholder:text-slate-500"
+                           className="w-full bg-emerald-950/50 border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-slate-100 outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all duration-300 placeholder:text-slate-500"
                          />
                      </div>
                   </div>
@@ -717,9 +717,9 @@ export default function Checkout() {
          </div>
 
         {/* RIGHT SIDE: ORDER SUMMARY */}
-        <div className="bg-slate-950/95 backdrop-blur-xl p-6 md:p-8 rounded-[2.5rem] shadow-2xl shadow-black/50 border border-white/10 relative overflow-hidden h-fit sticky top-28 text-white ring-1 ring-teal-500/15">
+        <div className="bg-emerald-950/95 backdrop-blur-xl p-6 md:p-8 rounded-[2.5rem] shadow-2xl shadow-black/50 border border-white/10 relative overflow-hidden h-fit sticky top-28 text-white ring-1 ring-emerald-500/15">
             
-            <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
+            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
 
             <h2 className="text-xl font-black text-white mb-6 relative z-10 tracking-tight">Order Summary</h2>
              
@@ -727,7 +727,7 @@ export default function Checkout() {
                  {cart.map((item, i) => (
                     <div key={i} className="flex justify-between items-center text-sm">
                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-slate-900 rounded-xl flex items-center justify-center text-slate-400 font-bold text-xs border border-slate-800">{i+1}</div>
+                            <div className="w-8 h-8 bg-emerald-950 rounded-xl flex items-center justify-center text-slate-400 font-bold text-xs border border-emerald-900">{i+1}</div>
                             <span className="font-bold text-slate-200">{item.name}</span>
                          </div>
                         <span className="font-bold text-white tracking-wide">₹{item.price}</span>
@@ -735,7 +735,7 @@ export default function Checkout() {
                  ))}
              </div>
 
-            <div className="border-t border-dashed border-slate-800 my-5 relative z-10"></div>
+            <div className="border-t border-dashed border-emerald-900 my-5 relative z-10"></div>
 
             <div className="space-y-3 mb-8 relative z-10">
                 <div className="flex justify-between text-slate-400 text-sm font-medium">
@@ -744,7 +744,7 @@ export default function Checkout() {
                 <div className="flex justify-between text-slate-400 text-sm font-medium">
                     <span>Platform Fee</span><span className="text-emerald-400 font-bold tracking-wide">FREE</span>
                 </div>
-                <div className="flex justify-between items-end text-xl font-black text-white mt-5 pt-5 border-t border-slate-800">
+                <div className="flex justify-between items-end text-xl font-black text-white mt-5 pt-5 border-t border-emerald-900">
                     <span className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">To Pay</span>
                     <span className="text-3xl tracking-tight">₹{grandTotal}</span>
                 </div>
@@ -753,7 +753,7 @@ export default function Checkout() {
             {/* Payment Method Selection */}
             <div className="space-y-4 mb-8 relative z-10">
               <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <CreditCard size={14} className="text-teal-400"/> Payment Method
+                <CreditCard size={14} className="text-emerald-400"/> Payment Method
               </p>
               
               {isOnlinePaymentEnabled ? (
@@ -763,11 +763,11 @@ export default function Checkout() {
                      onClick={() => setPaymentMethod('online')}
                      className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 text-[11px] font-bold uppercase tracking-widest transition-all duration-300 ${
                        paymentMethod === 'online'
-                         ? 'border-teal-500 bg-teal-500/10 text-teal-300 shadow-[0_0_15px_rgba(20,184,166,0.15)]'
-                         : 'border-slate-800 text-slate-400 hover:border-slate-600 hover:text-slate-200 bg-slate-900/50'
+                         ? 'border-emerald-500 bg-emerald-500/10 text-amber-300 shadow-[0_0_15px_rgba(16,185,129,0.15)]'
+                         : 'border-emerald-900 text-slate-400 hover:border-slate-600 hover:text-slate-200 bg-emerald-950/50'
                      }`}
                    >
-                     <CreditCard size={20} className={paymentMethod === 'online' ? 'text-teal-400' : 'text-slate-500'}/>
+                     <CreditCard size={20} className={paymentMethod === 'online' ? 'text-emerald-400' : 'text-slate-500'}/>
                      Pay Online
                    </button>
                    <button
@@ -775,8 +775,8 @@ export default function Checkout() {
                      onClick={() => setPaymentMethod('cash')}
                      className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 text-[11px] font-bold uppercase tracking-widest transition-all duration-300 ${
                        paymentMethod === 'cash'
-                         ? 'border-slate-400 bg-slate-800 text-white shadow-[0_0_15px_rgba(255,255,255,0.05)]'
-                         : 'border-slate-800 text-slate-400 hover:border-slate-600 hover:text-slate-200 bg-slate-900/50'
+                         ? 'border-slate-400 bg-emerald-900 text-white shadow-[0_0_15px_rgba(255,255,255,0.05)]'
+                         : 'border-emerald-900 text-slate-400 hover:border-slate-600 hover:text-slate-200 bg-emerald-950/50'
                      }`}
                    >
                      <ShieldCheck size={20} className={paymentMethod === 'cash' ? 'text-slate-300' : 'text-slate-500'}/>
@@ -788,7 +788,7 @@ export default function Checkout() {
                    <button
                      type="button"
                      onClick={() => setPaymentMethod('cash')}
-                     className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-slate-400 bg-slate-800 text-white shadow-[0_0_15px_rgba(255,255,255,0.05)] text-[11px] font-bold uppercase tracking-widest transition-all duration-300"
+                     className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-slate-400 bg-emerald-900 text-white shadow-[0_0_15px_rgba(255,255,255,0.05)] text-[11px] font-bold uppercase tracking-widest transition-all duration-300"
                    >
                      <ShieldCheck size={20} className="text-slate-300" />
                      Pay After Service (Cash / UPI)
@@ -797,8 +797,8 @@ export default function Checkout() {
               )}
             </div>
 
-            <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800/80 flex items-start gap-3 mb-8 relative z-10">
-                <CreditCard className="text-teal-400 shrink-0 mt-0.5" size={16}/>
+            <div className="bg-emerald-950 p-4 rounded-2xl border border-emerald-900/80 flex items-start gap-3 mb-8 relative z-10">
+                <CreditCard className="text-emerald-400 shrink-0 mt-0.5" size={16}/>
                 <p className="text-xs font-medium text-slate-300 leading-relaxed">
                   {isOnlinePaymentEnabled && paymentMethod === 'online'
                     ? 'Secure payment via Razorpay. You will be redirected to complete the payment.'
@@ -809,7 +809,7 @@ export default function Checkout() {
             <button 
                onClick={handleBooking}
                disabled={loading}
-               className="w-full relative z-10 bg-teal-600 hover:bg-teal-500 text-white py-4 rounded-2xl font-black uppercase tracking-[0.2em] shadow-[0_8px_20px_rgba(13,148,136,0.3)] active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-70 disabled:active:scale-100"
+               className="w-full relative z-10 bg-emerald-700 hover:bg-emerald-800 text-white py-4 rounded-2xl font-black uppercase tracking-[0.2em] shadow-[0_8px_20px_rgba(4,120,87,0.35)] active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-70 disabled:active:scale-100"
             >
                {loading ? <Loader2 className="animate-spin" size={18}/> : <ShieldCheck size={18}/>} 
                {loading ? 'Processing...' : (isOnlinePaymentEnabled && paymentMethod === 'online' ? 'Pay & Book Now' : 'Confirm Booking')}
