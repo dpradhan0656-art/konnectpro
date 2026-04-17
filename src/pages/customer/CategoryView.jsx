@@ -45,19 +45,19 @@ export default function CategoryView() {
   };
 
   return (
-    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 pt-4 pb-32 font-sans text-slate-100 selection:bg-teal-500/30"> 
+    <div className="min-h-screen max-w-[100vw] w-full overflow-x-hidden bg-gradient-to-b from-emerald-950 via-emerald-950 to-emerald-950 pt-4 pb-32 font-sans text-slate-100 selection:bg-amber-400/30"> 
       
       {/* HEADER */}
-      <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 text-white pt-6 pb-10 px-6 rounded-b-[3rem] shadow-[0_24px_80px_-20px_rgba(0,0,0,0.65)] relative overflow-hidden w-full box-border border-b border-white/5">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/25 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl -ml-12 -mb-12 pointer-events-none"></div>
+      <div className="bg-gradient-to-br from-emerald-950 via-emerald-950 to-emerald-950 text-white pt-6 pb-10 px-6 rounded-b-[3rem] shadow-[0_24px_80px_-20px_rgba(0,0,0,0.65)] relative overflow-hidden w-full box-border border-b border-white/5">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/25 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl -ml-12 -mb-12 pointer-events-none"></div>
           
           <div className="relative z-10 flex items-center gap-4">
             <button onClick={() => navigate(-1)} className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full transition-all active:scale-95 border border-white/10">
                 <ArrowLeft size={24} className="text-white" />
             </button>
             <div>
-                <p className="text-blue-300 font-bold uppercase tracking-widest text-[10px] mb-1 flex items-center gap-1"><ShieldCheck size={12}/> Verified Experts</p>
+                <p className="text-amber-300 font-bold uppercase tracking-widest text-[10px] mb-1 flex items-center gap-1"><ShieldCheck size={12}/> Verified Experts</p>
                 <h1 className="text-3xl font-black capitalize tracking-tight">{cleanCategoryName}</h1>
             </div>
           </div>
@@ -68,7 +68,7 @@ export default function CategoryView() {
         
         {loading ? (
            <div className="text-center py-20 bg-white/95 backdrop-blur-xl rounded-[2rem] shadow-lg border border-slate-200/90 ring-1 ring-slate-100">
-             <div className="animate-spin w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+             <div className="animate-spin w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full mx-auto mb-4"></div>
              <p className="text-slate-600 font-bold uppercase tracking-widest animate-pulse text-xs">Loading {cleanCategoryName}...</p>
              <p className="mt-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">
                Powered by Kshatryx Technologies
@@ -88,7 +88,7 @@ export default function CategoryView() {
             const imgSrc = useImgUrl ? (rawImg || fallbackImg) : fallbackImg;
 
             return (
-            <div key={service.id} className="bg-white/95 backdrop-blur-sm p-4 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(15,23,42,0.08)] border border-slate-200/90 flex gap-4 transition-all hover:border-blue-300/90 hover:shadow-[0_16px_44px_-8px_rgba(37,99,235,0.12)] group ring-1 ring-slate-100">
+            <div key={service.id} className="bg-white/95 backdrop-blur-sm p-4 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(15,23,42,0.08)] border border-slate-200/90 flex gap-4 transition-all hover:border-emerald-400/90 hover:shadow-[0_16px_44px_-8px_rgba(16,185,129,0.18)] group ring-1 ring-slate-100">
               
               {/* IMAGE SECTION – URL ya emoji */}
               <div className="w-24 h-24 bg-slate-100 rounded-2xl overflow-hidden shrink-0 shadow-sm border border-slate-200/80 relative flex items-center justify-center">
@@ -112,7 +112,7 @@ export default function CategoryView() {
                     {/* ✅ NEW: CUSTOMER NOTE */}
                     {service.note && (
                         <div className="mt-2.5 bg-slate-50 border border-slate-200/90 p-2 rounded-lg flex gap-1.5 items-start">
-                            <Info size={12} className="text-blue-600 mt-0.5 shrink-0" />
+                            <Info size={12} className="text-emerald-600 mt-0.5 shrink-0" />
                             <p className="text-[9px] text-slate-600 leading-tight font-medium">
                                 <span className="font-bold text-slate-800">Note:</span> {service.note}
                             </p>
@@ -127,7 +127,7 @@ export default function CategoryView() {
                         {finalPrice ? (
                             <div className="text-xl font-black text-slate-900">₹{finalPrice}</div>
                         ) : (
-                            <div className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded-lg border border-blue-200/80">
+                            <div className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200/80">
                                 Price on Inspection
                             </div>
                         )}
@@ -141,7 +141,7 @@ export default function CategoryView() {
                     ) : (
                         <button 
                            onClick={() => addToCart(service)}
-                           className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-md shadow-blue-600/25 border border-blue-500/80 active:scale-95 transition-all flex items-center gap-1"
+                           className="bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-md shadow-emerald-700/30 border border-emerald-600/80 active:scale-95 transition-all flex items-center gap-1"
                         >
                            ADD <Plus size={14}/>
                         </button>

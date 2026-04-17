@@ -32,6 +32,7 @@ import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import TimeSlotPicker from '../../components/booking/TimeSlotPicker';
+import toast from 'react-hot-toast';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -108,7 +109,7 @@ export default function Checkout() {
   const [success, setSuccess] = useState(false);
   const [user, setUser] = useState(null);
   const [date, setDate] = useState('');
-  const [timeSlot, setTimeSlot] = useState('');
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
 
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
@@ -177,12 +178,12 @@ export default function Checkout() {
 
   const detectLocation = () => {
     if (!navigator.geolocation) {
-        alert("GPS not supported. Please type manually.");
+        toast.error("GPS not supported. Please type manually.");
         return;
     }
     setLocationLoading(true);
     const timeoutId = setTimeout(() => {
-        if (locationLoading) { setLocationLoading(false); alert("GPS taking too long. Please type manually."); }
+        if (locationLoading) { setLocationLoading(false); toast.error("GPS taking too long. Please type manually."); }
     }, 6000);
 
     navigator.geolocation.getCurrentPosition(async (position) => {
@@ -211,7 +212,7 @@ export default function Checkout() {
 
   const handleSearchLocation = async () => {
     if (!searchQuery.trim()) {
-      alert('Please enter a city or area name to search.');
+      toast.error('Please enter a city or area name to search.');
       return;
     }
     setSearchLoading(true);
@@ -225,7 +226,7 @@ export default function Checkout() {
       const results = await res.json();
 
       if (!results || results.length === 0) {
-        alert('Location not found. Please try a nearby landmark or area name.');
+        toast.error('Location not found. Please try a nearby landmark or area name.');
         return;
       }
       const place = results[0];
@@ -240,7 +241,7 @@ export default function Checkout() {
         setNewAddress(`House/Flat No: \nLandmark: \n${place.display_name}`);
       }
     } catch {
-      alert('Failed to search location. Please try again.');
+      toast.error('Failed to search location. Please try again.');
     } finally {
       setSearchLoading(false);
     }
@@ -253,7 +254,7 @@ export default function Checkout() {
 
     if (showNewForm) {
       if (!newAddress || newAddress.trim() === '') {
-        alert('⚠️ Please enter your complete address.');
+        toast.error('Please enter your complete address.');
         return null;
       }
       const hasGpsCoords = !!newCoords.lat;
@@ -278,7 +279,7 @@ export default function Checkout() {
         .single();
 
       if (addressError) {
-        alert('Error saving address');
+        toast.error('Error saving address');
         return null;
       }
       finalAddress = insertedAddress.address;
@@ -286,7 +287,7 @@ export default function Checkout() {
       finalLng = insertedAddress.longitude;
     } else {
       if (!selectedAddressId) {
-        alert('⚠️ Please select a delivery address.');
+        toast.error('Please select a delivery address.');
         return null;
       }
       const selected = savedAddresses.find((a) => a.id === selectedAddressId);
@@ -310,7 +311,7 @@ export default function Checkout() {
           totalAmount: item?.price,
           bookingDate: date,
           scheduledDate: date,
-          scheduledTime: timeSlot,
+          scheduledTime: selectedTimeSlot,
           address: finalAddress,
           latitude: finalLat,
           longitude: finalLng,
@@ -334,7 +335,7 @@ export default function Checkout() {
         navigate('/bookings');
       }, 2000);
     } catch (error) {
-      alert('❌ Booking Failed: ' + error.message);
+      toast.error('Booking Failed: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -342,13 +343,13 @@ export default function Checkout() {
 
   const handleOnlinePayment = async (resolvedAddress) => {
     if (!grandTotal) {
-      alert('Invalid amount for payment.');
+      toast.error('Invalid amount for payment.');
       setLoading(false);
       return;
     }
     const sdkLoaded = await loadRazorpayScript();
     if (!sdkLoaded || !window.Razorpay) {
-      alert('Unable to load Razorpay. Check your connection and try again.');
+      toast.error('Unable to load Razorpay. Check your connection and try again.');
       setLoading(false);
       return;
     }
@@ -374,22 +375,22 @@ export default function Checkout() {
       },
       modal: {
         ondismiss: () => {
-          alert('Payment window closed. No booking created.');
+          toast('Payment window closed. No booking created.', { icon: 'ℹ️' });
           setLoading(false);
         },
       },
-      theme: { color: '#0f766e' },
+      theme: { color: '#047857' },
     };
 
     try {
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', function () {
-        alert('Payment failed. Please try again or choose Cash After Service.');
+        toast.error('Payment failed. Please try again or choose Cash After Service.');
         setLoading(false);
       });
       rzp.open();
     } catch {
-      alert('Unable to open payment window. Please try again.');
+      toast.error('Unable to open payment window. Please try again.');
       setLoading(false);
     }
   };
@@ -399,15 +400,15 @@ export default function Checkout() {
 
   const handleBooking = async () => {
     if (!date) {
-      alert('⚠️ Please select a preferred Date!');
+      toast.error('Please select a preferred Date');
       return;
     }
-    if (!timeSlot) {
-      alert('⚠️ Please select a preferred Time Slot!');
+    if (!selectedTimeSlot) {
+      toast.error('Please select a preferred Time Slot');
       return;
     }
     if (isRemoteBooking && (!contactName || !contactPhone)) {
-      alert("⚠️ Please enter contact person's name and phone number.");
+      toast.error("Please enter contact person's name and phone number.");
       return;
     }
     setLoading(true);
@@ -657,7 +658,7 @@ export default function Checkout() {
 
             {/* ⏱️ Time Slot Picker Card (light-theme island on dark Checkout bg) */}
             <div className="bg-white p-5 md:p-6 rounded-3xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] ring-1 ring-emerald-500/10">
-                <TimeSlotPicker selectedSlot={timeSlot} onSelectSlot={setTimeSlot} />
+                <TimeSlotPicker selectedSlot={selectedTimeSlot} onSelectSlot={setSelectedTimeSlot} />
             </div>
 
             {/* 👥 Remote Booking Card */}

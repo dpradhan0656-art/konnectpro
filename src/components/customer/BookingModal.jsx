@@ -9,7 +9,6 @@ import {
 import {
   X,
   Calendar,
-  Clock,
   MapPin,
   CreditCard,
   ShieldCheck,
@@ -20,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import TimeSlotPicker from '../booking/TimeSlotPicker';
+import toast from 'react-hot-toast';
 
 const loadRazorpayScript = () =>
   new Promise((resolve) => {
@@ -54,7 +54,6 @@ export default function BookingModal({ service, onClose, user }) {
   const [loginSent, setLoginSent] = useState(false);
 
   const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
   const [address, setAddress] = useState('');
   const [latitude, setLatitude] = useState('');
@@ -67,7 +66,7 @@ export default function BookingModal({ service, onClose, user }) {
 
   const handleGPSLocation = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser');
+      toast.error('Geolocation is not supported by your browser');
       return;
     }
     setLoading(true);
@@ -97,7 +96,7 @@ export default function BookingModal({ service, onClose, user }) {
         }
       },
       () => {
-        alert('Location access denied. Please enable GPS.');
+        toast.error('Location access denied. Please enable GPS.');
         setLoading(false);
       }
     );
@@ -105,16 +104,16 @@ export default function BookingModal({ service, onClose, user }) {
 
   const handleQuickLogin = async () => {
     if (!email) {
-      alert('Please enter email!');
+      toast.error('Please enter email!');
       return;
     }
     setLoading(true);
     const { error } = await supabase.auth.signInWithOtp({ email });
     if (error) {
-      alert('Error: ' + error.message);
+      toast.error('Error: ' + error.message);
     } else {
       setLoginSent(true);
-      alert(`Check your email (${email}) for the login link!`);
+      toast.success(`Check your email (${email}) for the login link!`);
     }
     setLoading(false);
   };
@@ -181,12 +180,12 @@ export default function BookingModal({ service, onClose, user }) {
         contactPhone,
       });
       await insertCanonicalBookings(supabase, row);
-      alert(`✅ Booking Confirmed via ${mode === 'online' ? 'ONLINE' : 'CASH'}!`);
+      toast.success(`Booking Confirmed via ${mode === 'online' ? 'ONLINE' : 'CASH'}!`);
       onClose();
       navigate('/bookings');
     } catch (error) {
       console.error(error);
-      alert('Booking Failed!');
+      toast.error('Booking Failed!');
     } finally {
       setLoading(false);
     }
@@ -194,13 +193,13 @@ export default function BookingModal({ service, onClose, user }) {
 
   const handleOnlinePayment = async () => {
     if (!service?.price) {
-      alert('Invalid amount for payment.');
+      toast.error('Invalid amount for payment.');
       return;
     }
 
     const sdkLoaded = await loadRazorpayScript();
     if (!sdkLoaded || !window.Razorpay) {
-      alert('Unable to load Razorpay SDK. Check connection and try again.');
+      toast.error('Unable to load Razorpay SDK. Check connection and try again.');
       return;
     }
 
@@ -223,7 +222,7 @@ export default function BookingModal({ service, onClose, user }) {
       },
       modal: {
         ondismiss: () => {
-          alert('Payment window closed. No booking created.');
+          toast('Payment window closed. No booking created.', { icon: 'ℹ️' });
         },
       },
       theme: { color: '#047857' },
@@ -232,35 +231,35 @@ export default function BookingModal({ service, onClose, user }) {
     try {
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', () => {
-        alert('Payment failed. Please try again or choose Cash After Service.');
+        toast.error('Payment failed. Please try again or choose Cash After Service.');
       });
       rzp.open();
     } catch {
-      alert('Unable to open payment window. Please try again.');
+      toast.error('Unable to open payment window. Please try again.');
     }
   };
 
   const handleConfirm = async () => {
-    if (!date || !time) {
-      alert('Select Date & Time');
+    if (!date) {
+      toast.error('Please select a preferred date');
       return;
     }
     if (!selectedTimeSlot) {
-      alert('Please select a time slot');
+      toast.error('Please select a time slot');
       return;
     }
     if (!address) {
-      alert('Enter address or use GPS');
+      toast.error('Enter address or use GPS');
       return;
     }
 
     if (isRemoteBooking) {
       if (!contactName || !contactPhone) {
-        alert("Enter contact person's name and phone number");
+        toast.error("Enter contact person's name and phone number");
         return;
       }
       if (!latitude || !longitude) {
-        alert('Please drop a map pin or enter latitude & longitude for the service address.');
+        toast.error('Please drop a map pin or enter latitude & longitude for the service address.');
         return;
       }
     }
@@ -338,27 +337,17 @@ export default function BookingModal({ service, onClose, user }) {
             </div>
 
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-emerald-950 border border-emerald-900 p-3 rounded-2xl">
-                  <label className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1 mb-1">
-                    <Calendar size={10} /> Date
-                  </label>
-                  <input
-                    type="date"
-                    className="w-full bg-transparent font-semibold text-sm text-white outline-none"
-                    onChange={(e) => setDate(e.target.value)}
-                  />
-                </div>
-                <div className="bg-emerald-950 border border-emerald-900 p-3 rounded-2xl">
-                  <label className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1 mb-1">
-                    <Clock size={10} /> Time
-                  </label>
-                  <input
-                    type="time"
-                    className="w-full bg-transparent font-semibold text-sm text-white outline-none"
-                    onChange={(e) => setTime(e.target.value)}
-                  />
-                </div>
+              <div className="bg-emerald-950 border border-emerald-900 p-3 rounded-2xl">
+                <label className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1 mb-1">
+                  <Calendar size={10} /> Preferred Service Date
+                </label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="w-full bg-transparent font-semibold text-sm text-white outline-none [color-scheme:dark]"
+                />
               </div>
 
               {/* ⏱️ Time Slot Picker — light-theme island (KSHATR Premium) */}
