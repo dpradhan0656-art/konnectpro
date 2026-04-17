@@ -9,10 +9,10 @@ export default function TrustBanner() {
   return (
     <section className="px-6 max-w-4xl mx-auto w-full min-w-0 overflow-hidden" aria-labelledby="trust-heading">
       <div className="rounded-2xl p-6 md:p-8 text-slate-900 shadow-[0_16px_48px_-12px_rgba(15,23,42,0.1)] relative overflow-hidden border border-slate-200/90 bg-white ring-1 ring-slate-100">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/80 via-white to-slate-50/90 pointer-events-none" aria-hidden="true" />
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/80 via-white to-amber-50/50 pointer-events-none" aria-hidden="true" />
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="text-center md:text-left">
-            <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest mb-3 border border-blue-200/80">
+            <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest mb-3 border border-emerald-200/80">
               <ShieldCheck size={12} aria-hidden="true" /> Kshatr Guarantee
             </div>
             <h2 id="trust-heading" className="text-2xl font-bold mb-2 text-slate-900">
@@ -24,12 +24,12 @@ export default function TrustBanner() {
           </div>
           <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/90 text-center">
-              <CheckCircle size={28} className="mx-auto mb-2 text-blue-600" aria-hidden="true" />
+              <CheckCircle size={28} className="mx-auto mb-2 text-emerald-700" aria-hidden="true" />
               <div className="text-xl font-bold text-slate-900">{TRUST_VERIFIED_LABEL}</div>
               <div className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mt-1">Verified</div>
             </div>
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/90 text-center">
-              <Clock size={28} className="mx-auto mb-2 text-blue-500" aria-hidden="true" />
+              <Clock size={28} className="mx-auto mb-2 text-amber-500" aria-hidden="true" />
               <div className="text-xl font-bold text-slate-900">{TRUST_FAST_ARRIVAL_LABEL}</div>
               <div className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mt-1">Fast Arrival</div>
             </div>

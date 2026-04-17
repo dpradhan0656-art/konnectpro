@@ -6,12 +6,12 @@ import { isImageUrl } from '../../lib/serviceIconUtils';
 import { getCategoryFallbackImage } from '../../lib/fallbackImages';
 
 const BG_WASH = [
-  'from-sky-400/25 to-white/75',
-  'from-blue-400/22 to-slate-50/85',
-  'from-indigo-400/20 to-white/80',
-  'from-slate-300/30 to-white/82',
-  'from-sky-500/18 to-slate-100/88',
-  'from-blue-500/20 to-white/78',
+  'from-emerald-400/22 to-white/80',
+  'from-amber-400/20 to-white/85',
+  'from-slate-300/30 to-white/85',
+  'from-emerald-500/18 to-slate-50/88',
+  'from-amber-500/16 to-white/82',
+  'from-slate-400/22 to-white/80',
 ];
 
 /**
@@ -39,7 +39,7 @@ export default function CategoryPickModal({ open, onClose, categories, loading }
 
   const modal = (
     <div
-      className="fixed inset-0 z-[200] flex flex-col bg-slate-950/70 backdrop-blur-md p-0 sm:p-4 sm:items-center sm:justify-center"
+      className="fixed inset-0 z-[200] flex flex-col bg-emerald-950/70 backdrop-blur-md p-0 sm:p-4 sm:items-center sm:justify-center"
       role="dialog"
       aria-modal="true"
       aria-labelledby="category-pick-title"
@@ -48,7 +48,7 @@ export default function CategoryPickModal({ open, onClose, categories, loading }
         <div className="flex items-center justify-between gap-3 px-4 py-4 border-b border-slate-200 bg-slate-50/90 shrink-0">
           <div>
             <h2 id="category-pick-title" className="text-lg font-bold text-slate-900 font-display tracking-tight flex items-center gap-2">
-              <LayoutGrid className="text-blue-600 shrink-0" size={22} aria-hidden="true" />
+              <LayoutGrid className="text-emerald-700 shrink-0" size={22} aria-hidden="true" />
               Choose a category
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">Electrician, Plumber, AC — jo chahiye woh chunein</p>
@@ -66,7 +66,7 @@ export default function CategoryPickModal({ open, onClose, categories, loading }
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 py-3 [-webkit-overflow-scrolling:touch]">
           {loading && (
             <div className="flex flex-col items-center justify-center py-16 gap-3 text-slate-500">
-              <Loader2 className="animate-spin text-blue-600" size={36} />
+              <Loader2 className="animate-spin text-emerald-700" size={36} />
               <span className="text-sm font-semibold">Loading categories…</span>
             </div>
           )}
@@ -91,7 +91,7 @@ export default function CategoryPickModal({ open, onClose, categories, loading }
                     key={cat.id || slugUrl || i}
                     type="button"
                     onClick={() => goCategory(cat)}
-                    className="relative rounded-xl overflow-hidden text-left aspect-[4/3] min-h-[100px] border border-slate-200/90 shadow-sm hover:shadow-md hover:border-blue-300/80 active:scale-[0.98] transition-all group"
+                    className="relative rounded-xl overflow-hidden text-left aspect-[4/3] min-h-[100px] border border-slate-200/90 shadow-sm hover:shadow-md hover:border-amber-300/70 active:scale-[0.98] transition-all group"
                   >
                     <div className="absolute inset-0 z-0">
                       <img
@@ -117,7 +117,7 @@ export default function CategoryPickModal({ open, onClose, categories, loading }
                         <span className="font-bold text-xs sm:text-sm text-slate-900 line-clamp-2 leading-tight">
                           {cat.name}
                         </span>
-                        <ChevronRight className="text-blue-600 shrink-0" size={16} aria-hidden="true" />
+                        <ChevronRight className="text-amber-600 shrink-0" size={16} aria-hidden="true" />
                       </div>
                     </div>
                   </button>
