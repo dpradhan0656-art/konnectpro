@@ -210,7 +210,7 @@ export default function BookingModal({ service, onClose, user }) {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID,
       amount: amountInPaise,
       currency: 'INR',
-      name: 'Kshatr Home Services',
+      name: 'Kshatryx Technologies',
       description: `Payment for ${service.name}`,
       handler: async function (response) {
         await saveBooking(PAYMENT_METHODS.ONLINE, 'paid', response.razorpay_payment_id);

@@ -358,7 +358,7 @@ export default function Checkout() {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID, // was TEST fallback: || 'rzp_test_YourDummyKeyHere'
       amount: grandTotal * 100,
       currency: 'INR',
-      name: 'Kshatr Home Services',
+      name: 'Kshatryx Technologies',
       description: 'Home services booking',
       handler: async function (response) {
         await createBookings(
