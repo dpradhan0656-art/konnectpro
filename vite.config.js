@@ -33,6 +33,9 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // Allow precaching of large premium hero assets (e.g. happy-customer.png ~6.5 MB,
+        // kshatr-expert.png ~3 MB). Default is 2 MB which blocks the production build.
+        maximumFileSizeToCacheInBytes: 10485760, // 10 MB
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/images\.unsplash\.com\/.*/i,
