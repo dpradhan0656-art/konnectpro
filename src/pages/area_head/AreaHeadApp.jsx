@@ -38,6 +38,10 @@ export default function AreaHeadApp() {
   const [walletTransactions, setWalletTransactions] = useState([]);
 
   // ─── Initial auth + subscription ─────────────────────────────────────
+  // Mirrors DeepakHQ pattern: getSession() decides the auth gate; profile
+  // load happens in the background so the spinner never blocks on a slow
+  // Supabase query. A 6-second safety timeout exits the spinner no matter
+  // what (network down, RLS infinite recursion, etc.).
   useEffect(() => {
     let mounted = true;
 
@@ -47,10 +51,11 @@ export default function AreaHeadApp() {
         if (!mounted) return;
         setSession(sess);
         if (sess?.user?.id) {
-          await loadManagerProfile(sess.user.id);
+          // Fire-and-forget — profileLoading drives its own UI state.
+          loadManagerProfile(sess.user.id);
         }
-      } catch {
-        // network errors land here — user just sees login screen
+      } catch (e) {
+        console.warn('[AreaHead] getSession failed:', e);
       } finally {
         if (mounted) setAuthChecking(false);
       }
@@ -58,11 +63,16 @@ export default function AreaHeadApp() {
 
     init();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, sess) => {
+    // Safety timeout: never leave the boot spinner forever.
+    const timeoutId = setTimeout(() => {
+      if (mounted) setAuthChecking(false);
+    }, 6000);
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, sess) => {
       if (!mounted) return;
       setSession(sess);
       if (sess?.user?.id) {
-        await loadManagerProfile(sess.user.id);
+        loadManagerProfile(sess.user.id);
       } else {
         setManager(null);
         setAccessError('');
@@ -73,9 +83,12 @@ export default function AreaHeadApp() {
 
     return () => {
       mounted = false;
+      clearTimeout(timeoutId);
       if (subscription?.unsubscribe) subscription.unsubscribe();
       else if (subscription?.remove) subscription.remove();
     };
+    // loadManagerProfile is stable (only references setState fns) — safe to omit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-sync wallet ledger when this page becomes visible/focused.

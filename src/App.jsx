@@ -61,7 +61,7 @@ function ScrollToTop() {
 function AdminServiceWorkerDisable() {
   const { pathname } = useLocation();
   useEffect(() => {
-    if (!pathname.startsWith('/deepakhq')) return;
+    if (!pathname.startsWith('/deepakhq') && !pathname.startsWith('/areahead') && !pathname.startsWith('/area-head')) return;
     if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then((regs) => {
         regs.forEach((reg) => reg.unregister());
