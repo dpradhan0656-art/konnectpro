@@ -1,15 +1,22 @@
 /**
- * Gross split for Edge Functions / Razorpay Route: Expert 81%, Kshatryx 9.5%, partner pool 9.5%.
- * Integer paise; rounding remainder stays in partner pool; optional area-head % (max 9.5 of gross)
- * is deducted only from that pool.
+ * Gross split for Edge Functions / Razorpay Route.
+ *
+ * Business rule (post-Bhenaji shutdown, May 2026):
+ *   Expert 80%, Kshatryx 20%.
+ *
+ * Field-partner ("Bhenaji") layer retired. Area-head commission is the only
+ * sub-distribution and is deducted from the 20% Kshatryx pool (max 20%).
+ *
+ * Mirrors: src/services/paymentSplitService.js,
+ *          expert-expo-app/src/services/paymentSplitService.js
  */
 
-export const EXPERT_GROSS_BPS = 8100;
-export const KSHATRYX_GROSS_BPS = 950;
-export const PARTNER_GROSS_BPS = 950;
+export const EXPERT_GROSS_BPS = 8000;
+export const KSHATRYX_GROSS_BPS = 2000;
+export const PARTNER_GROSS_BPS = 0;
 export const BPS_DENOMINATOR = 10000;
-export const MAX_AREA_HEAD_COMMISSION_PCT = 9.5;
-export const LEGACY_PLATFORM_COMBINED_BPS = KSHATRYX_GROSS_BPS + PARTNER_GROSS_BPS;
+export const MAX_AREA_HEAD_COMMISSION_PCT = 20;
+export const LEGACY_PLATFORM_COMBINED_BPS = KSHATRYX_GROSS_BPS;
 
 function assertNonNegativeIntegerPaise(n: unknown): number {
   const x = typeof n === "number" ? n : Number(n);
@@ -43,25 +50,24 @@ export function splitGrossPaymentPaise(
   areaHeadCommissionPercentage?: number | null
 ): GrossSplitPaise {
   const total = assertNonNegativeIntegerPaise(totalPaise);
-  const kshatryxPaise = Math.floor((total * KSHATRYX_GROSS_BPS) / BPS_DENOMINATOR);
   const expertPaise = Math.floor((total * EXPERT_GROSS_BPS) / BPS_DENOMINATOR);
-  const partnerPoolPaise = total - kshatryxPaise - expertPaise;
+  const kshatryxPoolPaise = total - expertPaise;
 
   const pct = clampAreaHeadCommissionPct(areaHeadCommissionPercentage);
   let areaHeadPaise = 0;
   if (pct > 0) {
     areaHeadPaise = Math.floor((total * pct) / 100);
-    if (areaHeadPaise > partnerPoolPaise) areaHeadPaise = partnerPoolPaise;
+    if (areaHeadPaise > kshatryxPoolPaise) areaHeadPaise = kshatryxPoolPaise;
   }
-  const partnerPaise = partnerPoolPaise - areaHeadPaise;
+  const kshatryxPaise = kshatryxPoolPaise - areaHeadPaise;
 
   return {
     totalPaise: total,
     expertPaise,
     kshatryxPaise,
-    partnerPaise,
+    partnerPaise: 0,
     areaHeadPaise,
-    partnerPoolPaise,
+    partnerPoolPaise: 0,
     expertBps: EXPERT_GROSS_BPS,
     kshatryxBps: KSHATRYX_GROSS_BPS,
     partnerBps: PARTNER_GROSS_BPS,
@@ -82,7 +88,7 @@ export function splitPaymentAmountPaise(
   const s = splitGrossPaymentPaise(totalPaise, areaHeadCommissionPercentage);
   return {
     totalPaise: s.totalPaise,
-    platformPaise: s.kshatryxPaise + s.partnerPaise + s.areaHeadPaise,
+    platformPaise: s.kshatryxPaise + s.areaHeadPaise,
     expertPaise: s.expertPaise,
     platformBps: LEGACY_PLATFORM_COMBINED_BPS,
   };

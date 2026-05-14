@@ -5,8 +5,7 @@ import { canAccessDeepakHQ } from '../../lib/adminAccess';
 import {
   Shield, Menu, X, LogOut, LayoutGrid, Users, Briefcase, Settings,
   Megaphone, Navigation, CreditCard, UserCheck, Grid, DollarSign, FileCheck,
-  Database, Activity, ClipboardCheck, Handshake,
-  UserCog,
+  Database, Activity, ClipboardCheck,
 } from 'lucide-react';
 
 // Lazy-load tabs so DeepakHQ opens fast and tabs load on demand
@@ -26,8 +25,6 @@ const ExpertVerification = lazy(() => import('./tabs/ExpertVerification'));
 const DeveloperToolsTab = lazy(() => import('./tabs/DeveloperToolsTab'));
 const LiveOperations = lazy(() => import('./tabs/LiveOperations'));
 const ReleaseOpsTab = lazy(() => import('./tabs/ReleaseOpsTab'));
-const PartnerDashboard = lazy(() => import('./PartnerDashboard/PartnerDashboard'));
-const AdminsPartnersTab = lazy(() => import('./tabs/AdminsPartnersTab'));
 
 const TabFallback = () => (
   <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -222,9 +219,7 @@ export default function DeepakHQ() {
             <NavBtn icon={<FileCheck size={18}/>} label="KYC Verifications" active={activeTab === 'kyc_verification'} onClick={() => handleTabChange('kyc_verification')} badge={pendingExpertCount > 0 ? String(pendingExpertCount) : undefined} />
             
             <NavBtn icon={<UserCheck size={18}/>} label="Expert Army" active={activeTab === 'experts'} onClick={() => handleTabChange('experts')} />
-            <NavBtn icon={<Shield size={18}/>} label="Area Commanders" active={activeTab === 'area_heads'} onClick={() => handleTabChange('area_heads')} />
-            <NavBtn icon={<Handshake size={18}/>} label="Partner Drishti" active={activeTab === 'partner_drishti'} onClick={() => handleTabChange('partner_drishti')} badge="9.5%" />
-            <NavBtn icon={<UserCog size={18}/>} label="Admins & Partners" active={activeTab === 'admins_partners'} onClick={() => handleTabChange('admins_partners')} />
+            <NavBtn icon={<Shield size={18}/>} label="Area Commanders" active={activeTab === 'area_heads'} onClick={() => handleTabChange('area_heads')} badge="20%" />
             
             <div className="pt-4 pb-2 px-4 text-[10px] font-bold text-slate-600 uppercase tracking-wider">Growth</div>
             <NavBtn icon={<Users size={18}/>} label="Customer CRM" active={activeTab === 'customers'} onClick={() => handleTabChange('customers')} />
@@ -272,8 +267,6 @@ export default function DeepakHQ() {
                     {/* Expert Army: ExpertControl mounts shared ExpertRegistrationForm (pending) + grid — see ExpertControl.jsx */}
                     {activeTab === 'experts' && <ExpertControl />}
                     {activeTab === 'area_heads' && <AreaHeadManager />}
-                    {activeTab === 'partner_drishti' && <PartnerDashboard />}
-                    {activeTab === 'admins_partners' && <AdminsPartnersTab />}
                     {activeTab === 'customers' && <CustomerCRM />}
                     {activeTab === 'wallet' && <WalletManager />}
                     {activeTab === 'marketing' && <MarketingTab />}
