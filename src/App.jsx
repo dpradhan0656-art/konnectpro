@@ -36,8 +36,9 @@ import ExpertKYC from './pages/expert/ExpertKYC';
 import RegisterExpert from './pages/RegisterExpert'; 
 
 // 4. AREA HEAD PAGES (City Commanders — only field-ops role besides Expert)
+// Unified portal: /areahead handles both inline Google/email login AND the
+// dashboard in one component (DeepakHQ-style). Old AreaHeadLogin.jsx removed.
 import AreaHeadApp from './pages/area_head/AreaHeadApp'; 
-import AreaHeadLogin from './pages/area_head/AreaHeadLogin'; 
 
 // Legal Pages
 import About from './pages/legal/About';
@@ -79,6 +80,7 @@ const Layout = ({ children }) => {
                        location.pathname.startsWith('/expert') || 
                        location.pathname === '/expert-dashboard' || 
                        location.pathname.startsWith('/area-head') || 
+                       location.pathname.startsWith('/areahead') || 
                        location.pathname === '/login';
 
   return (
@@ -154,10 +156,12 @@ const AppRoutes = () => {
           <Route path="/register-expert" element={<RegisterExpert />} />
           
           {/* ========================================== */}
-          {/* DOOR 4: AREA HEAD PORTAL */}
+          {/* DOOR 4: AREA HEAD PORTAL — canonical URL /areahead handles login + dashboard inline */}
           {/* ========================================== */}
-          <Route path="/area-head/login" element={<AreaHeadLogin />} />
-          <Route path="/area-head/dashboard" element={session ? <AreaHeadApp /> : <Navigate to="/area-head/login" replace />} />
+          <Route path="/areahead" element={<AreaHeadApp />} />
+          {/* Backward compat: old URLs land on the new canonical portal. */}
+          <Route path="/area-head/login" element={<Navigate to="/areahead" replace />} />
+          <Route path="/area-head/dashboard" element={<Navigate to="/areahead" replace />} />
 
           {/* Legacy redirects: old Bhenaji portal removed — push anyone landing on those URLs back to home. */}
           <Route path="/partner-login" element={<Navigate to="/" replace />} />
