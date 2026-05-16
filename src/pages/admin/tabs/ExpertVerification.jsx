@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Shield, User, FileText, MapPin, Briefcase, CheckCircle, XCircle, Loader2, Eye } from 'lucide-react';
+import { fetchExpertProfileMaster } from '../../../lib/expertProfileMaster';
+import { Shield, User, FileText, MapPin, Briefcase, CheckCircle, XCircle, Loader2, Eye, Landmark, CreditCard } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { writeAdminAuditLog } from '../../../utils/adminAuditTrail';
 
@@ -11,10 +12,36 @@ export default function ExpertVerification() {
   const [actionLoading, setActionLoading] = useState(false);
   /** Inline confirm — avoids blocking window.confirm (INP). */
   const [pendingConfirm, setPendingConfirm] = useState(null);
+  const [profileMaster, setProfileMaster] = useState(null);
+  const [loadingDocs, setLoadingDocs] = useState(false);
 
   useEffect(() => {
     fetchPendingExperts();
   }, []);
+
+  useEffect(() => {
+    if (!selectedExpert?.id) {
+      setProfileMaster(null);
+      setLoadingDocs(false);
+      return;
+    }
+    let cancelled = false;
+    const loadProfileMaster = async () => {
+      setLoadingDocs(true);
+      setProfileMaster(null);
+      try {
+        const data = await fetchExpertProfileMaster(selectedExpert.id);
+        if (!cancelled) setProfileMaster(data);
+      } catch (err) {
+        console.error('Error fetching expert_profile_master:', err);
+        if (!cancelled) setProfileMaster(null);
+      } finally {
+        if (!cancelled) setLoadingDocs(false);
+      }
+    };
+    void loadProfileMaster();
+    return () => { cancelled = true; };
+  }, [selectedExpert]);
 
   // 1. Database se Pending Experts lana
   const fetchPendingExperts = async () => {
@@ -151,7 +178,11 @@ export default function ExpertVerification() {
                       {/* Close Button */}
                       <button
                         type="button"
-                        onClick={() => { setSelectedExpert(null); setPendingConfirm(null); }}
+                        onClick={() => {
+                          setSelectedExpert(null);
+                          setPendingConfirm(null);
+                          setProfileMaster(null);
+                        }}
                         className="absolute top-6 right-6 text-slate-500 hover:text-white bg-slate-950 p-2 rounded-full transition-colors"
                       >
                           <XCircle size={24} />
@@ -206,9 +237,102 @@ export default function ExpertVerification() {
                               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Location</p>
                               <p className="text-sm font-bold text-white flex items-start gap-2">
                                 <MapPin size={16} className="text-teal-500 shrink-0 mt-0.5"/>
-                                {[selectedExpert.address, selectedExpert.city].filter(Boolean).join(', ') || 'Not Provided'}
+                                {[
+                                  profileMaster?.residential_address,
+                                  selectedExpert.address,
+                                  selectedExpert.city,
+                                ].filter(Boolean).join(', ') || 'Not Provided'}
                               </p>
                           </div>
+                      </div>
+
+                      <div className="mt-6 pt-6 border-t border-slate-800">
+                        <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2 mb-4">
+                          <Landmark size={16} className="text-teal-500" />
+                          Bank &amp; KYC Documents
+                        </h3>
+                        {loadingDocs ? (
+                          <p className="text-xs text-slate-500 font-bold flex items-center gap-2">
+                            <Loader2 size={14} className="animate-spin text-teal-500" />
+                            Loading payout &amp; document records…
+                          </p>
+                        ) : profileMaster || selectedExpert.photo_url ? (
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Account holder</p>
+                                <p className="text-sm font-bold text-white">
+                                  {profileMaster?.bank_account_holder_name || 'Not provided'}
+                                </p>
+                              </div>
+                              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Account number</p>
+                                <p className="text-sm font-bold text-white font-mono">
+                                  {profileMaster?.bank_account_number || 'Not provided'}
+                                </p>
+                              </div>
+                              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">IFSC</p>
+                                <p className="text-sm font-bold text-white font-mono uppercase">
+                                  {profileMaster?.ifsc_code || 'Not provided'}
+                                </p>
+                              </div>
+                              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">PAN</p>
+                                <p className="text-sm font-bold text-white font-mono uppercase">
+                                  {profileMaster?.pan_number || 'Not provided'}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-widest">
+                              <span className={`px-3 py-1.5 rounded-full border ${selectedExpert.aadhar_number ? 'border-green-500/40 text-green-400 bg-green-500/10' : 'border-amber-500/40 text-amber-400 bg-amber-500/10'}`}>
+                                Aadhaar digits: {selectedExpert.aadhar_number ? 'Provided' : 'Missing'}
+                              </span>
+                              <span className={`px-3 py-1.5 rounded-full border ${profileMaster?.bank_account_number && profileMaster?.ifsc_code ? 'border-green-500/40 text-green-400 bg-green-500/10' : 'border-amber-500/40 text-amber-400 bg-amber-500/10'}`}>
+                                Bank details: {profileMaster?.bank_account_number && profileMaster?.ifsc_code ? 'Complete' : 'Incomplete'}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              {selectedExpert.photo_url && (
+                                <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2 flex items-center gap-1">
+                                    <User size={12} className="text-teal-500" /> Profile selfie
+                                  </p>
+                                  <a href={selectedExpert.photo_url} target="_blank" rel="noopener noreferrer" className="block">
+                                    <img
+                                      src={selectedExpert.photo_url}
+                                      alt="Expert profile"
+                                      className="w-full max-h-48 object-contain rounded-xl border border-slate-700 bg-slate-900"
+                                    />
+                                  </a>
+                                </div>
+                              )}
+                              {profileMaster?.aadhar_card_photo_url && (
+                                <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2 flex items-center gap-1">
+                                    <CreditCard size={12} className="text-teal-500" /> Aadhaar card (upload)
+                                  </p>
+                                  <a href={profileMaster.aadhar_card_photo_url} target="_blank" rel="noopener noreferrer" className="block">
+                                    <img
+                                      src={profileMaster.aadhar_card_photo_url}
+                                      alt="Aadhaar document"
+                                      className="w-full max-h-48 object-contain rounded-xl border border-slate-700 bg-slate-900"
+                                    />
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                            {!profileMaster && (
+                              <p className="text-xs text-amber-400/90 font-bold">
+                                No expert_profile_master row yet — bank fields may only exist after Expo KYC or Expert Control.
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-amber-400 font-bold">
+                            No bank or document uploads found for this expert (Expo Profile or Expert Control).
+                          </p>
+                        )}
                       </div>
 
                       {pendingConfirm && (
