@@ -48,18 +48,23 @@ export default function DispatchTab() {
       if (!expertId) return;
       if (!window.confirm("Confirm Assignment? Expert ko app par notification mil jayegi.")) return;
 
-      let areaHeadId = null;
-      const city = (bookingCity || 'Jabalpur').toString().trim().toLowerCase();
-      if (city && areaHeads.length > 0) {
-          const match = areaHeads.find(ah => {
-              const aa = (ah.assigned_area || '').toLowerCase();
-              return aa === city || aa.includes(city) || city.includes(aa);
+      const expertRow = experts.find((e) => e.id === expertId);
+      let areaHeadId = expertRow?.area_head_id ?? null;
+
+      // Fallback: city → commander (only when expert has no referring area head)
+      if (!areaHeadId) {
+        const city = (bookingCity || 'Jabalpur').toString().trim().toLowerCase();
+        if (city && areaHeads.length > 0) {
+          const match = areaHeads.find((ah) => {
+            const aa = (ah.assigned_area || '').toLowerCase();
+            return aa === city || aa.includes(city) || city.includes(aa);
           });
           if (match) areaHeadId = match.id;
+        }
       }
 
       const updatePayload = { expert_id: expertId, status: 'assigned' };
-      if (areaHeadId !== null) updatePayload.area_head_id = areaHeadId;
+      if (areaHeadId) updatePayload.area_head_id = areaHeadId;
 
       const { error } = await supabase
         .from('bookings')

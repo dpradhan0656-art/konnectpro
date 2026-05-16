@@ -206,11 +206,18 @@ export default function ExpertRegistrationForm({
 
     setSubmitting(true);
     try {
-      const { error: insertError } = await supabase.from('experts').insert([payload]);
+      // Area-head insert: no .select() — RETURNING often blocked until SELECT RLS/RPC exists.
+      const insertQuery = supabase.from('experts').insert([payload]);
+      const { data: inserted, error: insertError } =
+        variant === 'areaHead'
+          ? await insertQuery
+          : await insertQuery.select('id, name, area_head_id, status').single();
+
       if (insertError) throw insertError;
+
       setSuccess(true);
       resetLocal();
-      onSuccess?.();
+      onSuccess?.(inserted ?? { area_head_id: areaHeadId });
     } catch (err) {
       setError(err.message || 'Could not submit. Try again.');
     } finally {

@@ -2,9 +2,14 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Loader2, Users, RefreshCw } from 'lucide-react';
 
+function shortId(id) {
+  if (!id) return '—';
+  const s = String(id);
+  return s.length > 12 ? `${s.slice(0, 8)}…` : s;
+}
+
 /**
  * Experts onboarded by this area commander (experts.area_head_id = area_heads.id).
- * Uses `experts` table — not `profiles` (catalog/auth profile is separate).
  */
 export default function MyExpertsList({ managerId, refreshKey = 0 }) {
   const [experts, setExperts] = useState([]);
@@ -12,7 +17,8 @@ export default function MyExpertsList({ managerId, refreshKey = 0 }) {
   const [error, setError] = useState('');
 
   const fetchMyExperts = useCallback(async () => {
-    if (!managerId) {
+    const headId = managerId ? String(managerId).trim() : '';
+    if (!headId) {
       setExperts([]);
       setLoading(false);
       return;
@@ -20,18 +26,65 @@ export default function MyExpertsList({ managerId, refreshKey = 0 }) {
     setLoading(true);
     setError('');
     try {
-      const { data, error: qErr } = await supabase
+      const { data: directData, error: directErr } = await supabase
         .from('experts')
-        .select('id, name, phone, email, service_category, status, created_at')
-        .eq('area_head_id', managerId)
+        .select('id, name, phone, email, service_category, status, area_head_id, created_at')
+        .eq('area_head_id', headId)
         .order('created_at', { ascending: false });
 
-      if (qErr) throw qErr;
-      setExperts(data || []);
+      if (!directErr && Array.isArray(directData) && directData.length > 0) {
+        setExperts(directData);
+        return;
+      }
+
+      if (directErr && !/permission|policy|row-level security/i.test(directErr.message || '')) {
+        throw directErr;
+      }
+
+      const { data: rpcData, error: rpcErr } = await supabase.rpc('get_area_head_experts_for', {
+        p_area_head_id: headId,
+      });
+
+      if (!rpcErr && Array.isArray(rpcData)) {
+        setExperts(rpcData);
+        if (rpcData.length === 0) {
+          setError(
+            `Is commander id (${shortId(headId)}) par koi expert nahi. Sanju Ale se login karein jiska area_heads.id yahi ho.`
+          );
+        }
+        return;
+      }
+
+      const rpcMissing = rpcErr && /function.*does not exist|schema cache|PGRST202/i.test(rpcErr.message || '');
+      if (rpcErr && !rpcMissing) {
+        throw rpcErr;
+      }
+
+      const { data: legacyRpc, error: legacyErr } = await supabase.rpc('get_area_head_experts');
+      if (!legacyErr && Array.isArray(legacyRpc) && legacyRpc.length > 0) {
+        setExperts(legacyRpc);
+        return;
+      }
+
+      setExperts(directData || []);
+
+      if ((directData || []).length === 0) {
+        if (directErr && /permission|policy|row-level security/i.test(directErr.message || '')) {
+          setError(
+            `${directErr.message} — SQL Editor me 20260516150000_area_head_my_experts_rpc.sql chalao.`
+          );
+        } else if (rpcMissing) {
+          setError('RPC missing — migration file run karein, phir API schema reload.');
+        } else {
+          setError(
+            `Expert link nahi mila. Commander ID ${shortId(headId)} — Sanju (Jhansi) wale account se login verify karein.`
+          );
+        }
+      }
     } catch (err) {
       console.error('[MyExpertsList]', err);
-      setError(err.message || 'Could not load experts.');
       setExperts([]);
+      setError(err.message || 'Could not load experts.');
     } finally {
       setLoading(false);
     }
@@ -57,6 +110,9 @@ export default function MyExpertsList({ managerId, refreshKey = 0 }) {
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+      <p className="text-[10px] text-slate-500 font-mono mb-3 break-all">
+        Commander ID: <span className="text-teal-400">{managerId || '—'}</span>
+      </p>
       <div className="flex items-center justify-between gap-3 mb-4">
         <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
           <Users size={16} className="text-teal-500" />
@@ -73,9 +129,7 @@ export default function MyExpertsList({ managerId, refreshKey = 0 }) {
         </button>
       </div>
 
-      {error && (
-        <p className="text-xs text-red-400 font-semibold mb-3">{error}</p>
-      )}
+      {error && <p className="text-xs text-red-400 font-semibold mb-3">{error}</p>}
 
       {loading ? (
         <div className="flex items-center justify-center gap-2 py-8 text-slate-500 text-xs font-bold uppercase tracking-widest">
