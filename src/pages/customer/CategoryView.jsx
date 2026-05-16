@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useCart } from '../../context/CartContext';
-import { getUserCityKey, filterServicesByCity } from '../../lib/serviceCityUtils';
+import { getUserCityKey } from '../../lib/serviceCityUtils';
+import { fetchServicesForCategorySlug } from '../../lib/categoryServiceLink';
 import BookingModal from '../../components/customer/BookingModal';
 import { ArrowLeft, Star, Clock, ShoppingBag, Plus, ShieldCheck, Zap, Info } from 'lucide-react';
 import { getServiceEmoji, isImageUrl } from '../../lib/serviceIconUtils';
@@ -17,24 +18,25 @@ export default function CategoryView() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const cleanCategoryName = category ? category.replace(/-/g, ' ') : '';
+  const urlSlug = category || '';
+  const cleanCategoryName = urlSlug === 'all'
+    ? 'all services'
+    : urlSlug.replace(/-/g, ' ');
 
   useEffect(() => {
-    const fetchServices = async () => {
+    const load = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('services')
-        .select('*')
-        .ilike('category', `%${cleanCategoryName}%`)
-        .eq('is_active', true);
-
-      const userCity = getUserCityKey();
-      const list = data || [];
-      if (!error) setServices(filterServicesByCity(list, userCity));
+      try {
+        const list = await fetchServicesForCategorySlug(supabase, urlSlug, getUserCityKey());
+        setServices(list);
+      } catch (err) {
+        console.error('CategoryView services:', err);
+        setServices([]);
+      }
       setLoading(false);
     };
-    fetchServices();
-  }, [cleanCategoryName]);
+    load();
+  }, [urlSlug]);
 
   const getQty = (id) => cart.find(i => i.id === id) ? 1 : 0;
 

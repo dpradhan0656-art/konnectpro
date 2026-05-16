@@ -1,6 +1,21 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const HERO_CUSTOMER_WEBP = '/images/happy-customer.webp';
+const HERO_CUSTOMER_PNG = '/images/happy-customer.png';
+const HERO_EXPERT_WEBP = '/images/kshatr-expert.webp';
+const HERO_EXPERT_PNG = '/images/kshatr-expert.png';
+const FALLBACK_CUSTOMER = '/images/placeholders/hero-customer.svg';
+const FALLBACK_EXPERT = '/images/placeholders/hero-expert.svg';
+
+function setHeroFallback(event, fallbackSrc) {
+  const img = event.currentTarget;
+  if (!img || img.dataset.fallbackApplied === '1') return;
+  img.dataset.fallbackApplied = '1';
+  img.onerror = null;
+  img.src = fallbackSrc;
+}
+
 const HomePromoHero = () => {
   const navigate = useNavigate();
 
@@ -14,23 +29,35 @@ const HomePromoHero = () => {
         
         {/* Left Image (Family) - Hidden on mobile to keep text clean, visible on PC */}
         <div className="relative hidden md:block md:w-1/2 h-full">
-          <img
-            src="/images/happy-customer.png"
-            alt="Happy Customer"
-            className="w-full h-full object-cover object-left-top"
-            onError={(e) => { e.target.onerror = null; e.target.src = 'https://via.placeholder.com/400/064E3B/FFFFFF?text=Customer'; }}
-          />
+          <picture>
+            <source srcSet={HERO_CUSTOMER_WEBP} type="image/webp" />
+            <img
+              src={HERO_CUSTOMER_PNG}
+              alt="Happy Customer"
+              width={800}
+              height={800}
+              decoding="async"
+              className="w-full h-full object-cover object-left-top"
+              onError={(e) => setHeroFallback(e, FALLBACK_CUSTOMER)}
+            />
+          </picture>
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-brand-primary/80 to-brand-primary"></div>
         </div>
 
         {/* Right Image (Expert) - Full width & faded on mobile, half width & solid on PC */}
         <div className="relative w-full md:w-1/2 h-full">
-          <img
-            src="/images/kshatr-expert.png"
-            alt="KSHATR Expert"
-            className="w-full h-full object-cover object-center md:object-right-top opacity-20 md:opacity-100"
-            onError={(e) => { e.target.onerror = null; e.target.src = 'https://via.placeholder.com/400/064E3B/FFFFFF?text=Expert'; }}
-          />
+          <picture>
+            <source srcSet={HERO_EXPERT_WEBP} type="image/webp" />
+            <img
+              src={HERO_EXPERT_PNG}
+              alt="KSHATR Expert"
+              width={800}
+              height={800}
+              decoding="async"
+              className="w-full h-full object-cover object-center md:object-right-top opacity-20 md:opacity-100"
+              onError={(e) => setHeroFallback(e, FALLBACK_EXPERT)}
+            />
+          </picture>
           <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-l from-brand-primary/90 via-brand-primary/60 to-transparent md:to-brand-primary"></div>
         </div>
       </div>

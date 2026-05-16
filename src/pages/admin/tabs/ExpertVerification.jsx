@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { Shield, User, FileText, MapPin, Briefcase, CheckCircle, XCircle, Loader2, Eye } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { writeAdminAuditLog } from '../../../utils/adminAuditTrail';
 
 export default function ExpertVerification() {
@@ -8,6 +9,8 @@ export default function ExpertVerification() {
   const [loading, setLoading] = useState(true);
   const [selectedExpert, setSelectedExpert] = useState(null); // Modal ke liye
   const [actionLoading, setActionLoading] = useState(false);
+  /** Inline confirm — avoids blocking window.confirm (INP). */
+  const [pendingConfirm, setPendingConfirm] = useState(null);
 
   useEffect(() => {
     fetchPendingExperts();
@@ -33,56 +36,59 @@ export default function ExpertVerification() {
     setLoading(false);
   };
 
-  // 2. Expert ko Approve karna (Green Signal) — unified with Expert Army semantics (status + is_verified)
-  const handleApprove = async (id, name) => {
-    const confirm = window.confirm(`Kya aap ${name} ko Approve karna chahte hain? Unki duty turant chalu ho jayegi.`);
-    if (!confirm) return;
-
+  const runApprove = async (id, name) => {
     setActionLoading(true);
-    // Legacy Duplicate Approval Flow — only status was updated; is_verified could stay false
-    // const { error } = await supabase.from('experts').update({ status: 'approved' }).eq('id', id);
     const { error } = await supabase
       .from('experts')
       .update({ status: 'approved', is_verified: true })
       .eq('id', id);
 
     if (!error) {
-        writeAdminAuditLog({
-          action: 'expert.approved.kyc',
-          entityType: 'expert',
-          entityId: id,
-          metadata: { name },
-        });
-        alert(`✅ ${name} ka account Approve ho gaya hai!`);
-        setSelectedExpert(null);
-        fetchPendingExperts(); // List refresh karo
+      void writeAdminAuditLog({
+        action: 'expert.approved.kyc',
+        entityType: 'expert',
+        entityId: id,
+        metadata: { name },
+      });
+      toast.success(`${name} approved — duty can start now.`);
+      setSelectedExpert(null);
+      setPendingConfirm(null);
+      void fetchPendingExperts();
     } else {
-        alert("Error: " + error.message);
+      toast.error(error.message || 'Approve failed');
     }
     setActionLoading(false);
   };
 
-  // 3. Expert ko Reject karna (Red Signal)
-  const handleReject = async (id, name) => {
-    const confirm = window.confirm(`⛔ Kya aap ${name} ka form Reject karna chahte hain? Unhe form wapas bharna padega.`);
-    if (!confirm) return;
-
+  const runReject = async (id, name) => {
     setActionLoading(true);
-    // Reject karne par KYC wapas false kar do taaki wo wapas form bhar sake
-    const { error } = await supabase.from('experts').update({ status: 'rejected', is_kyc_submitted: false }).eq('id', id);
-    
+    const { error } = await supabase
+      .from('experts')
+      .update({ status: 'rejected', is_kyc_submitted: false })
+      .eq('id', id);
+
     if (!error) {
-        writeAdminAuditLog({
-          action: 'expert.rejected.kyc',
-          entityType: 'expert',
-          entityId: id,
-          metadata: { name },
-        });
-        alert(`❌ ${name} ka account Reject kar diya gaya hai.`);
-        setSelectedExpert(null);
-        fetchPendingExperts();
+      void writeAdminAuditLog({
+        action: 'expert.rejected.kyc',
+        entityType: 'expert',
+        entityId: id,
+        metadata: { name },
+      });
+      toast.success(`${name} rejected — they can re-apply.`);
+      setSelectedExpert(null);
+      setPendingConfirm(null);
+      void fetchPendingExperts();
+    } else {
+      toast.error(error.message || 'Reject failed');
     }
     setActionLoading(false);
+  };
+
+  const executePendingConfirm = () => {
+    if (!pendingConfirm || actionLoading) return;
+    const { action, id, name } = pendingConfirm;
+    if (action === 'approve') void runApprove(id, name);
+    else void runReject(id, name);
   };
 
   if (loading) return <div className="text-teal-500 flex justify-center py-20"><Loader2 className="animate-spin" size={40}/></div>;
@@ -143,7 +149,11 @@ export default function ExpertVerification() {
               <div className="bg-slate-900 w-full max-w-2xl rounded-[2.5rem] border border-teal-500/30 shadow-2xl overflow-hidden animate-in zoom-in-95">
                   <div className="p-6 md:p-8 relative">
                       {/* Close Button */}
-                      <button onClick={() => setSelectedExpert(null)} className="absolute top-6 right-6 text-slate-500 hover:text-white bg-slate-950 p-2 rounded-full transition-colors">
+                      <button
+                        type="button"
+                        onClick={() => { setSelectedExpert(null); setPendingConfirm(null); }}
+                        className="absolute top-6 right-6 text-slate-500 hover:text-white bg-slate-950 p-2 rounded-full transition-colors"
+                      >
                           <XCircle size={24} />
                       </button>
 
@@ -201,19 +211,59 @@ export default function ExpertVerification() {
                           </div>
                       </div>
 
-                      {/* Action Buttons */}
-                      <div className="flex flex-col md:flex-row gap-4 mt-8 pt-6 border-t border-slate-800">
-                          <button 
-                              onClick={() => handleApprove(selectedExpert.id, selectedExpert.name)} 
+                      {pendingConfirm && (
+                        <div className="mt-6 p-4 rounded-2xl border border-amber-500/40 bg-amber-500/10">
+                          <p className="text-sm font-bold text-amber-100 mb-3">
+                            {pendingConfirm.action === 'approve'
+                              ? `Approve ${pendingConfirm.name}? Duty starts immediately.`
+                              : `Reject ${pendingConfirm.name}? They will need to re-apply.`}
+                          </p>
+                          <div className="flex gap-3">
+                            <button
+                              type="button"
+                              onClick={executePendingConfirm}
                               disabled={actionLoading}
+                              className="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 py-3 rounded-xl font-black uppercase tracking-widest text-xs disabled:opacity-50"
+                            >
+                              {actionLoading ? 'Saving…' : 'Yes, confirm'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setPendingConfirm(null)}
+                              disabled={actionLoading}
+                              className="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest disabled:opacity-50"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex flex-col md:flex-row gap-4 mt-8 pt-6 border-t border-slate-800">
+                          <button
+                              type="button"
+                              onClick={() => setPendingConfirm({
+                                action: 'approve',
+                                id: selectedExpert.id,
+                                name: selectedExpert.name,
+                              })}
+                              disabled={actionLoading || !!pendingConfirm}
                               className="flex-1 bg-green-600 hover:bg-green-500 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs flex justify-center items-center gap-2 shadow-lg shadow-green-900/50 transition-all active:scale-95 disabled:opacity-50"
                           >
-                              {actionLoading ? <Loader2 className="animate-spin" size={16}/> : <CheckCircle size={18}/>} Approve Expert
+                              {actionLoading && pendingConfirm?.action === 'approve'
+                                ? <Loader2 className="animate-spin" size={16}/>
+                                : <CheckCircle size={18}/>}
+                              Approve Expert
                           </button>
-                          
-                          <button 
-                              onClick={() => handleReject(selectedExpert.id, selectedExpert.name)} 
-                              disabled={actionLoading}
+
+                          <button
+                              type="button"
+                              onClick={() => setPendingConfirm({
+                                action: 'reject',
+                                id: selectedExpert.id,
+                                name: selectedExpert.name,
+                              })}
+                              disabled={actionLoading || !!pendingConfirm}
                               className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 py-4 rounded-xl font-black uppercase tracking-widest text-xs flex justify-center items-center gap-2 transition-all active:scale-95 disabled:opacity-50"
                           >
                               <XCircle size={18}/> Reject / Re-apply

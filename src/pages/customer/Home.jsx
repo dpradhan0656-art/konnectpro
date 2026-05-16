@@ -61,7 +61,12 @@ export default function Home() {
         const { data: offerData } = await supabase.from('spotlight_offers').select('*').eq('is_active', true);
         if (offerData) setOffers(offerData);
 
-        const { data: serviceData } = await supabase.from('services').select('*').eq('is_active', true).limit(10);
+        const { data: serviceData } = await supabase
+          .from('services')
+          .select('*')
+          .eq('is_active', true)
+          .order('name', { ascending: true })
+          .limit(24);
         if (serviceData) setServices(serviceData);
       } catch (err) {
         Logger.error('Home.fetchAllData', err);

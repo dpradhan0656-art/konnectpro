@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { Plus, Trash2, Edit, Save, Grid, Eye, EyeOff, Loader2, Sparkles, Image as ImageIcon } from 'lucide-react';
+import { slugifyCategoryName } from '../../../utils/syncServiceData';
 
 // 🎨 1. Smart Icon Renderer (Emoji or URL)
 const SmartIcon = ({ iconValue }) => {
@@ -64,8 +65,7 @@ export default function CategoryManager() {
     if(!newCat.name) return;
     setIsSaving(true);
     
-    // Auto-Slug Generation (e.g., "Car Wash" -> "car-wash")
-    const generatedSlug = newCat.name.toLowerCase().replace(/[\s_]+/g, '-').replace(/[^\w-]+/g, '');
+    const generatedSlug = slugifyCategoryName(newCat.name);
 
     const { error } = await supabase.from('categories').insert([{
         name: newCat.name,
@@ -96,9 +96,18 @@ export default function CategoryManager() {
   // --- Update Category (Full Control) ---
   const updateCategory = async (id) => {
       setLoadingId(id);
-      await supabase.from('categories').update({ 
-          name: editData.name,
-          icon: editData.icon 
+      const previous = categories.find((c) => c.id === id);
+      const nextName = editData.name?.trim();
+      const nextSlug = slugifyCategoryName(nextName);
+
+      if (previous?.name && nextName && previous.name !== nextName) {
+        await supabase.from('services').update({ category: nextName }).eq('category', previous.name);
+      }
+
+      await supabase.from('categories').update({
+          name: nextName,
+          icon: editData.icon,
+          slug: nextSlug,
       }).eq('id', id);
       setEditingId(null);
       setLoadingId(null);

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { isImageUrl } from '../../lib/serviceIconUtils';
 import { getCategoryFallbackImage } from '../../lib/fallbackImages';
+import { slugifyCategoryName } from '../../utils/syncServiceData';
 
 /** Light wash over images — KSHATR Premium palette (emerald / gold / neutral) */
 const BG_GRADIENTS = [
@@ -38,7 +39,7 @@ export default function CategorySection({ categories, loading }) {
       ) : categories.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6 md:gap-7" role="list">
           {categories.map((cat, i) => {
-            const slugUrl = cat.slug || cat.name.toLowerCase().replace(/[\s_]+/g, '-');
+            const slugUrl = cat.slug || slugifyCategoryName(cat.name);
             const useImage = isImageUrl(cat?.icon);
             const imageUrl = useImage ? cat.icon : getCategoryFallbackImage(cat?.name);
             const gradientClass = BG_GRADIENTS[i % BG_GRADIENTS.length];

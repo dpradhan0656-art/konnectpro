@@ -4,6 +4,7 @@ import { X, ChevronRight, LayoutGrid, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { isImageUrl } from '../../lib/serviceIconUtils';
 import { getCategoryFallbackImage } from '../../lib/fallbackImages';
+import { slugifyCategoryName } from '../../utils/syncServiceData';
 
 const BG_WASH = [
   'from-emerald-400/22 to-white/80',
@@ -32,7 +33,7 @@ export default function CategoryPickModal({ open, onClose, categories, loading }
   if (!open) return null;
 
   const goCategory = (cat) => {
-    const slug = cat.slug || cat.name?.toLowerCase().replace(/[\s_]+/g, '-') || '';
+    const slug = cat.slug || slugifyCategoryName(cat.name) || '';
     onClose();
     navigate(`/category/${slug}`);
   };

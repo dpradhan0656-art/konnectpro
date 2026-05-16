@@ -1,7 +1,19 @@
 import { useEffect, useState } from 'react';
 
+const INSTALL_DISMISS_KEY = 'kshatr_install_prompt_dismissed';
+
+function shouldCaptureInstallPrompt() {
+  if (typeof window === 'undefined') return false;
+  if (window.matchMedia('(display-mode: standalone)').matches) return false;
+  if (sessionStorage.getItem(INSTALL_DISMISS_KEY)) return false;
+  const ua = navigator.userAgent || '';
+  return /Android|webOS|iPhone|iPad|iPod/i.test(ua);
+}
+
 /**
  * Captures the browser `beforeinstallprompt` event so UI can trigger install later.
+ * Only calls preventDefault on mobile when our InstallAppPrompt may show — avoids
+ * Chrome console noise on desktop where prompt() is never called.
  */
 export function usePwaInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -9,6 +21,7 @@ export function usePwaInstallPrompt() {
 
   useEffect(() => {
     const onBeforeInstallPrompt = (event) => {
+      if (!shouldCaptureInstallPrompt()) return;
       event.preventDefault();
       setDeferredPrompt(event);
       setIsInstallable(true);

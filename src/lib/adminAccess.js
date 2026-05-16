@@ -53,3 +53,18 @@ export async function canAccessDeepakHQ(user) {
   if (isSuperAdminEmail(user.email)) return true;
   return isAppAdminUser(user.id);
 }
+
+/**
+ * Superadmin can open DeepakHQ via env allowlist, but RLS used to require `app_admin`.
+ * After migration `20260516120000_founder_hq_catalog_rls`, founder JWT also passes catalog RLS.
+ * This RPC also inserts `app_admin` so all other HQ tables work without duplicate policies.
+ */
+export async function syncFounderAdminRow(user) {
+  if (!user?.id || !isSuperAdminEmail(user.email)) return { ok: true, skipped: true };
+  const { error } = await supabase.rpc('ensure_founder_app_admin');
+  if (error) {
+    console.warn('[adminAccess] ensure_founder_app_admin:', error.message);
+    return { ok: false, error };
+  }
+  return { ok: true };
+}

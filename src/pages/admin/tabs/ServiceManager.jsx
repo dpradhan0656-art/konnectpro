@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
+import { syncFounderAdminRow } from '../../../lib/adminAccess';
 import { Plus, Trash2, Edit, Save, X, Search, Tag, RefreshCw, Sparkles, Loader2, Image as ImageIcon, AlertCircle } from 'lucide-react';
 
 export default function ServiceManager() {
@@ -21,7 +22,7 @@ export default function ServiceManager() {
     const { data: sData } = await supabase.from('services').select('*').order('category', { ascending: true });
     if (sData) setServices(sData);
 
-    const { data: cData } = await supabase.from('categories').select('name').order('name');
+    const { data: cData } = await supabase.from('categories').select('id, name, slug').eq('is_active', true).order('name');
     if (cData) {
         setCategories(cData);
         if (!form.category && cData.length > 0) setForm(prev => ({ ...prev, category: cData[0].name }));
@@ -30,7 +31,11 @@ export default function ServiceManager() {
   };
 
   useEffect(() => {
-    fetchData();
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) await syncFounderAdminRow(session.user);
+      fetchData();
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -53,7 +58,10 @@ export default function ServiceManager() {
     }]);
     
     if (error) {
-        alert("Error: " + error.message);
+        const rlsHint = /row-level security|permission denied|policy/i.test(error.message)
+          ? '\n\nSuperadmin login opens HQ, but Supabase must allow writes. Run migration supabase/migrations/20260516120000_founder_hq_catalog_rls.sql in Supabase SQL Editor, then log out and back in.'
+          : '';
+        alert("Error: " + error.message + rlsHint);
     } else {
         setForm({ ...form, name: '', price: '', image_url: '', note: '', service_cities: '' }); 
         fetchData(); 
@@ -71,7 +79,7 @@ export default function ServiceManager() {
 
   // --- 4. Edit Logic ---
   function parseServiceCities(raw) {
-    if (raw == null || String(raw).trim() === '') return null;
+    if (raw == null || String(raw).trim() === '') return ['all'];
     const s = String(raw).trim().toLowerCase();
     if (s === 'all') return ['all'];
     return s.split(/[\s,]+/).map((c) => c.trim()).filter(Boolean);
@@ -212,9 +220,16 @@ export default function ServiceManager() {
                     <div>
                         <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Category</label>
                         <select className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-white focus:border-teal-500 outline-none cursor-pointer" value={form.category} onChange={e => setForm({...form, category: e.target.value})}>
-                            {categories.length === 0 && <option>No Categories Found</option>}
-                            {categories.map(cat => <option key={cat.name} value={cat.name}>{cat.name}</option>)}
+                            {categories.length === 0 && <option value="">Add a category in Category Master first</option>}
+                            {categories.map(cat => (
+                              <option key={cat.id || cat.name} value={cat.name}>
+                                {cat.name}{cat.slug ? ` → /category/${cat.slug}` : ''}
+                              </option>
+                            ))}
                         </select>
+                        {categories.length === 0 && (
+                          <p className="text-[10px] text-amber-400 mt-1">Services need an active category from Category Master.</p>
+                        )}
                     </div>
                     
                     <div>
@@ -246,7 +261,7 @@ export default function ServiceManager() {
                     </div>
                     <div>
                         <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Cities (optional)</label>
-                        <input type="text" placeholder="jabalpur, indore or leave empty for all" className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-teal-100 focus:border-teal-500 outline-none text-xs" value={form.service_cities} onChange={e => setForm({...form, service_cities: e.target.value})} />
+                        <input type="text" placeholder="Leave empty = all cities (recommended)" className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-teal-100 focus:border-teal-500 outline-none text-xs" value={form.service_cities} onChange={e => setForm({...form, service_cities: e.target.value})} />
                     </div>
                     <button onClick={handleAdd} disabled={loading} className="w-full bg-teal-600 hover:bg-teal-500 text-white py-3.5 font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95 mt-2">
                         {loading ? <Loader2 className="animate-spin" size={18}/> : <><Plus size={18}/> Add to Database</>}

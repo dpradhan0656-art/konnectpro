@@ -1,7 +1,7 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { canAccessDeepakHQ } from '../../lib/adminAccess';
+import { canAccessDeepakHQ, syncFounderAdminRow } from '../../lib/adminAccess';
 import {
   Shield, Menu, X, LogOut, LayoutGrid, Users, Briefcase, Settings,
   Megaphone, Navigation, CreditCard, UserCheck, Grid, DollarSign, FileCheck,
@@ -74,6 +74,7 @@ export default function DeepakHQ() {
         const allowed = await canAccessDeepakHQ(session.user);
         if (mounted) {
           if (allowed) {
+            await syncFounderAdminRow(session.user);
             setIsAuthenticated(true);
             refreshPendingExpertCount();
           }
@@ -105,8 +106,11 @@ export default function DeepakHQ() {
       canAccessDeepakHQ(session.user).then((allowed) => {
         if (!mounted) return;
         if (allowed) {
-          setIsAuthenticated(true);
-          refreshPendingExpertCount();
+          syncFounderAdminRow(session.user).finally(() => {
+            if (!mounted) return;
+            setIsAuthenticated(true);
+            refreshPendingExpertCount();
+          });
         }
         else {
           setIsAuthenticated(false);
@@ -143,7 +147,10 @@ export default function DeepakHQ() {
       return;
     }
     const allowed = await canAccessDeepakHQ(data.user);
-    if (allowed) setIsAuthenticated(true);
+    if (allowed) {
+      await syncFounderAdminRow(data.user);
+      setIsAuthenticated(true);
+    }
     else {
       await supabase.auth.signOut();
       setLoginError('Not authorized. Your account is not an admin.');
