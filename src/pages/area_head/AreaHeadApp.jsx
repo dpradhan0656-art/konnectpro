@@ -5,6 +5,7 @@ import {
   Navigation, Phone, RefreshCw, Mail, Lock, ArrowRight, Loader2, Map,
 } from 'lucide-react';
 import ExpertRegistrationForm from '../../components/forms/ExpertRegistrationForm';
+import MyExpertsList from '../../components/area_head/MyExpertsList';
 
 /**
  * AreaHeadApp — unified portal (login + dashboard in one route, DeepakHQ-style).
@@ -36,6 +37,7 @@ export default function AreaHeadApp() {
   const [walletSyncing, setWalletSyncing] = useState(false);
   const [walletSyncError, setWalletSyncError] = useState('');
   const [walletTransactions, setWalletTransactions] = useState([]);
+  const [expertsListKey, setExpertsListKey] = useState(0);
 
   // ─── Initial auth + subscription ─────────────────────────────────────
   // Mirrors DeepakHQ pattern: getSession() decides the auth gate; profile
@@ -104,6 +106,35 @@ export default function AreaHeadApp() {
       window.removeEventListener('focus', syncNow);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
+  }, [manager?.id]);
+
+  // Live wallet_balance when process_job_payout credits area_heads (requires Realtime on table).
+  useEffect(() => {
+    if (!manager?.id) return undefined;
+
+    const channel = supabase
+      .channel(`area_head_wallet_${manager.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'area_heads',
+          filter: `id=eq.${manager.id}`,
+        },
+        (payload) => {
+          const nextBalance = payload?.new?.wallet_balance;
+          if (nextBalance == null) return;
+          setManager((prev) => (prev ? { ...prev, wallet_balance: nextBalance } : prev));
+          refreshWalletLedger(manager.id);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [manager?.id]);
 
   // ─── Profile + role gate ─────────────────────────────────────────────
@@ -408,13 +439,15 @@ export default function AreaHeadApp() {
         </div>
       </div>
 
-      <div className="p-4 max-w-xl mx-auto mt-4">
+      <div className="p-4 max-w-xl mx-auto mt-4 space-y-4">
         <ExpertRegistrationForm
           variant="areaHead"
           areaHeadId={manager.id}
           defaultCity={manager.assigned_area?.trim() || ''}
           cityReadOnly={Boolean(manager.assigned_area?.trim())}
+          onSuccess={() => setExpertsListKey((k) => k + 1)}
         />
+        <MyExpertsList managerId={manager.id} refreshKey={expertsListKey} />
       </div>
 
       <div className="p-4 max-w-xl mx-auto space-y-6 mt-2">
