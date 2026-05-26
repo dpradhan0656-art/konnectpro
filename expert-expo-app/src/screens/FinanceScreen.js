@@ -73,7 +73,7 @@ export default function FinanceScreen({ expert }) {
         const split = computeKshatryxSplit(job);
         return {
           id: job?.id,
-          service: job?.service_name || job?.category || job?.service_category || 'Service',
+          service: job?.service_name || 'Service',
           createdAt: job?.created_at,
           split,
         };
@@ -98,7 +98,7 @@ export default function FinanceScreen({ expert }) {
         supabase
           .from('bookings')
           .select(
-            'id, status, service_name, category, service_category, service_type, partner_module, total_amount, final_amount, expert_payout, created_at'
+            'id, status, service_name, total_amount, final_amount, expert_payout, created_at'
           )
           .eq('expert_id', expertId)
           .in('status', ['completed'])

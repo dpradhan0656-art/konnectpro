@@ -3,9 +3,9 @@
     "name": "Kshatr Expert",
     "slug": "kshatr-expert",
     "scheme": "expert-expo-app",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
-    "icon": "./assets/logo.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -16,7 +16,8 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.kshatryx.expertapp",
+      "package": "com.kshatr.expert",
+      "versionCode": 2,
       "permissions": [
         "INTERNET",
         "VIBRATE",
@@ -39,7 +40,9 @@
       ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/logo.png"
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
       }
     },
     "web": {
