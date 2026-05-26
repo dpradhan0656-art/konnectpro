@@ -9,6 +9,17 @@ android/.gradle-local
 android/.gradle-local/**
 expert-expo-app/_eas_inspect_archive
 expert-expo-app/_eas_inspect_archive/**
+expert-expo-app/_eas_inspect_out
+expert-expo-app/_eas_inspect_out/**
+expert-expo-app/dist-expo-verify-native
+expert-expo-app/dist-expo-verify-native/**
 
-# Separate Expo app — not part of this Capacitor/Vite EAS project.
-expert-expo-app
+# Expert Expo app: exclude heavy artifacts only (do NOT exclude the whole folder —
+# EAS builds with projectRootDirectory expert-expo-app need package.json and sources).
+expert-expo-app/node_modules
+expert-expo-app/android/.gradle
+expert-expo-app/android/app/build
+expert-expo-app/android/build
+expert-expo-app/ios/Pods
+expert-expo-app/ios/build
+expert-expo-app/builds
