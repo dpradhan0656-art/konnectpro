@@ -24,6 +24,13 @@ process.stdout.write(
         kyc_status: 'pending',
         ...(parsed.aadhar_number ? { aadhar_number: parsed.aadhar_number } : {}),
       },
+      profileMasterPayload: {
+        bank_account_holder_name: parsed.bank_account_holder_name || null,
+        bank_account_number: parsed.bank_account_number || null,
+        ifsc_code: parsed.ifsc_code || null,
+        pan_number: parsed.pan_number || null,
+        residential_address: parsed.residential_address || null,
+      },
     },
     null,
     2

@@ -1,5 +1,6 @@
 export const EXPERT_WHATSAPP_INTAKE_TEMPLATE = `Kshatr Expert Onboarding
 
+Basic details (required)
 Name:
 Phone:
 Email:
@@ -7,9 +8,16 @@ Skill:
 City:
 Experience:
 
-Please attach:
-1. Profile photo/selfie
-2. Aadhaar scan/photo
+KYC documents (required)
+1. Attach profile photo/selfie
+2. Attach Aadhaar scan/photo
+
+Payout details (optional now; required before withdrawal/manual bank transfer)
+Account holder name:
+Bank account number:
+IFSC code:
+PAN number:
+Residential address:
 
 Note: Share only correct details. Aadhaar documents are used only for KYC verification.`;
 
@@ -21,6 +29,11 @@ const FIELD_ALIASES = Object.freeze({
   city: ['city', 'location', 'area'],
   experience: ['experience', 'experience years', 'exp', 'years'],
   aadhar_number: ['aadhar', 'aadhaar', 'aadhar number', 'aadhaar number'],
+  bank_account_holder_name: ['account holder name', 'bank holder name', 'beneficiary name'],
+  bank_account_number: ['bank account number', 'account number', 'ac number', 'a/c number'],
+  ifsc_code: ['ifsc', 'ifsc code'],
+  pan_number: ['pan', 'pan number'],
+  residential_address: ['residential address', 'address', 'home address'],
 });
 
 const CITY_OPTIONS = ['Jabalpur', 'Sagar', 'Bhopal', 'Indore', 'Jhansi'];
@@ -72,6 +85,11 @@ export function parseWhatsAppExpertIntake(rawText) {
     city: normalizeExpertIntakeCity(parsed.city, ''),
     experience_years: Number.isFinite(experienceYears) ? experienceYears : '',
     aadhar_number: aadharDigits.length === 12 ? aadharDigits : '',
+    bank_account_holder_name: String(parsed.bank_account_holder_name || '').trim(),
+    bank_account_number: String(parsed.bank_account_number || '').replace(/\D/g, ''),
+    ifsc_code: String(parsed.ifsc_code || '').trim().toUpperCase().replace(/\s/g, ''),
+    pan_number: String(parsed.pan_number || '').trim().toUpperCase().replace(/\s/g, ''),
+    residential_address: String(parsed.residential_address || '').trim(),
   };
 }
 
