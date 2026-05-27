@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { fetchExpertProfileMaster } from '../../../lib/expertProfileMaster';
-import { Shield, User, FileText, MapPin, Briefcase, CheckCircle, XCircle, Loader2, Eye, Landmark, CreditCard } from 'lucide-react';
+import { fetchExpertProfileMaster, upsertExpertProfileMaster } from '../../../lib/expertProfileMaster';
+import { compressAndUploadExpertPhoto } from '../../../utils/uploadImage';
+import { Shield, User, FileText, MapPin, Briefcase, CheckCircle, XCircle, Loader2, Eye, Landmark, CreditCard, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { writeAdminAuditLog } from '../../../utils/adminAuditTrail';
 
@@ -14,6 +15,7 @@ export default function ExpertVerification() {
   const [pendingConfirm, setPendingConfirm] = useState(null);
   const [profileMaster, setProfileMaster] = useState(null);
   const [loadingDocs, setLoadingDocs] = useState(false);
+  const [uploadingDoc, setUploadingDoc] = useState('');
 
   useEffect(() => {
     fetchPendingExperts();
@@ -116,6 +118,42 @@ export default function ExpertVerification() {
     const { action, id, name } = pendingConfirm;
     if (action === 'approve') void runApprove(id, name);
     else void runReject(id, name);
+  };
+
+  const handleKycDocumentUpload = async (kind, file) => {
+    if (!selectedExpert?.id || !file) return;
+    setUploadingDoc(kind);
+    try {
+      const upload = await compressAndUploadExpertPhoto({
+        file,
+        expertKey: selectedExpert.id,
+        objectSuffix: kind === 'profile' ? 'profile-selfie' : 'aadhaar-scan',
+      });
+
+      if (kind === 'profile') {
+        const { error } = await supabase
+          .from('experts')
+          .update({ photo_url: upload.publicUrl, kyc_status: 'pending' })
+          .eq('id', selectedExpert.id);
+        if (error) throw error;
+        setSelectedExpert((prev) => (prev ? { ...prev, photo_url: upload.publicUrl } : prev));
+      } else {
+        await upsertExpertProfileMaster(selectedExpert.id, {
+          aadhar_card_photo_url: upload.publicUrl,
+        });
+        setProfileMaster((prev) => ({
+          ...(prev || { expert_id: selectedExpert.id }),
+          aadhar_card_photo_url: upload.publicUrl,
+        }));
+      }
+
+      toast.success(kind === 'profile' ? 'Profile photo uploaded.' : 'Aadhaar scan uploaded.');
+      void fetchPendingExperts();
+    } catch (err) {
+      toast.error(err?.message || 'Upload failed');
+    } finally {
+      setUploadingDoc('');
+    }
   };
 
   if (loading) return <div className="text-teal-500 flex justify-center py-20"><Loader2 className="animate-spin" size={40}/></div>;
@@ -251,6 +289,48 @@ export default function ExpertVerification() {
                           <Landmark size={16} className="text-teal-500" />
                           Bank &amp; KYC Documents
                         </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+                          <label className="rounded-2xl border border-slate-700 bg-slate-950 p-4 cursor-pointer hover:border-teal-500/60 transition-colors">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                              {uploadingDoc === 'profile' ? <Loader2 size={14} className="animate-spin text-teal-500" /> : <Upload size={14} className="text-teal-500" />}
+                              Upload profile photo
+                            </span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              disabled={Boolean(uploadingDoc)}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                e.target.value = '';
+                                void handleKycDocumentUpload('profile', file);
+                              }}
+                              className="hidden"
+                            />
+                            <p className="mt-2 text-[11px] text-slate-500">
+                              Links WhatsApp selfie to experts.photo_url.
+                            </p>
+                          </label>
+                          <label className="rounded-2xl border border-slate-700 bg-slate-950 p-4 cursor-pointer hover:border-teal-500/60 transition-colors">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                              {uploadingDoc === 'aadhaar' ? <Loader2 size={14} className="animate-spin text-teal-500" /> : <Upload size={14} className="text-teal-500" />}
+                              Upload Aadhaar scan
+                            </span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              disabled={Boolean(uploadingDoc)}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                e.target.value = '';
+                                void handleKycDocumentUpload('aadhaar', file);
+                              }}
+                              className="hidden"
+                            />
+                            <p className="mt-2 text-[11px] text-slate-500">
+                              Stores under expert_profile_master.aadhar_card_photo_url.
+                            </p>
+                          </label>
+                        </div>
                         {loadingDocs ? (
                           <p className="text-xs text-slate-500 font-bold flex items-center gap-2">
                             <Loader2 size={14} className="animate-spin text-teal-500" />

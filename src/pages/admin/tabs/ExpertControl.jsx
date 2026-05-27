@@ -4,9 +4,14 @@ import { adminResetPassword } from '../../../lib/authAdmin';
 import { canAccessDeepakHQ } from '../../../lib/adminAccess';
 import { compressAndUploadExpertPhoto } from '../../../utils/uploadImage';
 import { fetchExpertProfileMaster, upsertExpertProfileMaster } from '../../../lib/expertProfileMaster';
+import {
+  EXPERT_WHATSAPP_INTAKE_TEMPLATE,
+  parseWhatsAppExpertIntake,
+  validateParsedExpertIntake,
+} from '../../../utils/whatsappExpertIntake';
 import { 
   UserCheck, Search, Phone, MapPin, Plus, Edit, Trash2, X,
-  Lock, Briefcase, Loader2, ShieldCheck, Power, PowerOff, Mail
+  Lock, Briefcase, Loader2, ShieldCheck, Power, PowerOff, Mail, Clipboard
 } from 'lucide-react';
 import ExpertRegistrationForm from '../../../components/forms/ExpertRegistrationForm';
 
@@ -50,6 +55,11 @@ export default function ExpertControl() {
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState('');
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [whatsappText, setWhatsappText] = useState(EXPERT_WHATSAPP_INTAKE_TEMPLATE);
+  const [whatsappParsed, setWhatsappParsed] = useState(null);
+  const [whatsappError, setWhatsappError] = useState('');
+  const [registrationPrefill, setRegistrationPrefill] = useState(null);
+  const [prefillNonce, setPrefillNonce] = useState(0);
 
   useEffect(() => {
     checkWriteAccess();
@@ -288,6 +298,19 @@ export default function ExpertControl() {
     setPhotoPreviewUrl(objectUrl);
   };
 
+  const handleParseWhatsAppIntake = () => {
+    const parsed = parseWhatsAppExpertIntake(whatsappText);
+    const errors = validateParsedExpertIntake(parsed);
+    setWhatsappParsed(parsed);
+    if (errors.length) {
+      setWhatsappError(errors.join(' '));
+      return;
+    }
+    setWhatsappError('');
+    setRegistrationPrefill(parsed);
+    setPrefillNonce((n) => n + 1);
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-20 font-sans">
 
@@ -296,8 +319,70 @@ export default function ExpertControl() {
         Pros: same fields/Rules as footer & area head; single insert path with status=pending.
         Cons: separate from “Manual Add” modal which still enlists instantly approved experts for ops.
       */}
-      <div className="max-w-xl">
-        <ExpertRegistrationForm variant="admin" onSuccess={fetchData} />
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)] gap-5 items-start">
+        <div className="max-w-xl">
+          <ExpertRegistrationForm
+            variant="admin"
+            initialValues={registrationPrefill}
+            prefillNonce={prefillNonce}
+            onSuccess={fetchData}
+          />
+        </div>
+
+        <div className="rounded-2xl border border-teal-500/25 bg-slate-900 p-5 shadow-xl">
+          <div className="flex items-start gap-3 mb-3">
+            <div className="p-2 rounded-xl bg-teal-500/10 text-teal-400">
+              <Clipboard size={18} />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-white uppercase tracking-widest">WhatsApp Intake</h3>
+              <p className="text-[11px] text-slate-500 font-semibold mt-1">
+                Paste the message from WhatsApp, parse it, then submit the pre-filled registration form as Ready for Verification.
+              </p>
+            </div>
+          </div>
+          <textarea
+            rows={10}
+            value={whatsappText}
+            onChange={(e) => {
+              setWhatsappText(e.target.value);
+              setWhatsappError('');
+            }}
+            className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-xs text-slate-200 font-mono outline-none focus:border-teal-500/60"
+            spellCheck={false}
+          />
+          {whatsappError ? (
+            <p className="mt-2 text-xs font-bold text-amber-300">{whatsappError}</p>
+          ) : null}
+          {whatsappParsed ? (
+            <pre className="mt-3 max-h-40 overflow-auto rounded-xl bg-slate-950 border border-slate-800 p-3 text-[11px] text-teal-100">
+              {JSON.stringify(whatsappParsed, null, 2)}
+            </pre>
+          ) : null}
+          <div className="flex flex-wrap gap-2 mt-3">
+            <button
+              type="button"
+              onClick={() => {
+                setWhatsappText(EXPERT_WHATSAPP_INTAKE_TEMPLATE);
+                setWhatsappParsed(null);
+                setWhatsappError('');
+              }}
+              className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-black uppercase tracking-widest"
+            >
+              Load Template
+            </button>
+            <button
+              type="button"
+              onClick={handleParseWhatsAppIntake}
+              className="px-3 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-[10px] font-black uppercase tracking-widest"
+            >
+              Parse & Auto-fill
+            </button>
+          </div>
+          <p className="mt-3 text-[10px] text-slate-500 leading-relaxed">
+            Attachments stay separate: after the pending expert appears in KYC Verifications, upload their profile photo and Aadhaar scan there.
+          </p>
+        </div>
       </div>
       
       {/* 🛡️ TOP HEADER PANEL */}

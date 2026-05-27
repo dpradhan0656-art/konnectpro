@@ -28,6 +28,8 @@ function normalizeExpertCity(value, fallback = 'Jabalpur') {
  * @param {string} [props.defaultCity] — pre-filled city (e.g. area head assigned territory)
  * @param {boolean} [props.cityReadOnly] — lock city field (area head)
  * @param {boolean} [props.compact] — tighter layout (footer)
+ * @param {object} [props.initialValues] — optional admin prefill payload (WhatsApp intake)
+ * @param {number} [props.prefillNonce] — increment to re-apply initialValues
  * @param {() => void} [props.onSuccess] — called after successful insert (e.g. refresh admin list)
  * @param {string} [props.className]
  */
@@ -37,6 +39,8 @@ export default function ExpertRegistrationForm({
   defaultCity = '',
   cityReadOnly = false,
   compact = false,
+  initialValues = null,
+  prefillNonce = 0,
   onSuccess,
   className = '',
 }) {
@@ -74,6 +78,31 @@ export default function ExpertRegistrationForm({
   useEffect(() => {
     if (defaultCity) setCity(normalizeExpertCity(defaultCity));
   }, [defaultCity]);
+
+  useEffect(() => {
+    if (!initialValues) return;
+    setName(initialValues.name || '');
+    setPhone(String(initialValues.phone || '').replace(/\D/g, '').slice(0, 10));
+    setEmail(initialValues.email || '');
+    setExperienceYears(
+      initialValues.experience_years === 0 || initialValues.experience_years
+        ? String(initialValues.experience_years)
+        : ''
+    );
+    setAadhar(String(initialValues.aadhar_number || '').replace(/\D/g, '').slice(0, 12));
+    setCity(normalizeExpertCity(initialValues.city, variant === 'footer' ? '' : 'Jabalpur'));
+
+    const incomingCategory = String(initialValues.service_category || '').trim();
+    if (!incomingCategory) return;
+    const categoryMatch = categories.find((c) => c.name.toLowerCase() === incomingCategory.toLowerCase());
+    if (categoryMatch) {
+      setCategoryKey(categoryMatch.name);
+      setCustomCategory('');
+    } else {
+      setCategoryKey(OTHER_VALUE);
+      setCustomCategory(incomingCategory);
+    }
+  }, [categories, initialValues, prefillNonce, variant]);
 
   useEffect(() => {
     if (variant !== 'self') return;
@@ -205,6 +234,7 @@ export default function ExpertRegistrationForm({
       city: cityVal,
       experience_years: expNum,
       status: 'pending',
+      kyc_status: 'pending',
     };
     if (aadharPayload) payload.aadhar_number = aadharPayload;
 
