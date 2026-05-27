@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import ExpertRegistrationForm from '../../components/forms/ExpertRegistrationForm';
 import MyExpertsList from '../../components/area_head/MyExpertsList';
+import WhatsAppIntakeButton from '../../components/buttons/WhatsAppIntakeButton';
 
 /**
  * AreaHeadApp — unified portal (login + dashboard in one route, DeepakHQ-style).
@@ -440,6 +441,14 @@ export default function AreaHeadApp() {
       </div>
 
       <div className="p-4 max-w-xl mx-auto mt-4 space-y-4">
+        <div className="rounded-2xl border border-emerald-500/20 bg-white p-4 shadow-sm">
+          <p className="text-sm font-black text-slate-900 uppercase tracking-widest">Send expert intake format</p>
+          <p className="text-xs text-slate-600 mt-1 mb-3 font-semibold">
+            Share this on WhatsApp, then use the reply to fill the onboarding form below.
+          </p>
+          <WhatsAppIntakeButton className="w-full" />
+        </div>
+
         <ExpertRegistrationForm
           variant="areaHead"
           areaHeadId={manager.id}

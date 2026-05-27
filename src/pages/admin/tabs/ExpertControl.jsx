@@ -14,6 +14,7 @@ import {
   Lock, Briefcase, Loader2, ShieldCheck, Power, PowerOff, Mail, Clipboard
 } from 'lucide-react';
 import ExpertRegistrationForm from '../../../components/forms/ExpertRegistrationForm';
+import WhatsAppIntakeButton from '../../../components/buttons/WhatsAppIntakeButton';
 
 export default function ExpertControl() {
   const [experts, setExperts] = useState([]);
@@ -423,6 +424,17 @@ export default function ExpertControl() {
               </button>
             ) : null}
         </div>
+      </div>
+
+      {/* 🔍 SEARCH BOX */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
+        <div>
+          <p className="text-sm font-black text-white uppercase tracking-widest">Share onboarding format</p>
+          <p className="text-xs text-slate-400 mt-1">
+            Opens WhatsApp with the expert intake template pre-filled.
+          </p>
+        </div>
+        <WhatsAppIntakeButton className="w-full md:w-auto" />
       </div>
 
       {/* 🔍 SEARCH BOX */}
