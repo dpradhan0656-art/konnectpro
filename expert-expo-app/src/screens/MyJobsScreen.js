@@ -137,63 +137,27 @@ export default function MyJobsScreen({ expert }) {
       return;
     }
 
-    const split = computeKshatryxSplit({ ...selectedJob, final_amount: finalAmount, total_amount: finalAmount });
     setCompleting(true);
 
     try {
-      const { data: expertRow, error: expertErr } = await supabase
-        .from('experts')
-        .select('wallet_balance')
-        .eq('id', expertId)
-        .maybeSingle();
-      if (expertErr) throw expertErr;
+      const { error: payoutErr } = await supabase.rpc('process_job_payout_with_final_amount', {
+        p_booking_id: selectedJob.id,
+        p_final_amount: finalAmount,
+      });
 
-      const currentWallet = Number(expertRow?.wallet_balance || 0);
-      const nextWallet = currentWallet - Number(split.kshatryxShare || 0);
-
-      const { error: bookingErr } = await supabase
-        .from('bookings')
-        .update({
-          status: 'completed',
-          final_amount: finalAmount,
-          total_amount: finalAmount,
-          expert_payout: split.expertShare,
-        })
-        .eq('id', selectedJob.id)
-        .eq('expert_id', expertId);
-
-      if (bookingErr) {
-        if (String(bookingErr.message || '').toLowerCase().includes('final_amount')) {
+      if (payoutErr) {
+        if (String(payoutErr.message || '').toLowerCase().includes('final_amount')) {
           throw new Error(
             '`final_amount` column is missing in `bookings`. Please run the provided Supabase migration, then retry.'
           );
         }
-        throw bookingErr;
+        throw payoutErr;
       }
 
-      const { error: walletErr } = await supabase
-        .from('experts')
-        .update({ wallet_balance: nextWallet })
-        .eq('id', expertId);
-      if (walletErr) throw walletErr;
-
-      const { error: txErr } = await supabase.from('wallet_transactions').insert({
-        user_id: expertId,
-        user_type: 'expert',
-        amount: split.kshatryxShare,
-        transaction_type: 'debit',
-        reason: 'platform_commission',
-        description: `Commission debit for booking ${selectedJob.id} (final bill ${formatInr(finalAmount)})`,
-      });
-
-      if (txErr) {
-        // Non-blocking: job + wallet are already updated.
-        showFeedback('Job completed, wallet updated. Transaction log insert failed; admin can reconcile.', 'error');
-      } else {
-        showFeedback(
-          `Job completed. Kshatryx commission ${formatInr(split.kshatryxShare)} debited. Wallet can go negative if required.`
-        );
-      }
+      const split = computeKshatryxSplit({ ...selectedJob, final_amount: finalAmount, total_amount: finalAmount });
+      showFeedback(
+        `Job completed securely. Final bill ${formatInr(finalAmount)}; Kshatryx commission ${formatInr(split.kshatryxShare)}.`
+      );
 
       closeCompletionModal();
       setLoading(true);

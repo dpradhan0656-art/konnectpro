@@ -159,7 +159,11 @@ export default function ExpertDashboard() {
   const updateJobStatus = async (jobId, newStatus) => {
     setProcessingId(jobId);
     try {
-      const { error } = await supabase.from('bookings').update({ status: newStatus }).eq('id', jobId);
+      const { error } = await supabase
+        .from('bookings')
+        .update({ status: newStatus })
+        .eq('id', jobId)
+        .eq('expert_id', expert.id);
       if (error) throw error;
       setJobs(jobs.map(job => job.id === jobId ? { ...job, status: newStatus } : job));
       

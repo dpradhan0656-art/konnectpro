@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { fetchExpertProfileMaster, upsertExpertProfileMaster } from '../../../lib/expertProfileMaster';
 import { compressAndUploadExpertPhoto } from '../../../utils/uploadImage';
+import { compressAndUploadExpertKycDocument, createSignedKycDocumentUrl } from '../../../utils/uploadKycDocument';
 import { adminEnsureExpertAuth, EXPERT_DEFAULT_PASSWORD } from '../../../lib/authAdmin';
 import { Shield, User, FileText, MapPin, Briefcase, CheckCircle, XCircle, Loader2, Eye, Landmark, CreditCard, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -15,6 +16,7 @@ export default function ExpertVerification() {
   /** Inline confirm — avoids blocking window.confirm (INP). */
   const [pendingConfirm, setPendingConfirm] = useState(null);
   const [profileMaster, setProfileMaster] = useState(null);
+  const [aadharPreviewUrl, setAadharPreviewUrl] = useState('');
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [uploadingDoc, setUploadingDoc] = useState('');
   const [payoutDraft, setPayoutDraft] = useState({
@@ -49,9 +51,29 @@ export default function ExpertVerification() {
         if (!cancelled) setLoadingDocs(false);
       }
     };
-    void     loadProfileMaster();
+    void loadProfileMaster();
     return () => { cancelled = true; };
   }, [selectedExpert]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadSignedAadhaar = async () => {
+      const storedPath = profileMaster?.aadhar_card_photo_url;
+      if (!storedPath) {
+        setAadharPreviewUrl('');
+        return;
+      }
+      try {
+        const signedUrl = await createSignedKycDocumentUrl(storedPath);
+        if (!cancelled) setAadharPreviewUrl(signedUrl);
+      } catch (err) {
+        console.error('Error signing Aadhaar preview URL:', err);
+        if (!cancelled) setAadharPreviewUrl('');
+      }
+    };
+    void loadSignedAadhaar();
+    return () => { cancelled = true; };
+  }, [profileMaster?.aadhar_card_photo_url]);
 
   useEffect(() => {
     if (!selectedExpert?.id) return;
@@ -201,13 +223,12 @@ export default function ExpertVerification() {
     if (!selectedExpert?.id || !file) return;
     setUploadingDoc(kind);
     try {
-      const upload = await compressAndUploadExpertPhoto({
-        file,
-        expertKey: selectedExpert.id,
-        objectSuffix: kind === 'profile' ? 'profile-selfie' : 'aadhaar-scan',
-      });
-
       if (kind === 'profile') {
+        const upload = await compressAndUploadExpertPhoto({
+          file,
+          expertKey: selectedExpert.id,
+          objectSuffix: 'profile-selfie',
+        });
         const { error } = await supabase
           .from('experts')
           .update({ photo_url: upload.publicUrl, kyc_status: 'pending' })
@@ -215,12 +236,17 @@ export default function ExpertVerification() {
         if (error) throw error;
         setSelectedExpert((prev) => (prev ? { ...prev, photo_url: upload.publicUrl } : prev));
       } else {
+        const upload = await compressAndUploadExpertKycDocument({
+          file,
+          expertKey: selectedExpert.id,
+          objectSuffix: 'aadhaar-scan',
+        });
         await upsertExpertProfileMaster(selectedExpert.id, {
-          aadhar_card_photo_url: upload.publicUrl,
+          aadhar_card_photo_url: upload.objectPath,
         });
         setProfileMaster((prev) => ({
           ...(prev || { expert_id: selectedExpert.id }),
-          aadhar_card_photo_url: upload.publicUrl,
+          aadhar_card_photo_url: upload.objectPath,
         }));
       }
 
@@ -491,14 +517,14 @@ export default function ExpertVerification() {
                                   </a>
                                 </div>
                               )}
-                              {profileMaster?.aadhar_card_photo_url && (
+                              {profileMaster?.aadhar_card_photo_url && aadharPreviewUrl && (
                                 <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800">
                                   <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2 flex items-center gap-1">
                                     <CreditCard size={12} className="text-teal-500" /> Aadhaar card (upload)
                                   </p>
-                                  <a href={profileMaster.aadhar_card_photo_url} target="_blank" rel="noopener noreferrer" className="block">
+                                  <a href={aadharPreviewUrl} target="_blank" rel="noopener noreferrer" className="block">
                                     <img
-                                      src={profileMaster.aadhar_card_photo_url}
+                                      src={aadharPreviewUrl}
                                       alt="Aadhaar document"
                                       className="w-full max-h-48 object-contain rounded-xl border border-slate-700 bg-slate-900"
                                     />

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { upsertExpertProfileMaster } from '../../lib/expertProfileMaster';
 import { compressAndUploadExpertPhoto } from '../../utils/uploadImage';
+import { compressAndUploadExpertKycDocument } from '../../utils/uploadKycDocument';
 import {
   Camera,
   FileText,
@@ -122,7 +123,7 @@ export default function ExpertKYC() {
         expertKey: expertId,
         objectSuffix: 'profile-selfie',
       });
-      const aadharUp = await compressAndUploadExpertPhoto({
+      const aadharUp = await compressAndUploadExpertKycDocument({
         file: formData.aadharPhoto,
         expertKey: expertId,
         objectSuffix: 'aadhar-front',
@@ -146,7 +147,7 @@ export default function ExpertKYC() {
 
       await upsertExpertProfileMaster(expertId, {
         residential_address: formData.fullAddress.trim(),
-        aadhar_card_photo_url: aadharUp.publicUrl,
+        aadhar_card_photo_url: aadharUp.objectPath,
       });
 
       setSuccess(true);

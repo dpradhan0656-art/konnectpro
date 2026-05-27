@@ -17,7 +17,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../lib/supabase';
 import { ACCENT, BG, BORDER, CARD, TEXT, TEXT_MUTED } from '../components/dashboard/theme';
 import { fetchExpertProfileMaster, upsertExpertProfileMaster } from '../utils/expertProfileMaster';
-import { uploadExpertProfileImage } from '../utils/uploadImage';
+import { uploadExpertKycDocumentImage, uploadExpertProfileImage } from '../utils/uploadImage';
 
 function formatMemberSince(value) {
   if (!value) return '-';
@@ -317,12 +317,12 @@ export default function ProfileScreen({ expert }) {
           : await ImagePicker.launchImageLibraryAsync(pickerOptions);
       if (result.canceled || !result.assets?.length) return;
       const asset = result.assets[0];
-      const { publicUrl } = await uploadExpertProfileImage({
+      const { path } = await uploadExpertKycDocumentImage({
         localUri: asset.uri,
         expertId,
         objectSuffix: 'aadhar-front',
       });
-      await upsertExpertProfileMaster(expertId, { aadhar_card_photo_url: publicUrl });
+      await upsertExpertProfileMaster(expertId, { aadhar_card_photo_url: path });
       Alert.alert('Success', 'Aadhaar front image saved.');
     } catch (e) {
       Alert.alert('Upload failed', e?.message || String(e));

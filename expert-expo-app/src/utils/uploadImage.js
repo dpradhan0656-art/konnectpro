@@ -3,6 +3,7 @@ import { readAsStringAsync, EncodingType } from 'expo-file-system/legacy';
 import { resolveSupabasePublicConfig, supabase } from '../lib/supabase';
 
 const EXPERT_PHOTO_BUCKET = 'expert-photos';
+const EXPERT_KYC_DOCUMENT_BUCKET = 'expert-kyc-documents';
 
 /**
  * On-device debug text for Storage errors (APK bundle may use wrong EXPO_PUBLIC_SUPABASE_URL).
@@ -129,4 +130,39 @@ export async function uploadExpertProfileImage({ localUri, expertId, objectSuffi
     );
   }
   return { path: objectPath, publicUrl };
+}
+
+/**
+ * Uploads sensitive KYC images to the private KYC bucket and returns only the object path.
+ *
+ * @param {{ localUri: string; expertId: string | number; objectSuffix?: string }} params
+ * @returns {Promise<{ path: string }>}
+ */
+export async function uploadExpertKycDocumentImage({ localUri, expertId, objectSuffix = 'document' }) {
+  if (!localUri) throw new Error('Image URI is required.');
+  if (!expertId) throw new Error('Expert ID is required.');
+
+  let body;
+  try {
+    body = await imageUriToArrayBuffer(localUri);
+  } catch (e) {
+    const { url: supabaseUrl } = resolveSupabasePublicConfig();
+    const msg = e?.message || String(e);
+    throw new Error(`${msg}${formatStorageDebugFooter(EXPERT_KYC_DOCUMENT_BUCKET, supabaseUrl)}`);
+  }
+
+  const safeSuffix = String(objectSuffix || 'document').replace(/[^a-zA-Z0-9_-]/g, '') || 'document';
+  const objectPath = `experts/${expertId}/${Date.now()}-${safeSuffix}.jpg`;
+  const { url: supabaseUrl } = resolveSupabasePublicConfig();
+  const { error: uploadErr } = await supabase.storage.from(EXPERT_KYC_DOCUMENT_BUCKET).upload(objectPath, body, {
+    contentType: 'image/jpeg',
+    upsert: true,
+  });
+  if (uploadErr) {
+    const errMsg =
+      uploadErr?.message || uploadErr?.error || (typeof uploadErr === 'string' ? uploadErr : 'Storage upload failed');
+    throw new Error(`${errMsg}${formatStorageDebugFooter(EXPERT_KYC_DOCUMENT_BUCKET, supabaseUrl)}`);
+  }
+
+  return { path: objectPath };
 }
