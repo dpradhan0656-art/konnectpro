@@ -6,6 +6,19 @@ const OTHER_VALUE = 'Other';
 
 const CITY_OPTIONS = ['Jabalpur', 'Sagar', 'Bhopal', 'Indore', 'Jhansi'];
 
+function normalizeExpertCity(value, fallback = 'Jabalpur') {
+  const raw = String(value || '').trim();
+  if (!raw) return fallback;
+  const compact = raw
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, ' ');
+  const exact = CITY_OPTIONS.find((city) => city.toLowerCase() === compact);
+  if (exact) return exact;
+  const contained = CITY_OPTIONS.find((city) => compact.includes(city.toLowerCase()));
+  return contained || fallback;
+}
+
 /**
  * Single source of truth for expert lead / registration inserts into `public.experts`.
  *
@@ -33,7 +46,9 @@ export default function ExpertRegistrationForm({
   const [email, setEmail] = useState('');
   const [categoryKey, setCategoryKey] = useState('');
   const [customCategory, setCustomCategory] = useState('');
-  const [city, setCity] = useState(() => defaultCity || (variant === 'footer' ? '' : 'Jabalpur'));
+  const [city, setCity] = useState(() =>
+    normalizeExpertCity(defaultCity, variant === 'footer' ? '' : 'Jabalpur')
+  );
   const [experienceYears, setExperienceYears] = useState('');
   const [aadhar, setAadhar] = useState('');
   const [password, setPassword] = useState('');
@@ -57,7 +72,7 @@ export default function ExpertRegistrationForm({
   }, []);
 
   useEffect(() => {
-    if (defaultCity) setCity(defaultCity);
+    if (defaultCity) setCity(normalizeExpertCity(defaultCity));
   }, [defaultCity]);
 
   useEffect(() => {
@@ -129,7 +144,7 @@ export default function ExpertRegistrationForm({
       setError('Select or enter a service category.');
       return;
     }
-    const cityVal = (cityReadOnly ? defaultCity || city : city).trim();
+    const cityVal = normalizeExpertCity(cityReadOnly ? defaultCity || city : city, '').trim();
     if (!cityVal) {
       setError('Please enter city.');
       return;
@@ -377,20 +392,24 @@ export default function ExpertRegistrationForm({
           <div className="relative">
             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={16} />
             {cityReadOnly ? (
-              <input
-                type="text"
-                readOnly
-                tabIndex={-1}
-                value={defaultCity || city || '—'}
-                className="w-full bg-slate-900/80 border border-slate-700 text-slate-400 rounded-xl py-3 pl-10 pr-3 text-sm cursor-not-allowed"
+              <select
+                value={normalizeExpertCity(defaultCity || city)}
+                disabled
+                className="w-full bg-slate-900/80 border border-slate-700 text-slate-400 rounded-xl py-3 pl-10 pr-3 text-sm cursor-not-allowed appearance-none"
                 title="Territory from area head profile"
-              />
+              >
+                {CITY_OPTIONS.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
             ) : variant === 'admin' ? (
               <select
                 value={city}
                 onChange={(ev) => {
                   setSuccess(false);
-                  setCity(ev.target.value);
+                  setCity(normalizeExpertCity(ev.target.value));
                 }}
                 className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl py-3 pl-10 pr-3 text-sm outline-none focus:border-teal-500/50 appearance-none cursor-pointer"
               >
@@ -408,7 +427,7 @@ export default function ExpertRegistrationForm({
                 value={city}
                 onChange={(ev) => {
                   setSuccess(false);
-                  setCity(ev.target.value);
+                  setCity(normalizeExpertCity(ev.target.value, ''));
                 }}
                 className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl py-3 pl-10 pr-3 text-sm outline-none focus:border-teal-500/50"
               />
