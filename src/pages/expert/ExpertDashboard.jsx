@@ -53,6 +53,10 @@ export default function ExpertDashboard() {
   const [customAmount, setCustomAmount] = useState('');
   const [rechargeLoading, setRechargeLoading] = useState(false);
   const [rechargeError, setRechargeError] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState('');
   
   // 🌍 Language State (Local Storage)
   const [lang, setLang] = useState(localStorage.getItem('kshatr_lang') || 'hi');
@@ -240,6 +244,31 @@ export default function ExpertDashboard() {
       }
       await supabase.auth.signOut();
       navigate('/expert/login'); 
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setPasswordMessage('');
+    if (newPassword.length < 8) {
+      setPasswordMessage('Password kam se kam 8 characters ka hona chahiye.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordMessage('Confirm password match nahi ho raha.');
+      return;
+    }
+    setPasswordSaving(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setNewPassword('');
+      setConfirmPassword('');
+      setPasswordMessage('Password update ho gaya. Next login me naya password use karein.');
+    } catch (err) {
+      setPasswordMessage(err?.message || 'Password update fail ho gaya.');
+    } finally {
+      setPasswordSaving(false);
+    }
   };
 
   /** Phase 1: Google Maps — coords → directions; else address → search. */
@@ -489,6 +518,51 @@ export default function ExpertDashboard() {
                   {expert?.is_active ? t.online : t.offline}
               </h3>
           </div>
+
+          <form onSubmit={handleChangePassword} className="mt-4 bg-slate-950 p-5 rounded-3xl border border-slate-800">
+            <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
+              <Lock size={14} className="text-teal-400" /> Change Password
+            </h3>
+            <p className="text-[11px] text-slate-500 mt-1 mb-3">
+              Default password ko login ke baad yahan se change karein.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <input
+                type="password"
+                minLength={8}
+                value={newPassword}
+                onChange={(e) => {
+                  setNewPassword(e.target.value);
+                  setPasswordMessage('');
+                }}
+                placeholder="New password"
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white outline-none focus:border-teal-500"
+              />
+              <input
+                type="password"
+                minLength={8}
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  setPasswordMessage('');
+                }}
+                placeholder="Confirm password"
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white outline-none focus:border-teal-500"
+              />
+            </div>
+            {passwordMessage ? (
+              <p className={`mt-2 text-xs font-bold ${passwordMessage.includes('update ho gaya') ? 'text-green-400' : 'text-amber-300'}`}>
+                {passwordMessage}
+              </p>
+            ) : null}
+            <button
+              type="submit"
+              disabled={passwordSaving || !newPassword || !confirmPassword}
+              className="mt-3 w-full bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px]"
+            >
+              {passwordSaving ? 'Updating...' : 'Update Password'}
+            </button>
+          </form>
       </div>
 
       <div className="p-6 max-w-lg mx-auto">

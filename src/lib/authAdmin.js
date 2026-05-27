@@ -7,17 +7,19 @@
  */
 import { supabase } from './supabase';
 
-export async function adminResetPassword(userId, newPassword) {
-  if (!userId || !newPassword || newPassword.length < 6) {
-    throw new Error('user_id and new password (min 6 chars) required');
-  }
+export const EXPERT_DEFAULT_PASSWORD = 'Kshatr@7979';
 
+async function getAdminSession() {
   const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
   const session = refreshData?.session ?? (await supabase.auth.getSession()).data?.session;
   if (!session?.access_token) {
     throw new Error(refreshError?.message || 'Session expired. Please sign in again.');
   }
+  return session;
+}
 
+async function callAdminAuthFunction(functionName, payload) {
+  const session = await getAdminSession();
   const baseUrl = import.meta.env.VITE_SUPABASE_URL;
   const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
   if (!baseUrl || !anonKey) {
@@ -26,14 +28,14 @@ export async function adminResetPassword(userId, newPassword) {
 
   let res;
   try {
-    res = await fetch(`${baseUrl}/functions/v1/admin-reset-password`, {
+    res = await fetch(`${baseUrl}/functions/v1/${functionName}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${session.access_token}`,
         apikey: anonKey,
       },
-      body: JSON.stringify({ user_id: userId, new_password: newPassword }),
+      body: JSON.stringify(payload),
     });
   } catch (e) {
     const msg = e?.message || String(e);
@@ -58,9 +60,35 @@ export async function adminResetPassword(userId, newPassword) {
       body?.details ||
       (body?._raw ? String(body._raw).slice(0, 300) : null) ||
       res.statusText ||
-      'Password reset failed.';
+      'Admin auth operation failed.';
     throw new Error(`HTTP ${res.status}: ${detail}`);
   }
   if (body?.error) throw new Error(body.error);
   return body;
+}
+
+export async function adminResetPassword(userId, newPassword) {
+  if (!userId || !newPassword || newPassword.length < 6) {
+    throw new Error('user_id and new password (min 6 chars) required');
+  }
+
+  return callAdminAuthFunction('admin-reset-password', {
+    user_id: userId,
+    new_password: newPassword,
+  });
+}
+
+export async function adminEnsureExpertAuth({ expertId, email, password = EXPERT_DEFAULT_PASSWORD }) {
+  if (!expertId) throw new Error('expertId is required.');
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) {
+    throw new Error('Valid expert email is required before approval.');
+  }
+  if (!password || password.length < 8) {
+    throw new Error('Default expert password must be at least 8 characters.');
+  }
+  return callAdminAuthFunction('admin-ensure-expert-auth', {
+    expert_id: expertId,
+    email: String(email).trim().toLowerCase(),
+    password,
+  });
 }

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { fetchExpertProfileMaster, upsertExpertProfileMaster } from '../../../lib/expertProfileMaster';
 import { compressAndUploadExpertPhoto } from '../../../utils/uploadImage';
+import { adminEnsureExpertAuth, EXPERT_DEFAULT_PASSWORD } from '../../../lib/authAdmin';
 import { Shield, User, FileText, MapPin, Briefcase, CheckCircle, XCircle, Loader2, Eye, Landmark, CreditCard, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { writeAdminAuditLog } from '../../../utils/adminAuditTrail';
@@ -65,26 +66,52 @@ export default function ExpertVerification() {
     setLoading(false);
   };
 
-  const runApprove = async (id, name) => {
+  const runApprove = async (expert) => {
     setActionLoading(true);
-    const { error } = await supabase
+    const id = expert?.id;
+    const name = expert?.name || 'Expert';
+    if (!id) {
+      toast.error('Expert id missing.');
+      setActionLoading(false);
+      return;
+    }
+    const { data: latestExpert, error } = await supabase
       .from('experts')
-      .update({ status: 'approved', is_verified: true })
-      .eq('id', id);
+      .select('id, email, user_id')
+      .eq('id', id)
+      .maybeSingle();
 
-    if (!error) {
+    if (error) {
+      toast.error(error.message || 'Approval pre-check failed');
+      setActionLoading(false);
+      return;
+    }
+
+    try {
+      const authResult = await adminEnsureExpertAuth({
+        expertId: id,
+        email: expert?.email || latestExpert?.email,
+        password: EXPERT_DEFAULT_PASSWORD,
+      });
+
+      const { error: approveError } = await supabase
+        .from('experts')
+        .update({ status: 'approved', is_verified: true, user_id: authResult.user_id })
+        .eq('id', id);
+      if (approveError) throw approveError;
+
       void writeAdminAuditLog({
         action: 'expert.approved.kyc',
         entityType: 'expert',
         entityId: id,
-        metadata: { name },
+        metadata: { name, default_password_set: true },
       });
-      toast.success(`${name} approved — duty can start now.`);
+      toast.success(`${name} approved. Default login password: ${EXPERT_DEFAULT_PASSWORD}`);
       setSelectedExpert(null);
       setPendingConfirm(null);
       void fetchPendingExperts();
-    } else {
-      toast.error(error.message || 'Approve failed');
+    } catch (err) {
+      toast.error(err?.message || 'Approve failed');
     }
     setActionLoading(false);
   };
@@ -116,7 +143,7 @@ export default function ExpertVerification() {
   const executePendingConfirm = () => {
     if (!pendingConfirm || actionLoading) return;
     const { action, id, name } = pendingConfirm;
-    if (action === 'approve') void runApprove(id, name);
+    if (action === 'approve') void runApprove(pendingConfirm.expert || { id, name });
     else void runReject(id, name);
   };
 
@@ -419,7 +446,7 @@ export default function ExpertVerification() {
                         <div className="mt-6 p-4 rounded-2xl border border-amber-500/40 bg-amber-500/10">
                           <p className="text-sm font-bold text-amber-100 mb-3">
                             {pendingConfirm.action === 'approve'
-                              ? `Approve ${pendingConfirm.name}? Duty starts immediately.`
+                              ? `Approve ${pendingConfirm.name}? Login email will use default password ${EXPERT_DEFAULT_PASSWORD}.`
                               : `Reject ${pendingConfirm.name}? They will need to re-apply.`}
                           </p>
                           <div className="flex gap-3">
@@ -450,6 +477,7 @@ export default function ExpertVerification() {
                                 action: 'approve',
                                 id: selectedExpert.id,
                                 name: selectedExpert.name,
+                                expert: selectedExpert,
                               })}
                               disabled={actionLoading || !!pendingConfirm}
                               className="flex-1 bg-green-600 hover:bg-green-500 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs flex justify-center items-center gap-2 shadow-lg shadow-green-900/50 transition-all active:scale-95 disabled:opacity-50"
