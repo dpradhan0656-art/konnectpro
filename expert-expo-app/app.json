@@ -3,7 +3,7 @@
     "name": "Kshatr Expert",
     "slug": "kshatr-expert",
     "scheme": "expert-expo-app",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -17,7 +17,7 @@
     },
     "android": {
       "package": "com.kshatr.expert",
-      "versionCode": 2,
+      "versionCode": 3,
       "permissions": [
         "INTERNET",
         "VIBRATE",

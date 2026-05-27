@@ -2,15 +2,18 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { isReviewerLoginEnabled } from '../config/expertAuthFlags';
 import { supabase } from '../lib/supabase';
 import { signInWithGoogle } from '../lib/googleOAuth';
+import ReviewerLoginModal from './ReviewerLoginModal';
 
 /**
- * Expert App Auth — STRICT Google OAuth ONLY.
- * No OTP, no passwords, no email/phone manual auth.
+ * Expert App Auth — Google OAuth for normal users.
+ * Hidden reviewer email/password fallback is gated by EXPO_PUBLIC_ENABLE_REVIEWER_LOGIN=true.
  */
 
 const GOOGLE_G_LOGO_PNG = 'https://www.google.com/images/branding/googleg/1x/googleg_standard_color_128dp.png';
+const APP_LOGO = require('../../assets/logo.png');
 
 const ACCENT = '#0d9488';
 const ACCENT_MUTED = '#134e4a';
@@ -21,6 +24,7 @@ const TEXT_MUTED = '#94a3b8';
 
 // If the OAuth custom-tab session never reports back, stop the spinner.
 const GOOGLE_SIGNIN_TIMEOUT_MS = 120000;
+const REVIEWER_TAP_THRESHOLD = 7;
 
 /**
  * @param {{ onOAuthSessionHint?: (session: import('@supabase/supabase-js').Session | null | undefined) => Promise<void> }} props
@@ -30,8 +34,12 @@ export default function LoginScreen({ onOAuthSessionHint }) {
   const [isLoading, setIsLoading] = useState(false);
   /** Blocks double-tap after OAuth returns while App reconciles session (screen may stay mounted briefly). */
   const [oauthHandoff, setOauthHandoff] = useState(false);
+  const [reviewerVisible, setReviewerVisible] = useState(false);
+  const reviewerTapCountRef = useRef(0);
+  const reviewerTapResetRef = useRef(null);
   const googleSpinnerTimeoutRef = useRef(null);
   const mountedRef = useRef(true);
+  const reviewerLoginEnabled = isReviewerLoginEnabled();
 
   const clearGoogleSpinnerTimeout = useCallback(() => {
     if (googleSpinnerTimeoutRef.current) {
@@ -44,9 +52,30 @@ export default function LoginScreen({ onOAuthSessionHint }) {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+      if (reviewerTapResetRef.current) clearTimeout(reviewerTapResetRef.current);
       clearGoogleSpinnerTimeout();
     };
   }, [clearGoogleSpinnerTimeout]);
+
+  const onLogoTap = useCallback(() => {
+    if (!reviewerLoginEnabled) return;
+
+    reviewerTapCountRef.current += 1;
+    if (reviewerTapResetRef.current) clearTimeout(reviewerTapResetRef.current);
+    reviewerTapResetRef.current = setTimeout(() => {
+      reviewerTapCountRef.current = 0;
+      reviewerTapResetRef.current = null;
+    }, 1800);
+
+    if (reviewerTapCountRef.current >= REVIEWER_TAP_THRESHOLD) {
+      reviewerTapCountRef.current = 0;
+      if (reviewerTapResetRef.current) {
+        clearTimeout(reviewerTapResetRef.current);
+        reviewerTapResetRef.current = null;
+      }
+      setReviewerVisible(true);
+    }
+  }, [reviewerLoginEnabled]);
 
   // Keep UI responsive while `App.js` validates access and routes.
   useEffect(() => {
@@ -133,6 +162,9 @@ export default function LoginScreen({ onOAuthSessionHint }) {
       >
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
+            <Pressable onPress={onLogoTap} hitSlop={12} style={styles.logoTapTarget}>
+              <Image source={APP_LOGO} style={styles.appLogo} resizeMode="contain" />
+            </Pressable>
             <View style={styles.badge}>
               <Text style={styles.badgeText}>Partner</Text>
             </View>
@@ -164,6 +196,13 @@ export default function LoginScreen({ onOAuthSessionHint }) {
 
           <Text style={styles.footer}>No OTP. No passwords. Google OAuth only.</Text>
         </ScrollView>
+        {reviewerLoginEnabled ? (
+          <ReviewerLoginModal
+            visible={reviewerVisible}
+            onClose={() => setReviewerVisible(false)}
+            onSession={onOAuthSessionHint ?? (() => {})}
+          />
+        ) : null}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -185,6 +224,15 @@ const styles = StyleSheet.create({
   header: {
     marginTop: 16,
     marginBottom: 28,
+  },
+  logoTapTarget: {
+    alignSelf: 'flex-start',
+    marginBottom: 18,
+  },
+  appLogo: {
+    width: 72,
+    height: 72,
+    borderRadius: 18,
   },
   badge: {
     alignSelf: 'flex-start',

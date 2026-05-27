@@ -3,6 +3,7 @@
  *
  * EXPO_PUBLIC_FORCE_EXPERT_MODE — dev/QA only (e.g. Expo Go): skip DB expert gate and show dashboard.
  * Omit or set to false in production / store builds so normal validateExpertAccess runs.
+ * EXPO_PUBLIC_ENABLE_REVIEWER_LOGIN — Play Store review only: enables hidden email/password reviewer login.
  */
 
 function parseTruthyEnv(value) {
@@ -18,6 +19,15 @@ function parseTruthyEnv(value) {
  */
 export function isForceExpertDashboardMode() {
   return parseTruthyEnv(process.env.EXPO_PUBLIC_FORCE_EXPERT_MODE);
+}
+
+/**
+ * Hidden Google Play reviewer fallback. Keep disabled for normal production builds unless
+ * the Play Console review build needs email/password access.
+ * @returns {boolean}
+ */
+export function isReviewerLoginEnabled() {
+  return parseTruthyEnv(process.env.EXPO_PUBLIC_ENABLE_REVIEWER_LOGIN);
 }
 
 /**
