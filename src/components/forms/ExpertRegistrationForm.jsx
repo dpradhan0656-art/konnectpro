@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
+import { upsertExpertProfileMaster } from '../../lib/expertProfileMaster';
 import { User, Phone, Mail, Briefcase, MapPin, Clock, CreditCard, Loader2, CheckCircle } from 'lucide-react';
 
 const OTHER_VALUE = 'Other';
@@ -30,6 +31,7 @@ function normalizeExpertCity(value, fallback = 'Jabalpur') {
  * @param {boolean} [props.compact] — tighter layout (footer)
  * @param {object} [props.initialValues] — optional admin prefill payload (WhatsApp intake)
  * @param {number} [props.prefillNonce] — increment to re-apply initialValues
+ * @param {object} [props.profileMasterPayload] — optional bank/payout fields for expert_profile_master
  * @param {() => void} [props.onSuccess] — called after successful insert (e.g. refresh admin list)
  * @param {string} [props.className]
  */
@@ -41,6 +43,7 @@ export default function ExpertRegistrationForm({
   compact = false,
   initialValues = null,
   prefillNonce = 0,
+  profileMasterPayload = null,
   onSuccess,
   className = '',
 }) {
@@ -260,9 +263,17 @@ export default function ExpertRegistrationForm({
 
       if (insertError) throw insertError;
 
+      const expertId = inserted?.id ?? null;
+      const hasProfileMaster =
+        profileMasterPayload &&
+        Object.values(profileMasterPayload).some((v) => v != null && String(v).trim() !== '');
+      if (expertId && variant === 'admin' && hasProfileMaster) {
+        await upsertExpertProfileMaster(expertId, profileMasterPayload);
+      }
+
       setSuccess(true);
       resetLocal();
-      onSuccess?.(inserted ?? { area_head_id: areaHeadId });
+      onSuccess?.(inserted ?? { area_head_id: areaHeadId, id: expertId });
     } catch (err) {
       setError(err.message || 'Could not submit. Try again.');
     } finally {

@@ -17,6 +17,13 @@ export default function ExpertVerification() {
   const [profileMaster, setProfileMaster] = useState(null);
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [uploadingDoc, setUploadingDoc] = useState('');
+  const [payoutDraft, setPayoutDraft] = useState({
+    bank_account_holder_name: '',
+    bank_account_number: '',
+    ifsc_code: '',
+    pan_number: '',
+    residential_address: '',
+  });
 
   useEffect(() => {
     fetchPendingExperts();
@@ -42,9 +49,40 @@ export default function ExpertVerification() {
         if (!cancelled) setLoadingDocs(false);
       }
     };
-    void loadProfileMaster();
+    void     loadProfileMaster();
     return () => { cancelled = true; };
   }, [selectedExpert]);
+
+  useEffect(() => {
+    if (!selectedExpert?.id) return;
+    setPayoutDraft({
+      bank_account_holder_name: profileMaster?.bank_account_holder_name || '',
+      bank_account_number: profileMaster?.bank_account_number || '',
+      ifsc_code: profileMaster?.ifsc_code || '',
+      pan_number: profileMaster?.pan_number || '',
+      residential_address: profileMaster?.residential_address || '',
+    });
+  }, [profileMaster, selectedExpert?.id]);
+
+  const savePayoutDraft = async () => {
+    if (!selectedExpert?.id) return;
+    setActionLoading(true);
+    try {
+      await upsertExpertProfileMaster(selectedExpert.id, {
+        bank_account_holder_name: payoutDraft.bank_account_holder_name.trim() || null,
+        bank_account_number: payoutDraft.bank_account_number.replace(/\D/g, '') || null,
+        ifsc_code: payoutDraft.ifsc_code.trim().toUpperCase().replace(/\s/g, '') || null,
+        pan_number: payoutDraft.pan_number.trim().toUpperCase().replace(/\s/g, '') || null,
+        residential_address: payoutDraft.residential_address.trim() || null,
+      });
+      const data = await fetchExpertProfileMaster(selectedExpert.id);
+      setProfileMaster(data);
+      toast.success('Payout details saved.');
+    } catch (err) {
+      toast.error(err?.message || 'Could not save payout details');
+    }
+    setActionLoading(false);
+  };
 
   // 1. Database se Pending Experts lana
   const fetchPendingExperts = async () => {
@@ -93,6 +131,18 @@ export default function ExpertVerification() {
         email: expert?.email || latestExpert?.email,
         password: EXPERT_DEFAULT_PASSWORD,
       });
+
+      const payoutFields = {
+        bank_account_holder_name: payoutDraft.bank_account_holder_name.trim() || null,
+        bank_account_number: payoutDraft.bank_account_number.replace(/\D/g, '') || null,
+        ifsc_code: payoutDraft.ifsc_code.trim().toUpperCase().replace(/\s/g, '') || null,
+        pan_number: payoutDraft.pan_number.trim().toUpperCase().replace(/\s/g, '') || null,
+        residential_address: payoutDraft.residential_address.trim() || null,
+      };
+      const hasPayout = Object.values(payoutFields).some((v) => v);
+      if (hasPayout) {
+        await upsertExpertProfileMaster(id, payoutFields);
+      }
 
       const { error: approveError } = await supabase
         .from('experts')
@@ -366,31 +416,58 @@ export default function ExpertVerification() {
                         ) : profileMaster || selectedExpert.photo_url ? (
                           <div className="space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800">
-                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Account holder</p>
-                                <p className="text-sm font-bold text-white">
-                                  {profileMaster?.bank_account_holder_name || 'Not provided'}
-                                </p>
-                              </div>
-                              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800">
-                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Account number</p>
-                                <p className="text-sm font-bold text-white font-mono">
-                                  {profileMaster?.bank_account_number || 'Not provided'}
-                                </p>
-                              </div>
-                              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800">
-                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">IFSC</p>
-                                <p className="text-sm font-bold text-white font-mono uppercase">
-                                  {profileMaster?.ifsc_code || 'Not provided'}
-                                </p>
-                              </div>
-                              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800">
-                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">PAN</p>
-                                <p className="text-sm font-bold text-white font-mono uppercase">
-                                  {profileMaster?.pan_number || 'Not provided'}
-                                </p>
-                              </div>
+                              <label className="bg-slate-950 p-4 rounded-2xl border border-slate-800 block">
+                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Account holder</span>
+                                <input
+                                  value={payoutDraft.bank_account_holder_name}
+                                  onChange={(e) => setPayoutDraft((d) => ({ ...d, bank_account_holder_name: e.target.value }))}
+                                  className="mt-2 w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-teal-500/60"
+                                  placeholder="Optional until withdrawal"
+                                />
+                              </label>
+                              <label className="bg-slate-950 p-4 rounded-2xl border border-slate-800 block">
+                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Account number</span>
+                                <input
+                                  value={payoutDraft.bank_account_number}
+                                  onChange={(e) => setPayoutDraft((d) => ({ ...d, bank_account_number: e.target.value }))}
+                                  className="mt-2 w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white font-mono outline-none focus:border-teal-500/60"
+                                  inputMode="numeric"
+                                />
+                              </label>
+                              <label className="bg-slate-950 p-4 rounded-2xl border border-slate-800 block">
+                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">IFSC</span>
+                                <input
+                                  value={payoutDraft.ifsc_code}
+                                  onChange={(e) => setPayoutDraft((d) => ({ ...d, ifsc_code: e.target.value }))}
+                                  className="mt-2 w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white font-mono uppercase outline-none focus:border-teal-500/60"
+                                />
+                              </label>
+                              <label className="bg-slate-950 p-4 rounded-2xl border border-slate-800 block">
+                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">PAN</span>
+                                <input
+                                  value={payoutDraft.pan_number}
+                                  onChange={(e) => setPayoutDraft((d) => ({ ...d, pan_number: e.target.value }))}
+                                  className="mt-2 w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white font-mono uppercase outline-none focus:border-teal-500/60"
+                                />
+                              </label>
+                              <label className="bg-slate-950 p-4 rounded-2xl border border-slate-800 block sm:col-span-2">
+                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Residential address</span>
+                                <textarea
+                                  rows={2}
+                                  value={payoutDraft.residential_address}
+                                  onChange={(e) => setPayoutDraft((d) => ({ ...d, residential_address: e.target.value }))}
+                                  className="mt-2 w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-teal-500/60 resize-none"
+                                />
+                              </label>
                             </div>
+                            <button
+                              type="button"
+                              onClick={() => void savePayoutDraft()}
+                              disabled={actionLoading}
+                              className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-300 text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+                            >
+                              Save payout details
+                            </button>
                             <div className="flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-widest">
                               <span className={`px-3 py-1.5 rounded-full border ${selectedExpert.aadhar_number ? 'border-green-500/40 text-green-400 bg-green-500/10' : 'border-amber-500/40 text-amber-400 bg-amber-500/10'}`}>
                                 Aadhaar digits: {selectedExpert.aadhar_number ? 'Provided' : 'Missing'}
@@ -436,9 +513,54 @@ export default function ExpertVerification() {
                             )}
                           </div>
                         ) : (
-                          <p className="text-xs text-amber-400 font-bold">
-                            No bank or document uploads found for this expert (Expo Profile or Expert Control).
-                          </p>
+                          <div className="space-y-3">
+                            <p className="text-xs text-amber-400 font-bold">
+                              No saved payout row yet — enter bank details below (optional until withdrawal).
+                            </p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <label className="bg-slate-950 p-4 rounded-2xl border border-slate-800 block">
+                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Account holder</span>
+                                <input
+                                  value={payoutDraft.bank_account_holder_name}
+                                  onChange={(e) => setPayoutDraft((d) => ({ ...d, bank_account_holder_name: e.target.value }))}
+                                  className="mt-2 w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-teal-500/60"
+                                />
+                              </label>
+                              <label className="bg-slate-950 p-4 rounded-2xl border border-slate-800 block">
+                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Account number</span>
+                                <input
+                                  value={payoutDraft.bank_account_number}
+                                  onChange={(e) => setPayoutDraft((d) => ({ ...d, bank_account_number: e.target.value }))}
+                                  className="mt-2 w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white font-mono outline-none focus:border-teal-500/60"
+                                  inputMode="numeric"
+                                />
+                              </label>
+                              <label className="bg-slate-950 p-4 rounded-2xl border border-slate-800 block">
+                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">IFSC</span>
+                                <input
+                                  value={payoutDraft.ifsc_code}
+                                  onChange={(e) => setPayoutDraft((d) => ({ ...d, ifsc_code: e.target.value }))}
+                                  className="mt-2 w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white font-mono uppercase outline-none focus:border-teal-500/60"
+                                />
+                              </label>
+                              <label className="bg-slate-950 p-4 rounded-2xl border border-slate-800 block">
+                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">PAN</span>
+                                <input
+                                  value={payoutDraft.pan_number}
+                                  onChange={(e) => setPayoutDraft((d) => ({ ...d, pan_number: e.target.value }))}
+                                  className="mt-2 w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white font-mono uppercase outline-none focus:border-teal-500/60"
+                                />
+                              </label>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => void savePayoutDraft()}
+                              disabled={actionLoading}
+                              className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-300 text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+                            >
+                              Save payout details
+                            </button>
+                          </div>
                         )}
                       </div>
 

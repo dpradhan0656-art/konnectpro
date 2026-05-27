@@ -60,6 +60,7 @@ export default function ExpertControl() {
   const [whatsappParsed, setWhatsappParsed] = useState(null);
   const [whatsappError, setWhatsappError] = useState('');
   const [registrationPrefill, setRegistrationPrefill] = useState(null);
+  const [registrationProfileMaster, setRegistrationProfileMaster] = useState(null);
   const [prefillNonce, setPrefillNonce] = useState(0);
 
   useEffect(() => {
@@ -299,6 +300,14 @@ export default function ExpertControl() {
     setPhotoPreviewUrl(objectUrl);
   };
 
+  const buildProfileMasterFromParsed = (parsed) => ({
+    bank_account_holder_name: parsed.bank_account_holder_name || null,
+    bank_account_number: parsed.bank_account_number || null,
+    ifsc_code: parsed.ifsc_code || null,
+    pan_number: parsed.pan_number || null,
+    residential_address: parsed.residential_address || null,
+  });
+
   const handleParseWhatsAppIntake = () => {
     const parsed = parseWhatsAppExpertIntake(whatsappText);
     const errors = validateParsedExpertIntake(parsed);
@@ -309,6 +318,7 @@ export default function ExpertControl() {
     }
     setWhatsappError('');
     setRegistrationPrefill(parsed);
+    setRegistrationProfileMaster(buildProfileMasterFromParsed(parsed));
     setPrefillNonce((n) => n + 1);
   };
 
@@ -325,6 +335,7 @@ export default function ExpertControl() {
           <ExpertRegistrationForm
             variant="admin"
             initialValues={registrationPrefill}
+            profileMasterPayload={registrationProfileMaster}
             prefillNonce={prefillNonce}
             onSuccess={fetchData}
           />
@@ -434,7 +445,7 @@ export default function ExpertControl() {
             Opens WhatsApp with the expert intake template pre-filled.
           </p>
         </div>
-        <WhatsAppIntakeButton className="w-full md:w-auto" />
+        <WhatsAppIntakeButton className="w-full md:w-auto" template={EXPERT_WHATSAPP_INTAKE_TEMPLATE} />
       </div>
 
       {/* 🔍 SEARCH BOX */}
