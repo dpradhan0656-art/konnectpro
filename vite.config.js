@@ -11,9 +11,9 @@ export default defineConfig({
       manifestFilename: 'manifest.json',
       includeAssets: [
         'favicon.ico',
-        'icons/icon-192.svg',
-        'icons/icon-512.svg',
-        'icons/apple-touch-icon.svg',
+        'icons/icon-192.png',
+        'icons/icon-512.png',
+        'icons/apple-touch-icon.png',
       ],
       manifest: {
         name: 'Kshatryx Technologies',
@@ -27,8 +27,8 @@ export default defineConfig({
         orientation: 'portrait-primary',
         categories: ['lifestyle', 'utilities'],
         icons: [
-          { src: 'icons/icon-192.svg', sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
-          { src: 'icons/icon-512.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
+          { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+          { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
         ]
       },
       workbox: {
