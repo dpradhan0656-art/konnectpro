@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { adminResetPassword } from '../../../lib/authAdmin';
-import { Shield, MapPin, Briefcase, Plus, User, Mail, Lock, Loader2, CheckCircle, XCircle, Phone, KeyRound } from 'lucide-react';
+import { MAX_AREA_HEAD_COMMISSION_PCT } from '../../../services/paymentSplitService';
+import { Shield, MapPin, Briefcase, Plus, User, Mail, Lock, Loader2, CheckCircle, XCircle, Phone, KeyRound, Trash2 } from 'lucide-react';
 
 export default function AreaHeadManager() {
   const [managers, setManagers] = useState([]);
@@ -33,9 +34,9 @@ export default function AreaHeadManager() {
       setFormCompensationError('');
       const compNum = parseFloat(formData.compensation);
       if (formData.type === 'commission') {
-          if (!Number.isFinite(compNum) || compNum < 0 || compNum > 20) {
+          if (!Number.isFinite(compNum) || compNum < 0 || compNum > MAX_AREA_HEAD_COMMISSION_PCT) {
               setFormCompensationError(
-                  'Commission 0–20% ke beech hona chahiye. Yeh cut Kshatryx ke 20% pool se kat-ta hai.'
+                  `Commission 0–${MAX_AREA_HEAD_COMMISSION_PCT}% ke beech hona chahiye. Yeh Kshatryx ke 20% pool ka share hai.`
               );
               return;
           }
@@ -87,14 +88,28 @@ export default function AreaHeadManager() {
   };
 
   const updateCompensation = async (id, type, val) => {
-      const newVal = prompt(`Enter new ${type === 'salary' ? 'Salary Amount (₹)' : 'Commission Percentage (%)'}:`, val);
+      const newVal = prompt(`Enter new ${type === 'salary' ? 'Salary Amount (₹)' : 'Kshatryx Pool Share (%)'}:`, val);
       if(!newVal || isNaN(newVal)) return;
       const n = parseFloat(newVal);
-      if (type === 'commission' && (!Number.isFinite(n) || n < 0 || n > 20)) {
-          alert('Commission 0–20% ke beech hona chahiye. Yeh cut Kshatryx ke 20% pool se kat-ta hai.');
+      if (type === 'commission' && (!Number.isFinite(n) || n < 0 || n > MAX_AREA_HEAD_COMMISSION_PCT)) {
+          alert(`Commission 0–${MAX_AREA_HEAD_COMMISSION_PCT}% ke beech hona chahiye. Yeh Kshatryx ke 20% pool ka share hai.`);
           return;
       }
       await supabase.from('area_heads').update({ compensation_value: n }).eq('id', id);
+      fetchManagers();
+  };
+
+  const deleteManager = async (mgr) => {
+      const confirmed = window.confirm(
+          `Delete ${mgr.name} from Area/City Commanders?\n\nExisting bookings/experts will keep their audit data, but this commander row will be removed. Auth login user is not deleted automatically.`
+      );
+      if (!confirmed) return;
+
+      const { error } = await supabase.from('area_heads').delete().eq('id', mgr.id);
+      if (error) {
+          alert('Delete failed: ' + error.message);
+          return;
+      }
       fetchManagers();
   };
 
@@ -180,20 +195,22 @@ export default function AreaHeadManager() {
                           <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Compensation Type</label>
                           <select value={formData.type} onChange={e => { setFormCompensationError(''); setFormData({...formData, type: e.target.value}); }} className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl py-3 px-4 outline-none focus:border-teal-500/50 appearance-none font-bold">
                               <option value="salary">Monthly Salary</option>
-                              <option value="commission">Revenue Commission (%)</option>
+                              <option value="commission">Kshatryx Pool Share (%)</option>
                           </select>
                       </div>
                       <div>
-                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Amount / Percentage</label>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">
+                              {formData.type === 'salary' ? 'Monthly Amount' : 'Kshatryx Pool Share (%)'}
+                          </label>
                           <div className="relative">
                               <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                               <input
                                   type="number"
                                   required
                                   min={0}
-                                  max={formData.type === 'commission' ? 20 : undefined}
+                                  max={formData.type === 'commission' ? MAX_AREA_HEAD_COMMISSION_PCT : undefined}
                                   step={formData.type === 'commission' ? '0.1' : '1'}
-                                  placeholder={formData.type === 'salary' ? "e.g. 15000" : "e.g. 10 (for 10%)"}
+                                  placeholder={formData.type === 'salary' ? "e.g. 15000" : "e.g. 30 (30% of Kshatryx pool)"}
                                   value={formData.compensation}
                                   onChange={e => { setFormCompensationError(''); setFormData({...formData, compensation: e.target.value}); }}
                                   className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl py-3 pl-12 pr-4 outline-none focus:border-teal-500/50 font-black"
@@ -202,6 +219,10 @@ export default function AreaHeadManager() {
                       </div>
                       {formCompensationError ? (
                           <p className="md:col-span-2 text-sm text-amber-400 font-bold">{formCompensationError}</p>
+                      ) : formData.type === 'commission' ? (
+                          <p className="md:col-span-2 text-xs text-slate-400 font-semibold">
+                              Example: ₹1000 job → Kshatryx pool ₹200 → 30% commander share = ₹60.
+                          </p>
                       ) : null}
                   </div>
 
@@ -243,7 +264,7 @@ export default function AreaHeadManager() {
                       <div className="mb-4 bg-slate-950 p-3 rounded-xl border border-slate-800">
                           <p className="text-[9px] text-slate-500 uppercase font-bold tracking-widest">Payout Plan</p>
                           <p className="text-lg font-black text-white cursor-pointer hover:text-teal-400 transition-colors" title="Click to edit" onClick={() => updateCompensation(mgr.id, mgr.employment_type, mgr.compensation_value)}>
-                              {mgr.employment_type === 'salary' ? `₹${mgr.compensation_value}/mo` : `${mgr.compensation_value}% Cut`} <span className="text-slate-600 text-[10px] ml-1">✏️</span>
+                              {mgr.employment_type === 'salary' ? `₹${mgr.compensation_value}/mo` : `${mgr.compensation_value}% of Kshatryx Pool`} <span className="text-slate-600 text-[10px] ml-1">✏️</span>
                           </p>
                           <p className="text-[10px] text-teal-500 font-bold mt-1 uppercase">Wallet: ₹{mgr.wallet_balance || 0}</p>
                       </div>
@@ -255,6 +276,7 @@ export default function AreaHeadManager() {
                           ) : (
                               <button onClick={() => updateStatus(mgr.id, 'blocked')} className="bg-red-600/10 hover:bg-red-600/20 border border-red-500/20 text-red-400 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors w-full flex items-center justify-center gap-2"><XCircle size={14}/> Block Access</button>
                           )}
+                          <button onClick={() => deleteManager(mgr)} className="bg-red-900/20 hover:bg-red-900/30 border border-red-500/30 text-red-300 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors w-full flex items-center justify-center gap-2"><Trash2 size={14}/> Delete Commander</button>
                       </div>
                   </div>
               </div>

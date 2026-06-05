@@ -7,8 +7,8 @@
  *
  * Field-partner ("Bhenaji") layer has been retired. Area-head commission is the
  * only sub-distribution left and is decided per-head by the super admin in
- * DeepakHQ → Area Commanders. It is deducted from the 20% Kshatryx pool
- * (capped at 20%); Kshatryx keeps whatever remains.
+ * DeepakHQ → Area Commanders. The configured commander rate is a percentage
+ * of the Kshatryx pool, not of the gross job amount.
  *
  * Legacy exports (`PARTNER_GROSS_BPS`, `partnerPaise`, `partnerPoolPaise`,
  * `partnerBps`) are kept zero-valued so old callers/migrations don't crash;
@@ -23,7 +23,7 @@ export const KSHATRYX_GROSS_BPS = 2000;
 // Deprecated — kept at 0 only for back-compat with old callers/tests.
 export const PARTNER_GROSS_BPS = 0;
 export const BPS_DENOMINATOR = 10000;
-export const MAX_AREA_HEAD_COMMISSION_PCT = 20;
+export const MAX_AREA_HEAD_COMMISSION_PCT = 49;
 
 /** Legacy: combined "platform take" = full Kshatryx pool (20%). */
 export const LEGACY_PLATFORM_COMBINED_BPS = KSHATRYX_GROSS_BPS;
@@ -55,8 +55,8 @@ function clampAreaHeadCommissionPct(pct) {
  * Canonical split on gross job total (paise).
  *
  * @param {number} totalPaise
- * @param {number|undefined|null} [areaHeadCommissionPercentage] — percent of gross for area head
- *        (0–20, capped; cut comes from the 20% Kshatryx pool so kshatryxPaise is reduced)
+ * @param {number|undefined|null} [areaHeadCommissionPercentage] — percent of the Kshatryx pool for area head
+ *        (0–49, configured cap)
  * @returns {{
  *   totalPaise: number,
  *   expertPaise: number,
@@ -79,8 +79,7 @@ export function splitGrossPaymentPaise(totalPaise, areaHeadCommissionPercentage)
   const pct = clampAreaHeadCommissionPct(areaHeadCommissionPercentage);
   let areaHeadPaise = 0;
   if (pct > 0) {
-    areaHeadPaise = Math.floor((total * pct) / 100);
-    if (areaHeadPaise > kshatryxPoolPaise) areaHeadPaise = kshatryxPoolPaise;
+    areaHeadPaise = Math.floor((kshatryxPoolPaise * pct) / 100);
   }
   const kshatryxPaise = kshatryxPoolPaise - areaHeadPaise;
 

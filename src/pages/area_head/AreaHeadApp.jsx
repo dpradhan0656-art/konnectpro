@@ -433,10 +433,15 @@ export default function AreaHeadApp() {
             </div>
             <div className="text-right">
               <span className="bg-teal-500/20 text-teal-400 border border-teal-500/30 text-[9px] font-black px-2 py-1 rounded uppercase">
-                {manager.employment_type === 'salary' ? 'Salaried Employee' : `${manager.compensation_value}% Revenue Cut`}
+                {manager.employment_type === 'salary' ? 'Salaried Employee' : `${manager.compensation_value}% of Kshatryx Pool`}
               </span>
             </div>
           </div>
+          {manager.employment_type === 'commission' ? (
+            <p className="relative z-10 mt-3 text-[11px] text-slate-300 font-semibold">
+              Aapka commission Kshatryx ke 20% pool ka {manager.compensation_value}% hai. Dusre commanders ka percentage ya contact data yahan nahi dikhaya jata.
+            </p>
+          ) : null}
         </div>
       </div>
 

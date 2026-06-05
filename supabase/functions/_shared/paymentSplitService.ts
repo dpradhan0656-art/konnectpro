@@ -5,7 +5,8 @@
  *   Expert 80%, Kshatryx 20%.
  *
  * Field-partner ("Bhenaji") layer retired. Area-head commission is the only
- * sub-distribution and is deducted from the 20% Kshatryx pool (max 20%).
+ * sub-distribution. The configured commander rate is a percentage of the
+ * Kshatryx pool, not of the gross job amount.
  *
  * Mirrors: src/services/paymentSplitService.js,
  *          expert-expo-app/src/services/paymentSplitService.js
@@ -15,7 +16,7 @@ export const EXPERT_GROSS_BPS = 8000;
 export const KSHATRYX_GROSS_BPS = 2000;
 export const PARTNER_GROSS_BPS = 0;
 export const BPS_DENOMINATOR = 10000;
-export const MAX_AREA_HEAD_COMMISSION_PCT = 20;
+export const MAX_AREA_HEAD_COMMISSION_PCT = 49;
 export const LEGACY_PLATFORM_COMBINED_BPS = KSHATRYX_GROSS_BPS;
 
 function assertNonNegativeIntegerPaise(n: unknown): number {
@@ -56,8 +57,7 @@ export function splitGrossPaymentPaise(
   const pct = clampAreaHeadCommissionPct(areaHeadCommissionPercentage);
   let areaHeadPaise = 0;
   if (pct > 0) {
-    areaHeadPaise = Math.floor((total * pct) / 100);
-    if (areaHeadPaise > kshatryxPoolPaise) areaHeadPaise = kshatryxPoolPaise;
+    areaHeadPaise = Math.floor((kshatryxPoolPaise * pct) / 100);
   }
   const kshatryxPaise = kshatryxPoolPaise - areaHeadPaise;
 
