@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { adminResetPassword } from '../../../lib/authAdmin';
 import { MAX_AREA_HEAD_COMMISSION_PCT } from '../../../services/paymentSplitService';
-import { Shield, MapPin, Briefcase, Plus, User, Mail, Lock, Loader2, CheckCircle, XCircle, Phone, KeyRound, Trash2 } from 'lucide-react';
+import EditCommanderModal from '../components/EditCommanderModal';
+import { Shield, MapPin, Briefcase, Plus, User, Mail, Lock, Loader2, CheckCircle, XCircle, Phone, KeyRound, Trash2, SquarePen } from 'lucide-react';
 
 export default function AreaHeadManager() {
   const [managers, setManagers] = useState([]);
@@ -14,6 +15,7 @@ export default function AreaHeadManager() {
   const [pwModal, setPwModal] = useState(null);
   const [pwValue, setPwValue] = useState('');
   const [pwLoading, setPwLoading] = useState(false);
+  const [editCommander, setEditCommander] = useState(null);
   const [formData, setFormData] = useState({
       name: '', email: '', phone: '', password: '', city: 'Jabalpur', type: 'salary', compensation: 0
   });
@@ -270,6 +272,7 @@ export default function AreaHeadManager() {
                       </div>
 
                       <div className="flex flex-col gap-2">
+                          <button onClick={() => setEditCommander(mgr)} className="bg-teal-600/20 hover:bg-teal-600/30 text-teal-300 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2"><SquarePen size={14}/> Edit Details</button>
                           <button onClick={() => { setPwModal({ name: mgr.name, user_id: mgr.user_id }); setPwValue(''); }} className="bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2"><KeyRound size={14}/> Change Password</button>
                           {mgr.status !== 'active' ? (
                               <button onClick={() => updateStatus(mgr.id, 'active')} className="bg-green-600/20 hover:bg-green-600/30 text-green-400 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors w-full">Approve / Activate</button>
@@ -297,6 +300,13 @@ export default function AreaHeadManager() {
               </div>
           </div>
       )}
+      <EditCommanderModal
+          commander={editCommander}
+          onClose={() => setEditCommander(null)}
+          onSaved={async () => {
+              await fetchManagers();
+          }}
+      />
     </div>
   );
 }
