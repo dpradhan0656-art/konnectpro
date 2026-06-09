@@ -1,0 +1,18 @@
+---
+description: Enforce Android version increments before EAS AAB release builds
+alwaysApply: true
+---
+
+# EAS Android AAB Versioning
+
+Before generating any Android AAB for `expert-expo-app`, always verify and increment release versions in both Expo config and native Android config.
+
+- Update `expert-expo-app/app.json`:
+  - `expo.version` must be bumped for the release.
+  - `expo.android.versionCode` must be higher than every previously uploaded Play Console build.
+- If `expert-expo-app/android/` exists, EAS uses native Android values. Also update `expert-expo-app/android/app/build.gradle`:
+  - `defaultConfig.versionCode` must match or exceed `app.json` and must never reuse an old Play Console version code.
+  - `defaultConfig.versionName` must match `expo.version`.
+- Before starting `npm run build:android:store` or `eas build --platform android --profile production`, run a quick verification that prints both sources and confirms they are in sync.
+- Never upload an AAB unless EAS build details show the expected `appVersion` and `appBuildVersion`.
+
