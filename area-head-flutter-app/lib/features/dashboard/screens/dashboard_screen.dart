@@ -1,3 +1,7 @@
+import 'package:area_head_flutter_app/features/complaints/screens/complaints_screen.dart';
+import 'package:area_head_flutter_app/features/daily_reports/screens/daily_report_screen.dart';
+import 'package:area_head_flutter_app/features/experts/screens/my_experts_screen.dart';
+import 'package:area_head_flutter_app/features/jobs/screens/jobs_screen.dart';
 import 'package:area_head_flutter_app/shared/models/area_head_profile.dart';
 import 'package:flutter/material.dart';
 
@@ -68,18 +72,25 @@ class DashboardScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const _ComingSoonCard(
+            const _ModuleCard(
               icon: Icons.groups_outlined,
               title: 'My Experts',
+              screen: MyExpertsScreen(),
             ),
-            const _ComingSoonCard(icon: Icons.work_outline, title: 'Jobs'),
-            const _ComingSoonCard(
+            const _ModuleCard(
+              icon: Icons.work_outline,
+              title: 'Jobs',
+              screen: JobsScreen(),
+            ),
+            const _ModuleCard(
               icon: Icons.report_problem_outlined,
               title: 'Complaints',
+              screen: ComplaintsScreen(),
             ),
-            const _ComingSoonCard(
+            const _ModuleCard(
               icon: Icons.assignment_outlined,
               title: 'Daily Report',
+              screen: DailyReportScreen(),
             ),
           ],
         ),
@@ -123,11 +134,16 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-class _ComingSoonCard extends StatelessWidget {
-  const _ComingSoonCard({required this.icon, required this.title});
+class _ModuleCard extends StatelessWidget {
+  const _ModuleCard({
+    required this.icon,
+    required this.title,
+    required this.screen,
+  });
 
   final IconData icon;
   final String title;
+  final Widget screen;
 
   @override
   Widget build(BuildContext context) {
@@ -135,8 +151,11 @@ class _ComingSoonCard extends StatelessWidget {
       child: ListTile(
         leading: Icon(icon, color: Colors.tealAccent),
         title: Text(title),
-        subtitle: const Text('Coming in next sprint'),
-        trailing: const Icon(Icons.lock_clock),
+        subtitle: const Text('Read-only Phase-2'),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () {
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+        },
       ),
     );
   }
