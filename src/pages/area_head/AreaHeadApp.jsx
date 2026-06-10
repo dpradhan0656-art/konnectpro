@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import {
   Shield, MapPin, Briefcase, LogOut, Users, Activity, Clock, CheckCircle,
@@ -135,7 +136,6 @@ export default function AreaHeadApp() {
     return () => {
       supabase.removeChannel(channel);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [manager?.id]);
 
   // ─── Profile + role gate ─────────────────────────────────────────────
@@ -145,7 +145,7 @@ export default function AreaHeadApp() {
     try {
       const { data, error } = await supabase
         .from('area_heads')
-        .select('*')
+        .select('id, user_id, name, phone, assigned_area, status, wallet_balance, employment_type, compensation_value')
         .eq('user_id', userId)
         .maybeSingle();
 
@@ -173,13 +173,17 @@ export default function AreaHeadApp() {
   };
 
   const fetchAreaBookings = async (headId) => {
-    const { data } = await supabase
-      .from('bookings')
-      .select('*, experts(name, phone)')
-      .eq('area_head_id', headId)
-      .order('created_at', { ascending: false })
-      .limit(20);
-    if (data) setAreaBookings(data);
+    if (!headId) {
+      setAreaBookings([]);
+      return;
+    }
+    const { data, error } = await supabase.rpc('get_current_area_head_bookings');
+    if (error) {
+      setAreaBookings([]);
+      setAccessError('Area booking radar load nahi ho paya. Network/RLS/RPC check karein.');
+      return;
+    }
+    setAreaBookings(Array.isArray(data) ? data : []);
   };
 
   const refreshWalletLedger = async (headId) => {
@@ -256,6 +260,13 @@ export default function AreaHeadApp() {
     );
   }
 
+  // No session → normal customer login. After login, user can open /areahead again.
+  if (!session) {
+    return <Navigate to="/login" replace state={{ from: '/areahead' }} />;
+  }
+
+  // Legacy inline Area Head login is preserved below for rollback safety, but the
+  // active flow now uses the normal customer login window + restored Supabase session.
   // No session → inline login screen
   if (!session) {
     return (
@@ -590,14 +601,16 @@ export default function AreaHeadApp() {
                     <p className="flex items-start gap-2"><MapPin size={14} className="mt-0.5 text-slate-600 shrink-0" /> {job.address}</p>
                     <p className="flex items-center gap-2"><Clock size={14} className="text-slate-600 shrink-0" /> {new Date(job.created_at).toLocaleString()}</p>
 
-                    {job.experts ? (
+                    {job.expert_name ? (
                       <div className="flex justify-between items-center mt-3 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
                         <p className="flex items-center gap-2 text-slate-300 font-bold">
-                          <Users size={14} className="text-teal-500" /> {job.experts.name}
+                          <Users size={14} className="text-teal-500" /> {job.expert_name}
                         </p>
-                        <a href={`tel:${job.experts.phone}`} className="text-teal-500 bg-teal-500/10 p-1.5 rounded-lg hover:bg-teal-500 hover:text-white transition-colors">
-                          <Phone size={14} />
-                        </a>
+                        {job.expert_phone ? (
+                          <a href={`tel:${job.expert_phone}`} className="text-teal-500 bg-teal-500/10 p-1.5 rounded-lg hover:bg-teal-500 hover:text-white transition-colors">
+                            <Phone size={14} />
+                          </a>
+                        ) : null}
                       </div>
                     ) : (
                       <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mt-2 animate-pulse">Waiting for Expert Assignment...</p>
