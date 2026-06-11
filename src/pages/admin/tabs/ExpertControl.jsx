@@ -16,6 +16,28 @@ import {
 import ExpertRegistrationForm from '../../../components/forms/ExpertRegistrationForm';
 import WhatsAppIntakeButton from '../../../components/buttons/WhatsAppIntakeButton';
 
+const EXPERT_ARMY_ROSTER_STATUSES = ['approved', 'active'];
+const EXPERT_ARMY_SAFE_SELECT =
+  'id, name, email, phone, service_category, category, city, average_rating, status, kyc_status, photo_url, created_at, area_head_id, user_id, is_active, is_verified';
+
+const formatKycBadge = (status) => {
+  const kyc = String(status || 'pending').toLowerCase();
+  if (kyc === 'verified') return 'VERIFIED';
+  if (kyc === 'rejected') return 'REJECTED';
+  return 'PENDING';
+};
+
+const kycBadgeClass = (status) => {
+  const kyc = String(status || 'pending').toLowerCase();
+  if (kyc === 'verified') {
+    return 'bg-emerald-500/20 text-emerald-300 border border-emerald-600/30';
+  }
+  if (kyc === 'rejected') {
+    return 'bg-red-500/20 text-red-300 border border-red-600/30';
+  }
+  return 'bg-amber-500/20 text-amber-200 border border-amber-600/30';
+};
+
 export default function ExpertControl() {
   const [experts, setExperts] = useState([]);
   const [categories, setCategories] = useState([]); // ✅ Dynamic Categories from DB
@@ -23,10 +45,8 @@ export default function ExpertControl() {
   const [checkingWriteAccess, setCheckingWriteAccess] = useState(true);
   const [canWrite, setCanWrite] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  // Active roster only — pending / rejected review lives in KYC Verifications tab
-  // Legacy Duplicate Approval Flow — status filter toggles (pending | approved | rejected)
-  // const [filterStatus, setFilterStatus] = useState('approved');
-  const ROSTER_STATUS = 'approved';
+  const [kycFilter, setKycFilter] = useState('all');
+  // Active roster: legacy approved experts + Area Head lead approvals (status = active).
   const SHOW_INSTANT_ADD = false;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -91,14 +111,18 @@ export default function ExpertControl() {
   const fetchData = async () => {
     setLoading(true);
     
-    // A. Fetch Experts (approved active roster only)
-    // Legacy Duplicate Approval Flow — .eq('status', filterStatus) when multi-status filters were enabled
-    const { data: expData } = await supabase
+    // A. Fetch Experts (active roster: approved legacy + active Area Head lead approvals)
+    const { data: expData, error: expError } = await supabase
         .from('experts')
-        .select('*')
-        .eq('status', ROSTER_STATUS)
+        .select(EXPERT_ARMY_SAFE_SELECT)
+        .in('status', EXPERT_ARMY_ROSTER_STATUSES)
         .order('created_at', { ascending: false });
-    if (expData) setExperts(expData);
+    if (expError) {
+      console.error('Expert Army fetch failed:', expError.message);
+      setExperts([]);
+    } else if (expData) {
+      setExperts(expData);
+    }
 
     // B. Fetch Dynamic Categories from Category Master
     const { data: catData } = await supabase.from('categories').select('name').eq('is_active', true);
@@ -236,12 +260,23 @@ export default function ExpertControl() {
   };
 
   const q = searchTerm.toLowerCase().trim();
-  const filteredExperts = experts.filter(exp => 
-    !q ||
-    exp.name?.toLowerCase().includes(q) || 
-    exp.phone?.includes(searchTerm.trim()) ||
-    exp.email?.toLowerCase().includes(q)
-  );
+  const matchesKycFilter = (exp) => {
+    const kyc = String(exp.kyc_status || 'pending').toLowerCase();
+    if (kycFilter === 'verified') return kyc === 'verified';
+    if (kycFilter === 'pending') return kyc === 'pending' || kyc === '';
+    return true;
+  };
+  const filteredExperts = experts.filter((exp) => {
+    if (!matchesKycFilter(exp)) return false;
+    if (!q) return true;
+    return (
+      exp.name?.toLowerCase().includes(q) ||
+      exp.phone?.includes(searchTerm.trim()) ||
+      exp.email?.toLowerCase().includes(q) ||
+      exp.service_category?.toLowerCase().includes(q) ||
+      exp.category?.toLowerCase().includes(q)
+    );
+  });
 
   const handleQuickPasswordChange = async () => {
     if (!pwModal?.user_id || !pwValue || pwValue.length < 6) {
@@ -405,7 +440,9 @@ export default function ExpertControl() {
             </div>
             <div>
                 <h2 className="text-2xl font-black text-white uppercase tracking-tight">Expert Army</h2>
-                <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Active roster · {experts.length} approved</p>
+                <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">
+                  Active roster · {experts.length} experts
+                </p>
             </div>
         </div>
 
@@ -418,9 +455,24 @@ export default function ExpertControl() {
                 </button>
             ))}
             */}
-            <span className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-teal-600/20 text-teal-400 border border-teal-700/40">
-              Approved only
-            </span>
+            {[
+              { id: 'all', label: 'All Active Experts' },
+              { id: 'pending', label: 'KYC Pending' },
+              { id: 'verified', label: 'KYC Verified' },
+            ].map((chip) => (
+              <button
+                key={chip.id}
+                type="button"
+                onClick={() => setKycFilter(chip.id)}
+                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  kycFilter === chip.id
+                    ? 'bg-teal-600 text-white shadow-lg shadow-teal-900/40'
+                    : 'text-slate-500 bg-slate-950 hover:bg-slate-800'
+                }`}
+              >
+                {chip.label}
+              </button>
+            ))}
             {/*
               Old Inconsistent Form — header “Manual Add” (modal enlisted fewer fields + auto-approved).
               Kept for history; re-enable by changing false → true if you need instant-approved roster adds.
@@ -466,6 +518,7 @@ export default function ExpertControl() {
             <thead className="bg-slate-950/80 border-b border-slate-800">
               <tr className="text-[10px] uppercase tracking-widest text-slate-500">
                 <th className="px-4 py-3">Expert</th>
+                <th className="px-4 py-3">Source</th>
                 <th className="px-4 py-3">Email</th>
                 <th className="px-4 py-3">Phone</th>
                 <th className="px-4 py-3">Category</th>
@@ -479,19 +532,22 @@ export default function ExpertControl() {
               {filteredExperts.map((exp) => (
                 <tr key={`table-${exp.id}`} className="border-b border-slate-800/70 text-sm">
                   <td className="px-4 py-3 text-white font-semibold">{exp.name || '—'}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wide ${
+                      exp.area_head_id
+                        ? 'bg-indigo-500/20 text-indigo-200 border border-indigo-600/30'
+                        : 'bg-slate-800 text-slate-400 border border-slate-700'
+                    }`}>
+                      {exp.area_head_id ? 'Area Head Lead' : 'Direct'}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-slate-300">{exp.email || '—'}</td>
                   <td className="px-4 py-3 text-slate-300">{exp.phone || '—'}</td>
                   <td className="px-4 py-3 text-slate-300">{exp.category || exp.service_category || '—'}</td>
                   <td className="px-4 py-3 text-amber-300 font-semibold">{Number(exp.average_rating || 0).toFixed(1)}</td>
                   <td className="px-4 py-3">
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wide ${
-                      String(exp.kyc_status || 'pending').toLowerCase() === 'verified'
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-600/30'
-                        : String(exp.kyc_status || 'pending').toLowerCase() === 'rejected'
-                        ? 'bg-red-500/20 text-red-300 border border-red-600/30'
-                        : 'bg-amber-500/20 text-amber-200 border border-amber-600/30'
-                    }`}>
-                      {String(exp.kyc_status || 'pending')}
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wide ${kycBadgeClass(exp.kyc_status)}`}>
+                      {formatKycBadge(exp.kyc_status)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-slate-400 text-xs max-w-[220px] truncate" title={exp.photo_url || ''}>
@@ -531,16 +587,28 @@ export default function ExpertControl() {
 
                 <div className="flex items-start gap-4 mb-4">
                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl ${exp.is_active ? 'bg-teal-500/20 text-teal-400' : 'bg-slate-800 text-slate-500'}`}>
-                        {exp.name[0]}
+                        {(exp.name || '?')[0]}
                     </div>
                     <div>
                         <h3 className="text-lg font-black text-white flex items-center gap-2">
-                            {exp.name} 
+                            {exp.name}
                             {exp.is_verified && <ShieldCheck size={16} className="text-teal-500" />}
                         </h3>
                         <p className="text-teal-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-1 mt-1">
-                            <Briefcase size={12}/> {exp.service_category}
+                            <Briefcase size={12}/> {exp.service_category || exp.category || 'Service'}
                         </p>
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wide ${kycBadgeClass(exp.kyc_status)}`}>
+                            KYC {formatKycBadge(exp.kyc_status)}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wide ${
+                            exp.area_head_id
+                              ? 'bg-indigo-500/20 text-indigo-200 border border-indigo-600/30'
+                              : 'bg-slate-800 text-slate-400 border border-slate-700'
+                          }`}>
+                            {exp.area_head_id ? 'Area Head Lead' : 'Direct'}
+                          </span>
+                        </div>
                     </div>
                 </div>
 
