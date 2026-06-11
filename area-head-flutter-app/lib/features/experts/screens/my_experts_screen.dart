@@ -1,4 +1,5 @@
 import 'package:area_head_flutter_app/features/experts/data/experts_repository.dart';
+import 'package:area_head_flutter_app/features/experts/screens/add_expert_screen.dart';
 import 'package:area_head_flutter_app/shared/models/area_head_expert.dart';
 import 'package:flutter/material.dart';
 
@@ -21,6 +22,19 @@ class _MyExpertsScreenState extends State<MyExpertsScreen> {
     _future = _repository.fetchMyExperts();
   }
 
+  void _refreshExperts() {
+    setState(() {
+      _future = _repository.fetchMyExperts();
+    });
+  }
+
+  Future<void> _openAddExpert() async {
+    final added = await Navigator.of(
+      context,
+    ).push<bool>(MaterialPageRoute(builder: (_) => const AddExpertScreen()));
+    if (added == true) _refreshExperts();
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -39,7 +53,16 @@ class _MyExpertsScreenState extends State<MyExpertsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('My Experts')),
+      appBar: AppBar(
+        title: const Text('My Experts'),
+        actions: [
+          TextButton.icon(
+            onPressed: _openAddExpert,
+            icon: const Icon(Icons.add),
+            label: const Text('Add Expert'),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: FutureBuilder<List<AreaHeadExpert>>(
           future: _future,
@@ -52,9 +75,7 @@ class _MyExpertsScreenState extends State<MyExpertsScreen> {
                 icon: Icons.warning_amber,
                 title: 'Unable to load experts',
                 message: 'Please check network/RPC permissions and retry.',
-                onRetry: () => setState(() {
-                  _future = _repository.fetchMyExperts();
-                }),
+                onRetry: _refreshExperts,
               );
             }
 
@@ -72,10 +93,11 @@ class _MyExpertsScreenState extends State<MyExpertsScreen> {
                 ),
                 const SizedBox(height: 16),
                 if ((snapshot.data ?? const []).isEmpty)
-                  const _MessageState(
+                  _MessageState(
                     icon: Icons.groups_outlined,
                     title: 'No experts onboarded yet',
-                    message: 'Add Expert will come in a future sprint.',
+                    message: 'Submit your first expert lead for verification.',
+                    onRetry: _openAddExpert,
                   )
                 else if (experts.isEmpty)
                   const _MessageState(
