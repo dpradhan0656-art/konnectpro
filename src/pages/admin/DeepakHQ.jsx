@@ -5,7 +5,7 @@ import { canAccessDeepakHQ, syncFounderAdminRow } from '../../lib/adminAccess';
 import {
   Shield, Menu, X, LogOut, LayoutGrid, Users, Briefcase, Settings,
   Megaphone, Navigation, CreditCard, UserCheck, Grid, DollarSign, FileCheck,
-  Database, Activity, ClipboardCheck,
+  Database, Activity, ClipboardCheck, ShieldCheck,
 } from 'lucide-react';
 
 // Lazy-load tabs so DeepakHQ opens fast and tabs load on demand
@@ -22,6 +22,7 @@ const MarketingTab = lazy(() => import('./tabs/MarketingTab'));
 const RevenueTab = lazy(() => import('./tabs/RevenueTab'));
 const AreaHeadManager = lazy(() => import('./tabs/AreaHeadManager'));
 const ExpertVerification = lazy(() => import('./tabs/ExpertVerification'));
+const PendingExpertLeads = lazy(() => import('./tabs/PendingExpertLeads'));
 const DeveloperToolsTab = lazy(() => import('./tabs/DeveloperToolsTab'));
 const LiveOperations = lazy(() => import('./tabs/LiveOperations'));
 const ReleaseOpsTab = lazy(() => import('./tabs/ReleaseOpsTab'));
@@ -45,6 +46,7 @@ export default function DeepakHQ() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [pendingExpertCount, setPendingExpertCount] = useState(0);
+  const [pendingLeadCount, setPendingLeadCount] = useState(0);
 
   const refreshPendingExpertCount = async () => {
     const { count, error } = await supabase
@@ -52,6 +54,11 @@ export default function DeepakHQ() {
       .select('id', { count: 'exact', head: true })
       .eq('status', 'pending');
     if (!error) setPendingExpertCount(count || 0);
+  };
+
+  const refreshPendingLeadCount = async () => {
+    const { data, error } = await supabase.rpc('get_pending_expert_leads_for_admin');
+    if (!error && Array.isArray(data)) setPendingLeadCount(data.length);
   };
 
   /*
@@ -77,6 +84,7 @@ export default function DeepakHQ() {
             await syncFounderAdminRow(session.user);
             setIsAuthenticated(true);
             refreshPendingExpertCount();
+            refreshPendingLeadCount();
           }
           else await supabase.auth.signOut();
         }
@@ -110,6 +118,7 @@ export default function DeepakHQ() {
             if (!mounted) return;
             setIsAuthenticated(true);
             refreshPendingExpertCount();
+            refreshPendingLeadCount();
           });
         }
         else {
@@ -134,6 +143,7 @@ export default function DeepakHQ() {
     if (!isAuthenticated) return;
     const id = setInterval(() => {
       refreshPendingExpertCount();
+      refreshPendingLeadCount();
     }, 30000);
     return () => clearInterval(id);
   }, [isAuthenticated]);
@@ -224,6 +234,7 @@ export default function DeepakHQ() {
             
             {/* ✅ NAYA BUTTON JODA (KYC Verification) */}
             <NavBtn icon={<FileCheck size={18}/>} label="KYC Verifications" active={activeTab === 'kyc_verification'} onClick={() => handleTabChange('kyc_verification')} badge={pendingExpertCount > 0 ? String(pendingExpertCount) : undefined} />
+            <NavBtn icon={<ShieldCheck size={18}/>} label="Pending Expert Leads" active={activeTab === 'pending_expert_leads'} onClick={() => handleTabChange('pending_expert_leads')} badge={pendingLeadCount > 0 ? String(pendingLeadCount) : undefined} />
             
             <NavBtn icon={<UserCheck size={18}/>} label="Expert Army" active={activeTab === 'experts'} onClick={() => handleTabChange('experts')} />
             <NavBtn icon={<Shield size={18}/>} label="Area Commanders" active={activeTab === 'area_heads'} onClick={() => handleTabChange('area_heads')} badge="20%" />
@@ -271,6 +282,7 @@ export default function DeepakHQ() {
                     {activeTab === 'dispatch' && <DispatchTab />}
                     {activeTab === 'live_ops' && <LiveOperations />}
                     {activeTab === 'kyc_verification' && <ExpertVerification />}
+                    {activeTab === 'pending_expert_leads' && <PendingExpertLeads />}
                     {/* Expert Army: ExpertControl mounts shared ExpertRegistrationForm (pending) + grid — see ExpertControl.jsx */}
                     {activeTab === 'experts' && <ExpertControl />}
                     {activeTab === 'area_heads' && <AreaHeadManager />}
