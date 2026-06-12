@@ -1,9 +1,16 @@
+import 'package:area_head_flutter_app/core/services/supabase_service.dart';
 import 'package:area_head_flutter_app/shared/models/area_head_complaint.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ComplaintsRepository {
+  SupabaseClient get _client => SupabaseService.client;
+
   Future<List<AreaHeadComplaint>> fetchMyComplaints() async {
-    // Complaints schema/RPC is not source-controlled yet. Keep this read-only
-    // module closed instead of guessing a broad table query.
-    return const [];
+    final data = await _client.rpc('get_current_area_head_complaints');
+    final rows = data is List ? data : const [];
+    return rows
+        .whereType<Map<String, dynamic>>()
+        .map(AreaHeadComplaint.fromJson)
+        .toList();
   }
 }

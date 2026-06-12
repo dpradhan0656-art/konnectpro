@@ -3,13 +3,18 @@ import 'package:flutter/material.dart';
 class AppTheme {
   const AppTheme._();
 
-  static const _seed = Color(0xFF0D9488);
-  static const _background = Color(0xFF020617);
+  static const _seed = Color(0xFF047857);
+  static const _background = Color(0xFFF8FAFC);
+  static const _surface = Colors.white;
+  static const _text = Color(0xFF0F172A);
+  static const _muted = Color(0xFF64748B);
+  static const _border = Color(0xFFE2E8F0);
 
-  static ThemeData dark() {
+  static ThemeData kshatr() {
     final scheme = ColorScheme.fromSeed(
       seedColor: _seed,
-      brightness: Brightness.dark,
+      brightness: Brightness.light,
+      surface: _surface,
     );
 
     return ThemeData(
@@ -18,22 +23,51 @@ class AppTheme {
       scaffoldBackgroundColor: _background,
       appBarTheme: const AppBarTheme(
         backgroundColor: _background,
-        foregroundColor: Colors.white,
+        foregroundColor: _text,
+        surfaceTintColor: _background,
         centerTitle: false,
       ),
       cardTheme: CardThemeData(
-        color: const Color(0xFF0F172A),
+        color: _surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Color(0xFF1E293B)),
+          borderRadius: BorderRadius.circular(18),
+          side: const BorderSide(color: _border),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: _seed,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF020617),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+        fillColor: _surface,
+        labelStyle: const TextStyle(color: _muted),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: _border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: _border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: _seed, width: 1.4),
+        ),
+      ),
+      textTheme: const TextTheme(
+        bodyMedium: TextStyle(color: _text),
+        bodySmall: TextStyle(color: _muted),
       ),
     );
   }
+
+  @Deprecated('Use AppTheme.kshatr()')
+  static ThemeData dark() => kshatr();
 }

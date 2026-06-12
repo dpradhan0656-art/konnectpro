@@ -12,7 +12,7 @@ class AreaHeadApp extends StatelessWidget {
     return MaterialApp(
       title: 'Kshatr Area Head',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark(),
+      theme: AppTheme.kshatr(),
       home: AuthCheckScreen(startupError: startupError),
     );
   }

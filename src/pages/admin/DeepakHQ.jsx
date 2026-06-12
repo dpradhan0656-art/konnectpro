@@ -23,6 +23,7 @@ const RevenueTab = lazy(() => import('./tabs/RevenueTab'));
 const AreaHeadManager = lazy(() => import('./tabs/AreaHeadManager'));
 const ExpertVerification = lazy(() => import('./tabs/ExpertVerification'));
 const PendingExpertLeads = lazy(() => import('./tabs/PendingExpertLeads'));
+const AreaHeadReportsViewer = lazy(() => import('./tabs/AreaHeadReportsViewer'));
 const DeveloperToolsTab = lazy(() => import('./tabs/DeveloperToolsTab'));
 const LiveOperations = lazy(() => import('./tabs/LiveOperations'));
 const ReleaseOpsTab = lazy(() => import('./tabs/ReleaseOpsTab'));
@@ -238,6 +239,7 @@ export default function DeepakHQ() {
             
             <NavBtn icon={<UserCheck size={18}/>} label="Expert Army" active={activeTab === 'experts'} onClick={() => handleTabChange('experts')} />
             <NavBtn icon={<Shield size={18}/>} label="Area Commanders" active={activeTab === 'area_heads'} onClick={() => handleTabChange('area_heads')} badge="20%" />
+            <NavBtn icon={<ClipboardCheck size={18}/>} label="Area Reports" active={activeTab === 'area_head_reports'} onClick={() => handleTabChange('area_head_reports')} />
             
             <div className="pt-4 pb-2 px-4 text-[10px] font-bold text-slate-600 uppercase tracking-wider">Growth</div>
             <NavBtn icon={<Users size={18}/>} label="Customer CRM" active={activeTab === 'customers'} onClick={() => handleTabChange('customers')} />
@@ -286,6 +288,7 @@ export default function DeepakHQ() {
                     {/* Expert Army: ExpertControl mounts shared ExpertRegistrationForm (pending) + grid — see ExpertControl.jsx */}
                     {activeTab === 'experts' && <ExpertControl />}
                     {activeTab === 'area_heads' && <AreaHeadManager />}
+                    {activeTab === 'area_head_reports' && <AreaHeadReportsViewer />}
                     {activeTab === 'customers' && <CustomerCRM />}
                     {activeTab === 'wallet' && <WalletManager />}
                     {activeTab === 'marketing' && <MarketingTab />}
